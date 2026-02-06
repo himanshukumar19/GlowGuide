@@ -1,12 +1,26 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sparkles, ChevronDown } from "lucide-react";
+import { Menu, X, Sparkles, ChevronDown, ShoppingCart, Heart } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 
 const navItems = [
   { label: "Home", path: "/" },
+  { 
+    label: "Shop", 
+    path: "/shop",
+    children: [
+      { label: "All Products", path: "/shop" },
+      { label: "Men & Women", path: "/shop?category=men-women" },
+      { label: "Korean Skincare", path: "/shop?category=korean" },
+      { label: "For Children", path: "/shop?category=children" },
+      { label: "For Seniors", path: "/shop?category=senior" },
+      { label: "Laser Devices", path: "/shop?category=laser-devices" },
+    ]
+  },
   { label: "About Skincare", path: "/about" },
   { label: "Skin Quiz", path: "/quiz" },
   {
@@ -20,23 +34,14 @@ const navItems = [
       { label: "Normal", path: "/skin-types/normal" },
     ],
   },
-  {
-    label: "By Age",
-    path: "/age",
-    children: [
-      { label: "Children", path: "/age/children" },
-      { label: "Teens", path: "/age/teens" },
-      { label: "Adults", path: "/age/adults" },
-      { label: "Seniors", path: "/age/seniors" },
-    ],
-  },
-  { label: "K-Beauty", path: "/korean-skincare" },
 ];
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const location = useLocation();
+  const { itemCount: cartCount } = useCart();
+  const { itemCount: wishlistCount } = useWishlist();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -105,11 +110,32 @@ const Navbar = () => {
           </div>
 
           {/* Right side */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Link to="/quiz" className="hidden md:block">
+            
+            {/* Wishlist */}
+            <Link to="/wishlist" className="relative p-2 rounded-lg hover:bg-muted transition-colors">
+              <Heart className="h-5 w-5" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Cart */}
+            <Link to="/cart" className="relative p-2 rounded-lg hover:bg-muted transition-colors">
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
+            <Link to="/shop" className="hidden md:block">
               <Button variant="default" size="sm" className="gradient-primary border-0 text-primary-foreground">
-                Take Quiz
+                Shop Now
               </Button>
             </Link>
 

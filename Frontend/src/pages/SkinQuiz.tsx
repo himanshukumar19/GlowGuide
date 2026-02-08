@@ -20,8 +20,9 @@ import Layout from "@/components/layout/Layout";
 import {
   quizQuestions,
   skinTypeResults,
-  getSkinTypeFromScore,
+  getSkinTypeFromAnswers,
   QuizResult,
+  SelectedAnswer,
 } from "@/data/quizData";
 
 type QuizState = "intro" | "quiz" | "result";
@@ -29,7 +30,7 @@ type QuizState = "intro" | "quiz" | "result";
 const SkinQuiz = () => {
   const [quizState, setQuizState] = useState<QuizState>("intro");
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<number[]>([]);
+  const [answers, setAnswers] = useState<SelectedAnswer[]>([]);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [result, setResult] = useState<QuizResult | null>(null);
 
@@ -42,20 +43,19 @@ const SkinQuiz = () => {
     setSelectedOption(null);
   };
 
-  const handleOptionSelect = (points: number, index: number) => {
+  const handleOptionSelect = (scores: SelectedAnswer, index: number) => {
     setSelectedOption(index);
     setTimeout(() => {
-      const newAnswers = [...answers, points];
+      const newAnswers = [...answers, scores];
       setAnswers(newAnswers);
 
       if (currentQuestion < quizQuestions.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
         setSelectedOption(null);
       } else {
-        // Calculate result
-        const totalScore = newAnswers.reduce((sum, pts) => sum + pts, 0);
-        const skinType = getSkinTypeFromScore(totalScore);
-        setResult(skinTypeResults[skinType]);
+        // Calculate result using weighted multi-dimensional scoring
+        const resultType = getSkinTypeFromAnswers(newAnswers);
+        setResult(skinTypeResults[resultType]);
         setQuizState("result");
       }
     }, 400);
@@ -180,7 +180,7 @@ const SkinQuiz = () => {
                           {quizQuestions[currentQuestion].options.map((option, index) => (
                             <motion.button
                               key={index}
-                              onClick={() => handleOptionSelect(option.points, index)}
+                              onClick={() => handleOptionSelect(option.scores, index)}
                               className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
                                 selectedOption === index
                                   ? "border-primary bg-primary/10"

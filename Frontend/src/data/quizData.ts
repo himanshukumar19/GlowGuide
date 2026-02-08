@@ -1,9 +1,16 @@
+export type SkinType = 'normal' | 'oily' | 'combination' | 'dry' | 'sensitive';
+
+// Each answer contributes weighted scores to multiple skin types
+// This is how real dermatological assessments work
+type SkinScores = Partial<Record<SkinType, number>>;
+
 export interface QuizQuestion {
   id: number;
   question: string;
+  weight: number; // How important this question is (1-3)
   options: {
     text: string;
-    points: number;
+    scores: SkinScores; // Weighted contribution to each skin type
   }[];
 }
 
@@ -19,57 +26,122 @@ export interface QuizResult {
 export const quizQuestions: QuizQuestion[] = [
   {
     id: 1,
-    question: "How does your skin feel a few hours after washing?",
+    question: "How does your skin feel a few hours after washing your face?",
+    weight: 3, // Very important diagnostic question
     options: [
-      { text: "Comfortable, neither dry nor oily", points: 1 },
-      { text: "Shiny and greasy all over", points: 2 },
-      { text: "Oily in T-zone, normal/dry elsewhere", points: 3 },
-      { text: "Tight, dry, or flaky", points: 4 },
-      { text: "Red, itchy, or irritated", points: 5 },
+      { text: "Comfortable, neither dry nor oily", scores: { normal: 3 } },
+      { text: "Shiny and greasy all over", scores: { oily: 3 } },
+      { text: "Oily in the T-zone, normal or dry on cheeks", scores: { combination: 3, oily: 1, dry: 1 } },
+      { text: "Tight, dry, or flaky", scores: { dry: 3 } },
+      { text: "Red, itchy, or irritated", scores: { sensitive: 3, dry: 1 } },
     ],
   },
   {
     id: 2,
-    question: "How often do you experience breakouts?",
+    question: "How often do you experience breakouts or acne?",
+    weight: 2,
     options: [
-      { text: "Rarely or never", points: 1 },
-      { text: "Often, especially in oily areas", points: 2 },
-      { text: "Sometimes in T-zone only", points: 3 },
-      { text: "Rarely, but skin feels rough", points: 4 },
-      { text: "Sometimes, with redness and irritation", points: 5 },
+      { text: "Rarely or never", scores: { normal: 2, dry: 1 } },
+      { text: "Frequently, especially in oily areas", scores: { oily: 3 } },
+      { text: "Occasionally, mostly in the T-zone", scores: { combination: 2, oily: 1 } },
+      { text: "Rarely, but skin feels rough or flaky", scores: { dry: 2 } },
+      { text: "Sometimes, often with redness and irritation", scores: { sensitive: 2, oily: 1 } },
     ],
   },
   {
     id: 3,
-    question: "How does your skin react to new products or weather changes?",
+    question: "How does your skin react to new skincare products?",
+    weight: 3, // Key indicator for sensitive skin
     options: [
-      { text: "Adapts well, no issues", points: 1 },
-      { text: "Gets more oily or breaks out", points: 2 },
-      { text: "T-zone gets oilier, cheeks may get dry", points: 3 },
-      { text: "Gets drier, may peel or flake", points: 4 },
-      { text: "Gets red, burns, or itches easily", points: 5 },
+      { text: "Adapts well, no noticeable reaction", scores: { normal: 3 } },
+      { text: "Gets more oily or causes breakouts", scores: { oily: 2 } },
+      { text: "Some areas react differently than others", scores: { combination: 2, sensitive: 1 } },
+      { text: "Feels even drier or starts peeling", scores: { dry: 2, sensitive: 1 } },
+      { text: "Burns, stings, or turns red easily", scores: { sensitive: 3 } },
     ],
   },
   {
     id: 4,
-    question: "How large are your pores?",
+    question: "How would you describe your pores?",
+    weight: 2, // Strong indicator for oily vs dry
     options: [
-      { text: "Small and barely visible", points: 1 },
-      { text: "Large and visible all over", points: 2 },
-      { text: "Large on nose/forehead, small elsewhere", points: 3 },
-      { text: "Very small, skin looks tight", points: 4 },
-      { text: "Varies, often with redness around them", points: 5 },
+      { text: "Small and barely noticeable", scores: { normal: 2 } },
+      { text: "Large and visible across most of my face", scores: { oily: 3 } },
+      { text: "Larger on nose and forehead, smaller on cheeks", scores: { combination: 3 } },
+      { text: "Very small or almost invisible, skin looks tight", scores: { dry: 2, normal: 1 } },
+      { text: "Varies, often with redness around them", scores: { sensitive: 2, combination: 1 } },
     ],
   },
   {
     id: 5,
     question: "How does your skin feel at the end of the day?",
+    weight: 3,
     options: [
-      { text: "Still comfortable and balanced", points: 1 },
-      { text: "Very shiny and oily", points: 2 },
-      { text: "Oily T-zone, rest is fine or dry", points: 3 },
-      { text: "Tight, dry, needs moisture", points: 4 },
-      { text: "Irritated, sensitive, or uncomfortable", points: 5 },
+      { text: "Still comfortable and balanced", scores: { normal: 3 } },
+      { text: "Very shiny and greasy", scores: { oily: 3 } },
+      { text: "Oily T-zone but cheeks feel normal or dry", scores: { combination: 3 } },
+      { text: "Tight, rough, and in need of moisture", scores: { dry: 3 } },
+      { text: "Irritated, uncomfortable, or inflamed", scores: { sensitive: 3 } },
+    ],
+  },
+  {
+    id: 6,
+    question: "How does your skin react to sun exposure?",
+    weight: 2,
+    options: [
+      { text: "Tans gradually with minimal issues", scores: { normal: 2 } },
+      { text: "Gets oilier and may break out", scores: { oily: 2 } },
+      { text: "T-zone gets oilier, cheeks may feel dry", scores: { combination: 2, dry: 1 } },
+      { text: "Burns easily and feels even drier", scores: { dry: 2, sensitive: 1 } },
+      { text: "Burns quickly, gets red, and stays irritated", scores: { sensitive: 3 } },
+    ],
+  },
+  {
+    id: 7,
+    question: "What does your skin look like when you wake up in the morning?",
+    weight: 2,
+    options: [
+      { text: "Fresh and balanced, looks healthy", scores: { normal: 2 } },
+      { text: "Oily and shiny, especially on the forehead", scores: { oily: 2, combination: 1 } },
+      { text: "Oily nose and forehead, cheeks look normal", scores: { combination: 3 } },
+      { text: "Dry, dull, or with visible flakes", scores: { dry: 3 } },
+      { text: "Puffy, red, or with visible irritation", scores: { sensitive: 2 } },
+    ],
+  },
+  {
+    id: 8,
+    question: "How does your skin respond to weather changes (cold, hot, humid)?",
+    weight: 2,
+    options: [
+      { text: "Stays mostly the same regardless of weather", scores: { normal: 3 } },
+      { text: "Gets much oilier in hot or humid weather", scores: { oily: 2, combination: 1 } },
+      { text: "T-zone gets oilier in summer, cheeks dry in winter", scores: { combination: 3 } },
+      { text: "Gets very dry and flaky in cold or dry weather", scores: { dry: 2 } },
+      { text: "Reacts strongly — redness, itching, or flare-ups", scores: { sensitive: 3 } },
+    ],
+  },
+  {
+    id: 9,
+    question: "How would you describe your skin's texture when you touch it?",
+    weight: 2,
+    options: [
+      { text: "Smooth and soft", scores: { normal: 2 } },
+      { text: "Thick and slightly bumpy, especially where oily", scores: { oily: 2 } },
+      { text: "Smooth in some areas, rough or bumpy in others", scores: { combination: 2, dry: 1 } },
+      { text: "Rough, flaky, or papery", scores: { dry: 3 } },
+      { text: "Thin, delicate, and easily irritated", scores: { sensitive: 3, dry: 1 } },
+    ],
+  },
+  {
+    id: 10,
+    question: "When you apply moisturizer, how does your skin react?",
+    weight: 2,
+    options: [
+      { text: "Absorbs well and feels comfortable", scores: { normal: 2 } },
+      { text: "Feels heavy or greasy, may cause breakouts", scores: { oily: 3 } },
+      { text: "Some areas absorb it well, others feel greasy", scores: { combination: 3 } },
+      { text: "Soaks it up quickly and still feels dry", scores: { dry: 3 } },
+      { text: "May sting, tingle, or cause redness", scores: { sensitive: 3 } },
     ],
   },
 ];
@@ -231,11 +303,51 @@ export const skinTypeResults: Record<string, QuizResult> = {
   },
 };
 
-export const getSkinTypeFromScore = (score: number): string => {
-  if (score >= 5 && score <= 7) return "normal";
-  if (score >= 8 && score <= 10) return "oily";
-  if (score >= 11 && score <= 13) return "combination";
-  if (score >= 14 && score <= 17) return "dry";
-  if (score >= 18 && score <= 25) return "sensitive";
-  return "normal";
+// Selected answer stores the scores from each chosen option
+export type SelectedAnswer = SkinScores;
+
+export const getSkinTypeFromAnswers = (answers: SelectedAnswer[]): SkinType => {
+  // Accumulate weighted scores across all answers
+  const totalScores: Record<SkinType, number> = {
+    normal: 0,
+    oily: 0,
+    combination: 0,
+    dry: 0,
+    sensitive: 0,
+  };
+
+  answers.forEach((answerScores) => {
+    (Object.keys(answerScores) as SkinType[]).forEach((type) => {
+      totalScores[type] += answerScores[type] || 0;
+    });
+  });
+
+  // Smart combination detection:
+  // If both oily and dry have significant scores, the user likely has combination skin
+  const oilyScore = totalScores.oily;
+  const dryScore = totalScores.dry;
+  const combinationScore = totalScores.combination;
+  const totalAllScores = Object.values(totalScores).reduce((a, b) => a + b, 0);
+
+  // If oily and dry are both strong (each > 20% of total), boost combination
+  if (totalAllScores > 0) {
+    const oilyPercent = oilyScore / totalAllScores;
+    const dryPercent = dryScore / totalAllScores;
+    if (oilyPercent > 0.2 && dryPercent > 0.2) {
+      totalScores.combination += (oilyScore + dryScore) * 0.4;
+    }
+  }
+
+  // Find the skin type with the highest total score
+  let maxScore = 0;
+  let result: SkinType = 'normal';
+
+  (Object.keys(totalScores) as SkinType[]).forEach((type) => {
+    if (totalScores[type] > maxScore) {
+      maxScore = totalScores[type];
+      result = type;
+    }
+  });
+
+  return result;
 };

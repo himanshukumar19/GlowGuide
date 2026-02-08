@@ -1,73 +1,145 @@
-# Welcome to your Lovable project
+# GlowGuide 🌟
 
-## Project info
+A modern, comprehensive skincare e-commerce platform offering personalized skincare recommendations, shopping experience, and educational content about skin types and care routines.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🚀 Features
 
-## How can I edit this code?
+- **Personalized Skin Quiz** - Interactive quiz to determine your skin type and get tailored product recommendations
+- **E-commerce Shop** - Browse and purchase skincare products with advanced filtering and sorting
+- **Shopping Cart & Wishlist** - Full-featured cart with promo codes, GST calculation, and wishlist management
+- **Skin Type Education** - Detailed information about different skin types and suitable products
+- **Dark/Light Theme** - Seamless theme switching for better user experience
+- **Responsive Design** - Optimized for all devices (mobile, tablet, desktop)
 
-There are several ways of editing your application.
+## 📋 Project Flow
 
-**Use Lovable**
+### User Journey
+```
+1. Home Page → Learn about skincare and GlowGuide
+2. Skin Quiz → Take interactive quiz to determine skin type
+3. Results → Get personalized recommendations
+4. Shop → Browse categorized products with filters
+5. Product Details → View detailed product information
+6. Cart → Review items, apply promo codes, calculate totals
+7. Checkout → Complete purchase with order summary
+8. About Skincare → Educational content about skin types
+```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Application Architecture
+```
+Frontend/
+├── src/
+│   ├── components/        # Reusable UI components
+│   │   ├── layout/       # Navbar, Footer, Layout
+│   │   ├── shop/         # Product cards, filters, sorting
+│   │   └── ui/           # shadcn-ui components
+│   ├── pages/            # Route-based page components
+│   │   ├── Index.tsx             # Landing page
+│   │   ├── SkinQuiz.tsx          # Interactive quiz
+│   │   ├── ShopPage.tsx          # Product catalog
+│   │   ├── ProductDetailPage.tsx # Product details
+│   │   ├── CartPage.tsx          # Shopping cart
+│   │   ├── CheckoutPage.tsx      # Order checkout
+│   │   └── WishlistPage.tsx      # Saved products
+│   ├── context/          # State management
+│   │   ├── CartContext.tsx       # Cart logic & promo codes
+│   │   ├── WishlistContext.tsx   # Wishlist management
+│   │   └── ThemeContext.tsx      # Theme switching
+│   ├── data/             # Static data & configurations
+│   └── types/            # TypeScript type definitions
+```
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Technologies Used
 
-**Use your preferred IDE**
+- **Frontend Framework:** React 18 with TypeScript
+- **Build Tool:** Vite
+- **Styling:** Tailwind CSS
+- **UI Components:** shadcn-ui
+- **Animations:** Framer Motion
+- **Routing:** React Router v6
+- **State Management:** React Context API
+- **Form Handling:** React Hook Form + Zod validation
+- **Icons:** Lucide React
+- **Notifications:** Sonner
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 📦 Getting Started
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or bun
 
-Follow these steps:
+### Installation
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+```bash
+# Clone the repository
+git clone https://github.com/himanshukumar19/GlowGuide.git
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to Frontend directory
+cd GlowGuide/Frontend
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🧪 Available Scripts
 
-**Use GitHub Codespaces**
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+npm run test         # Run tests
+npm run test:watch   # Run tests in watch mode
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📱 Key Features Breakdown
 
-## What technologies are used for this project?
+### Shopping Cart
+- Add/remove products
+- Quantity management
+- Promo code support (GLOW10, SKINCARE15, WELCOME20)
+- GST calculation (18%)
+- Free shipping on orders ₹999+
+- Move items to wishlist
 
-This project is built with:
+### Product Catalog
+- 50+ curated skincare products
+- Category filtering (Korean, Laser, Children, Men/Women, Elderly)
+- Price range filtering
+- Multiple sorting options
+- Real-time search
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Skin Quiz
+- 10 interactive questions
+- Personalized skin type results
+- Tailored product recommendations
+- Educational content about skin types
 
-## How can I deploy this project?
+## 🤝 Contributing
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+Contributions are welcome! Please follow these steps:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## Can I connect a custom domain to my Lovable project?
+## 📄 License
 
-Yes, you can!
+This project is licensed under the MIT License.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 👨‍💻 Author
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**Himanshu Kumar**
+- GitHub: [@himanshukumar19](https://github.com/himanshukumar19)
+
+## 🙏 Acknowledgments
+
+- UI components from [shadcn/ui](https://ui.shadcn.com/)
+- Icons from [Lucide](https://lucide.dev/)
+- Design inspiration from modern e-commerce platforms

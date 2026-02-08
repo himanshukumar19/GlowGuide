@@ -1,6 +1,34 @@
 import { Product, Review } from '@/types/product';
 
-// Product images - using placeholder for now, replace with actual imports
+// Product images - imported from assets
+import plixGuavaCleanser from '@/assets/images/Skincare/Skincare for men and women /Plix Guava Glow Juicy Cleanser.png';
+import mamaEarthVitaminCFaceWash from '@/assets/images/Skincare/Skincare for men and women /MamaEarth Vitamin C Face Wash.png';
+import theOrdinaryToner from '@/assets/images/Skincare/Skincare for men and women /THe Ordinary Tonerprovider.png';
+import dotKeyWatermelonSunscreen from '@/assets/images/Skincare/Skincare for men and women /Dot & Key WaterMelon Cooling Sunscreen.png';
+import theManCompanySerum from '@/assets/images/Skincare/Skincare for men and women /THe Man Company Vitamic C Face Serum .png';
+import cetaphilMoisturisingLotion from '@/assets/images/Skincare/Skincare for men and women /Cetaphil Moisturising Lotion.png';
+
+// Korean Skincare
+import glamvedaKoreanKit from '@/assets/images/Skincare/Korean Skincare/Glamveda Korean 7 Step Winter Skincare Kit for Women.png';
+
+// Children Skincare
+import mamaEarthBabyFaceWash from '@/assets/images/Skincare/Skincare for children/MamaEarth Baby Foaming Face Wash .png';
+import mamaEarthBabyFaceCream from '@/assets/images/Skincare/Skincare for children/MamaEarth Baby Milky Soft Face Cream.png';
+import mamaEarthChildSunscreen from '@/assets/images/Skincare/Skincare for children/Mamaearth child sunscreen .png';
+import motherSparshLipBalm from '@/assets/images/Skincare/Skincare for children/Mother Sparsh Milky Soft Baby Lip Balm.png';
+import cetaphilBabyDiaperCream from '@/assets/images/Skincare/Skincare for children/Cetaphil Baby Diaper Cream .png';
+
+// Senior Skincare
+import simpleFaceWash from '@/assets/images/Skincare/Skincare for old age /Simple face wash.png';
+import cetaphilMoisturisingCream from '@/assets/images/Skincare/Skincare for old age /Cetaphil Moisturising Cream.png';
+import cetaphilOptimalHydration from '@/assets/images/Skincare/Skincare for old age /Cetaphil Optimal Hydration.png';
+import mamaEarthVitaminCSunscreen from '@/assets/images/Skincare/Skincare for old age /MamaEarth Vitamin C Daily Glow Sunscreen.png';
+
+// Laser Hair Removal
+import bioLaser from '@/assets/images/Skincare/Laser Hair Removal/Bio-Laser.png';
+import laserDevice from '@/assets/images/Skincare/Laser Hair Removal/unnamed.png';
+import beforeAfter from '@/assets/images/Skincare/Laser Hair Removal/Before&Afterpng.png';
+
 const placeholderImage = '/placeholder.svg';
 
 export const products: Product[] = [
@@ -16,7 +44,7 @@ export const products: Product[] = [
     discount: 25,
     rating: 4.5,
     reviewCount: 1247,
-    image: placeholderImage,
+    image: plixGuavaCleanser,
     shortDescription: '100% vegan, non-comedogenic, sulphate-free cleanser for glowing skin',
     description: 'The Plix Guava Glow Juicy Cleanser is a 100% vegan, non-comedogenic, and sulphate-free formula designed to brighten and hydrate skin. It features 3% Vitamin C, Pro Vitamin B5, and Guava Extracts to remove impurities, reduce dark spots, soothe redness, and promote a glowing complexion. Gentle enough for daily use, this refreshing cleanser leaves your skin feeling clean, soft, and radiant without stripping natural oils.',
     keyBenefits: [
@@ -53,7 +81,7 @@ export const products: Product[] = [
     discount: 30,
     rating: 4.3,
     reviewCount: 2845,
-    image: placeholderImage,
+    image: mamaEarthVitaminCFaceWash,
     shortDescription: 'Complete brightening kit with Vitamin C, Turmeric & Saffron',
     description: 'Mamaearth offers a comprehensive skin brightening kit using powerful ingredients like Vitamin C, Turmeric, and Saffron. Many users report enhanced radiance and even skin tone. The kit includes cleanser, face wash, serum, and moisturizer formulated to work synergistically for best results.',
     keyBenefits: [
@@ -88,7 +116,7 @@ export const products: Product[] = [
     price: 850,
     rating: 4.7,
     reviewCount: 3921,
-    image: placeholderImage,
+    image: theOrdinaryToner,
     shortDescription: 'Powerful AHA toner for texture, tone, and radiance',
     description: 'The Ordinary Glycolic Acid 7% Exfoliating Toner provides seven key benefits including improved skin texture, increased radiance, and even skin tone. It effectively exfoliates dead skin cells, reduces the appearance of fine lines, and can be used to manage body acne or rough skin on elbows/knees.',
     keyBenefits: [
@@ -125,7 +153,7 @@ export const products: Product[] = [
     discount: 14,
     rating: 4.4,
     reviewCount: 1654,
-    image: placeholderImage,
+    image: dotKeyWatermelonSunscreen,
     shortDescription: 'Broad-spectrum SPF with anti-aging peptides and 48-hour moisture',
     description: 'Dot & Key\'s specialized SPF 30 sunscreen features Pomegranate and Multi-Peptide formula providing broad-spectrum UV protection, 48-hour moisture retention, and anti-aging benefits. It helps reduce fine lines and boost collagen production while protecting from sun damage.',
     keyBenefits: [
@@ -163,7 +191,7 @@ export const products: Product[] = [
     discount: 33,
     rating: 4.6,
     reviewCount: 987,
-    image: placeholderImage,
+    image: theManCompanySerum,
     shortDescription: 'Lightweight, fast-absorbing serum with high-concentration actives',
     description: 'A serum is a lightweight, fast-absorbing skincare product formulated with a high concentration of active ingredients designed to penetrate deeply into the skin to address specific concerns like dehydration, dullness, aging, or acne.',
     keyBenefits: [
@@ -198,7 +226,7 @@ export const products: Product[] = [
     price: 1250,
     rating: 4.8,
     reviewCount: 4532,
-    image: placeholderImage,
+    image: cetaphilMoisturisingLotion,
     shortDescription: 'Dermatologist-developed moisturizer for sensitive skin',
     description: 'Defends against 5 signs of skin sensitivity including weakened skin barrier, irritation, roughness, tightness, and dryness. This fragrance-free, non-comedogenic formula is specially designed for sensitive skin.',
     keyBenefits: [
@@ -237,7 +265,7 @@ export const products: Product[] = [
     discount: 50,
     rating: 4.5,
     reviewCount: 756,
-    image: placeholderImage,
+    image: glamvedaKoreanKit,
     shortDescription: 'Complete K-beauty routine with Rice & Ceramide for glass skin',
     description: 'Glamveda Korean 7 Step Winter Skincare Kit for Women featuring Rice & Ceramide Routine. This comprehensive gift box includes Face Wash, Toner, Moisturizer, Serum, Mask, Sunscreen, and Under Eye Cream. Leaves skin feeling soft, radiant and fresh.',
     keyBenefits: [
@@ -277,7 +305,7 @@ export const products: Product[] = [
     discount: 25,
     rating: 4.7,
     reviewCount: 2134,
-    image: placeholderImage,
+    image: mamaEarthBabyFaceWash,
     shortDescription: 'Tear-free, gentle cleanser with natural ingredients for baby\'s delicate skin',
     description: 'Natural cleanser with Aloe Vera Extract that moisturizes and nourishes baby\'s delicate scalp and skin. Features a tear-free formula that is gentle yet efficient with a 5.6 pH level, best suited for baby skin.',
     keyBenefits: [
@@ -314,7 +342,7 @@ export const products: Product[] = [
     discount: 22,
     rating: 4.6,
     reviewCount: 1876,
-    image: placeholderImage,
+    image: mamaEarthBabyFaceCream,
     shortDescription: 'Dermatologically tested face cream with natural butters and milk protein',
     description: 'Mamaearth Milky Soft Face Cream is dermatologically tested and free from sulfates, parabens, mineral oils, PEGs, and phthalates. Made with natural butters and oils plus milk protein.',
     keyBenefits: [
@@ -351,7 +379,7 @@ export const products: Product[] = [
     discount: 25,
     rating: 4.5,
     reviewCount: 1543,
-    image: placeholderImage,
+    image: mamaEarthChildSunscreen,
     shortDescription: 'Safe mineral sunscreen with Zinc Oxide for delicate baby skin',
     description: 'Mamaearth child sunscreen offers safe, mineral-based (Zinc Oxide) protection against UVA/UVB rays with SPF 50+. Specially designed for delicate skin.',
     keyBenefits: [
@@ -388,7 +416,7 @@ export const products: Product[] = [
     discount: 20,
     rating: 4.4,
     reviewCount: 892,
-    image: placeholderImage,
+    image: motherSparshLipBalm,
     shortDescription: 'Natural, petroleum-free lip balm for baby\'s chapped lips',
     description: 'Mother Sparsh Milky Soft Baby Lip Balm (for ages 2+) is a natural, non-sticky, petroleum-free, and paraben-free formula designed to intensely moisturize and soothe dry, chapped lips.',
     keyBenefits: [
@@ -425,7 +453,7 @@ export const products: Product[] = [
     discount: 33,
     rating: 4.6,
     reviewCount: 654,
-    image: placeholderImage,
+    image: cetaphilBabyDiaperCream,
     shortDescription: 'Complete gentle care kit for newborns and babies',
     description: 'Comprehensive baby skincare kit with all essentials for daily care. Includes gentle cleanser, moisturizer, diaper cream, and massage oil. All products are dermatologist-tested, hypoallergenic, and free from harmful chemicals.',
     keyBenefits: [
@@ -464,7 +492,7 @@ export const products: Product[] = [
     discount: 17,
     rating: 4.6,
     reviewCount: 3245,
-    image: placeholderImage,
+    image: simpleFaceWash,
     shortDescription: 'Gentle yet effective cleansing for mature sensitive skin',
     description: 'Simple face washes offer gentle yet effective cleansing, removing dirt, makeup, and oil without stripping skin. Features hydrating ingredients (Vitamin E, Pro-Vitamin B5) and is free from harsh chemicals.',
     keyBenefits: [
@@ -501,7 +529,7 @@ export const products: Product[] = [
     discount: 32,
     rating: 4.7,
     reviewCount: 1876,
-    image: placeholderImage,
+    image: cetaphilOptimalHydration,
     shortDescription: 'Concentrated retinol, vitamin C, and hyaluronic acid for mature skin',
     description: 'Anti-aging serums designed for mature skin deliver concentrated ingredients like retinol, vitamin C, and hyaluronic acid to boost collagen, reduce wrinkles, and increase hydration.',
     keyBenefits: [
@@ -538,7 +566,7 @@ export const products: Product[] = [
     discount: 18,
     rating: 4.8,
     reviewCount: 5432,
-    image: placeholderImage,
+    image: cetaphilMoisturisingCream,
     shortDescription: '48-hour hydration for mature, dry skin',
     description: 'A single application of Cetaphil Moisturizing Cream can provide long-lasting hydration and prevent moisture loss for up to 48 hours. It significantly improves your skin\'s moisture barrier within three days and restores it in just one week.',
     keyBenefits: [
@@ -576,7 +604,7 @@ export const products: Product[] = [
     discount: 19,
     rating: 4.5,
     reviewCount: 987,
-    image: placeholderImage,
+    image: mamaEarthVitaminCSunscreen,
     shortDescription: 'Brightening sunscreen with anti-aging benefits',
     description: 'Crafted with Vitamin C, this sunscreen brightens skin and shields it from UVA & UVB rays. Infused with the goodness of Turmeric, it heals damaged skin caused by sun exposure and revives your skin\'s natural glow.',
     keyBenefits: [
@@ -615,7 +643,7 @@ export const products: Product[] = [
     discount: 24,
     rating: 4.6,
     reviewCount: 1234,
-    image: placeholderImage,
+    image: bioLaser,
     shortDescription: 'Professional-grade at-home IPL device for long-term hair reduction',
     description: 'Professional-quality IPL (Intense Pulsed Light) device for safe, effective at-home hair removal. FDA-approved technology provides long-lasting hair reduction on face, arms, legs, underarms, and bikini area.',
     keyBenefits: [
@@ -652,7 +680,7 @@ export const products: Product[] = [
     discount: 22,
     rating: 4.4,
     reviewCount: 678,
-    image: placeholderImage,
+    image: laserDevice,
     shortDescription: 'Compact, travel-friendly IPL for on-the-go hair removal',
     description: 'Compact and portable IPL device perfect for travel and touch-ups. Despite its small size, delivers professional results with advanced IPL technology. Cordless design with long battery life.',
     keyBenefits: [
@@ -689,7 +717,7 @@ export const products: Product[] = [
     discount: 23,
     rating: 4.7,
     reviewCount: 456,
-    image: placeholderImage,
+    image: beforeAfter,
     shortDescription: 'IPL hair removal plus skin rejuvenation in one device',
     description: 'Multi-functional device combining IPL hair removal with skin rejuvenation treatments. Features dedicated modes for hair removal, acne treatment, skin tightening, and pigmentation reduction.',
     keyBenefits: [

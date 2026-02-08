@@ -118,7 +118,7 @@ const Footer = () => {
           
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p className="flex items-center gap-1">
-              Made with <Heart className="h-4 w-4 text-primary fill-primary" /> for healthy skin
+              Crafted with <Heart className="h-4 w-4 text-primary fill-primary animate-pulse" /> and skincare science for your glow journey
             </p>
             <p>© {new Date().getFullYear()} GlowGuide. All rights reserved.</p>
           </div>

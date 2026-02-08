@@ -147,18 +147,23 @@ const ShopPage = () => {
               <button
                 onClick={() => setSearchQuery('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2"
+                aria-label="Clear search"
+                title="Clear search"
               >
                 <X className="h-4 w-4 text-muted-foreground" />
               </button>
             )}
           </div>
           <div className="flex items-center gap-4">
+            {/* Mobile Filter Button Only */}
             <ProductFilters
               filters={filters}
               setFilters={setFilters}
               sortOption={sortOption}
               setSortOption={setSortOption}
               productCount={filteredProducts.length}
+              desktopOnly={false}
+              mobileOnly={true}
             />
             <ProductSort value={sortOption} onChange={setSortOption} />
           </div>
@@ -166,13 +171,15 @@ const ShopPage = () => {
 
         {/* Main Content */}
         <div className="flex gap-8">
-          {/* Filters Sidebar (Desktop) */}
+          {/* Desktop Filters Sidebar Only */}
           <ProductFilters
             filters={filters}
             setFilters={setFilters}
             sortOption={sortOption}
             setSortOption={setSortOption}
             productCount={filteredProducts.length}
+            desktopOnly={true}
+            mobileOnly={false}
           />
 
           {/* Product Grid */}

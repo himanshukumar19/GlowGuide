@@ -211,6 +211,7 @@ const ProductDetailPage = () => {
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="p-2 hover:bg-background rounded transition-colors"
+                  aria-label="Decrease quantity"
                 >
                   <Minus className="h-4 w-4" />
                 </button>
@@ -218,6 +219,7 @@ const ProductDetailPage = () => {
                 <button
                   onClick={() => setQuantity(quantity + 1)}
                   className="p-2 hover:bg-background rounded transition-colors"
+                  aria-label="Increase quantity"
                 >
                   <Plus className="h-4 w-4" />
                 </button>

@@ -14,13 +14,15 @@ interface ProductFiltersProps {
   sortOption: SortOption;
   setSortOption: (sort: SortOption) => void;
   productCount: number;
+  mobileOnly?: boolean;
+  desktopOnly?: boolean;
 }
 
 const skinTypes = ['oily', 'dry', 'combination', 'sensitive', 'normal'];
 const categories = Object.entries(categoryLabels);
 const brands = getAllBrands();
 
-const ProductFilters = ({ filters, setFilters, sortOption, setSortOption, productCount }: ProductFiltersProps) => {
+const ProductFilters = ({ filters, setFilters, sortOption, setSortOption, productCount, mobileOnly = false, desktopOnly = false }: ProductFiltersProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
@@ -87,7 +89,14 @@ const ProductFilters = ({ filters, setFilters, sortOption, setSortOption, produc
 
         {/* Price Range */}
         <AccordionItem value="price">
-          <AccordionTrigger className="text-sm font-medium">Price Range</AccordionTrigger>
+          <AccordionTrigger className="text-sm font-medium">
+            Price Range
+            {(filters.priceRange[0] > 0 || filters.priceRange[1] < 30000) && (
+              <span className="ml-2 text-xs text-primary">
+                (₹{filters.priceRange[0].toLocaleString()} - ₹{filters.priceRange[1].toLocaleString()})
+              </span>
+            )}
+          </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-4 px-1">
               <Slider
@@ -95,7 +104,9 @@ const ProductFilters = ({ filters, setFilters, sortOption, setSortOption, produc
                 min={0}
                 max={30000}
                 step={100}
+                minStepsBetweenThumbs={1}
                 onValueChange={(value) => updateFilter('priceRange', value as [number, number])}
+                className="cursor-pointer"
               />
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>₹{filters.priceRange[0].toLocaleString()}</span>
@@ -197,40 +208,44 @@ const ProductFilters = ({ filters, setFilters, sortOption, setSortOption, produc
   return (
     <>
       {/* Desktop Filters */}
-      <div className="hidden lg:block w-64 shrink-0">
-        <div className="sticky top-20 bg-card rounded-xl border border-border p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Filters</h3>
-            <span className="text-sm text-muted-foreground">{productCount} products</span>
+      {!mobileOnly && (
+        <div className="hidden lg:block w-64 shrink-0">
+          <div className="sticky top-20 bg-card rounded-xl border border-border p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Filters</h3>
+              <span className="text-sm text-muted-foreground">{productCount} products</span>
+            </div>
+            <FilterContent />
           </div>
-          <FilterContent />
         </div>
-      </div>
+      )}
 
       {/* Mobile Filter Button */}
-      <div className="lg:hidden">
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
-              {hasActiveFilters && (
-                <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5">
-                  {filters.category.length + filters.skinTypes.length + filters.brands.length}
-                </span>
-              )}
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-80 overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Filters</SheetTitle>
-            </SheetHeader>
-            <div className="mt-4">
-              <FilterContent />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
+      {!desktopOnly && (
+        <div className="lg:hidden">
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+                {hasActiveFilters && (
+                  <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5">
+                    {filters.category.length + filters.skinTypes.length + filters.brands.length}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-80 overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Filters</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4">
+                <FilterContent />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      )}
     </>
   );
 };

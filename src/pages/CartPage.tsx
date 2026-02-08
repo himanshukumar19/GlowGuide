@@ -127,6 +127,7 @@ const CartPage = () => {
                       <button
                         onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                         className="p-1 hover:bg-background rounded transition-colors"
+                        aria-label="Decrease quantity"
                       >
                         <Minus className="h-4 w-4" />
                       </button>
@@ -134,6 +135,7 @@ const CartPage = () => {
                       <button
                         onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                         className="p-1 hover:bg-background rounded transition-colors"
+                        aria-label="Increase quantity"
                       >
                         <Plus className="h-4 w-4" />
                       </button>

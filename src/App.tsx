@@ -9,6 +9,7 @@ import { WishlistProvider } from "@/context/WishlistContext";
 import Index from "./pages/Index";
 import SkinQuiz from "./pages/SkinQuiz";
 import SkinTypesOverview from "./pages/SkinTypesOverview";
+import SkinTypeDetail from "./pages/SkinTypeDetail";
 import AboutSkincare from "./pages/AboutSkincare";
 import ShopPage from "./pages/ShopPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
@@ -32,6 +33,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/quiz" element={<SkinQuiz />} />
                 <Route path="/skin-types" element={<SkinTypesOverview />} />
+                <Route path="/skin-types/:type" element={<SkinTypeDetail />} />
                 <Route path="/about" element={<AboutSkincare />} />
                 <Route path="/shop" element={<ShopPage />} />
                 <Route path="/product/:id" element={<ProductDetailPage />} />

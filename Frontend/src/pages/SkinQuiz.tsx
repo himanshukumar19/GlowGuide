@@ -45,15 +45,26 @@ const SkinQuiz = () => {
 
   const handleOptionSelect = (scores: SelectedAnswer, index: number) => {
     setSelectedOption(index);
+    
+    // Current question ka weight nikalo
+    const questionWeight = quizQuestions[currentQuestion].weight || 1;
+
+    // Har score ko weight se multiply karo
+    const weightedScores: SelectedAnswer = {};
+    (Object.keys(scores) as Array<keyof typeof scores>).forEach((key) => {
+      if (scores[key]) {
+        weightedScores[key] = (scores[key] || 0) * questionWeight;
+      }
+    });
+
     setTimeout(() => {
-      const newAnswers = [...answers, scores];
+      const newAnswers = [...answers, weightedScores]; // Weighted scores save karo
       setAnswers(newAnswers);
 
       if (currentQuestion < quizQuestions.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
         setSelectedOption(null);
       } else {
-        // Calculate result using weighted multi-dimensional scoring
         const resultType = getSkinTypeFromAnswers(newAnswers);
         setResult(skinTypeResults[resultType]);
         setQuizState("result");

@@ -22,7 +22,7 @@ import {
   skinTypeResults,
   getSkinTypeFromAnswers,
   QuizResult,
-  SelectedAnswer,
+  QuizAnswers,
 } from "@/data/quizData";
 
 type QuizState = "intro" | "quiz" | "result";
@@ -30,7 +30,7 @@ type QuizState = "intro" | "quiz" | "result";
 const SkinQuiz = () => {
   const [quizState, setQuizState] = useState<QuizState>("intro");
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<SelectedAnswer[]>([]);
+  const [answers, setAnswers] = useState<QuizAnswers>({});
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [result, setResult] = useState<QuizResult | null>(null);
 
@@ -39,32 +39,24 @@ const SkinQuiz = () => {
   const handleStart = () => {
     setQuizState("quiz");
     setCurrentQuestion(0);
-    setAnswers([]);
+    setAnswers({});
     setSelectedOption(null);
   };
 
-  const handleOptionSelect = (scores: SelectedAnswer, index: number) => {
+  const handleOptionSelect = (questionId: string, value: number, index: number) => {
     setSelectedOption(index);
-    
-    // Current question ka weight nikalo
-    const questionWeight = quizQuestions[currentQuestion].weight || 1;
 
-    // Har score ko weight se multiply karo
-    const weightedScores: SelectedAnswer = {};
-    (Object.keys(scores) as Array<keyof typeof scores>).forEach((key) => {
-      if (scores[key]) {
-        weightedScores[key] = (scores[key] || 0) * questionWeight;
-      }
-    });
+    // Save the numeric value keyed by feature name (e.g. { sebum_level: 80 })
+    const newAnswers: QuizAnswers = { ...answers, [questionId]: value };
 
     setTimeout(() => {
-      const newAnswers = [...answers, weightedScores]; // Weighted scores save karo
       setAnswers(newAnswers);
 
       if (currentQuestion < quizQuestions.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
         setSelectedOption(null);
       } else {
+        // Local prediction — replaced with ML backend call in Phase 1 backend
         const resultType = getSkinTypeFromAnswers(newAnswers);
         setResult(skinTypeResults[resultType]);
         setQuizState("result");
@@ -74,8 +66,12 @@ const SkinQuiz = () => {
 
   const handlePrevious = () => {
     if (currentQuestion > 0) {
+      // Remove the previous question's answer from the dict
+      const prevQuestionId = quizQuestions[currentQuestion - 1].id;
+      const newAnswers = { ...answers };
+      delete newAnswers[prevQuestionId];
+      setAnswers(newAnswers);
       setCurrentQuestion(currentQuestion - 1);
-      setAnswers(answers.slice(0, -1));
       setSelectedOption(null);
     }
   };
@@ -83,7 +79,7 @@ const SkinQuiz = () => {
   const handleRestart = () => {
     setQuizState("intro");
     setCurrentQuestion(0);
-    setAnswers([]);
+    setAnswers({});
     setSelectedOption(null);
     setResult(null);
   };
@@ -114,7 +110,7 @@ const SkinQuiz = () => {
                     Discover Your Skin Type
                   </h1>
                   <p className="text-muted-foreground text-lg mb-6">
-                    Answer 5 quick questions to identify your skin type and get 
+                    Answer 6 quick questions to identify your skin type and get
                     personalized routine recommendations.
                   </p>
                 </div>
@@ -132,7 +128,7 @@ const SkinQuiz = () => {
                         <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
                           <span className="text-2xl">❓</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">5 Questions</p>
+                        <p className="text-sm text-muted-foreground">6 Questions</p>
                       </div>
                       <div>
                         <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
@@ -183,15 +179,38 @@ const SkinQuiz = () => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                       >
-                        <h2 className="font-heading text-xl md:text-2xl font-semibold mb-8 text-center">
+                        {/* Question header with emoji and importance badge */}
+                        <div className="flex items-center justify-center gap-2 mb-3">
+                          <span className="text-3xl">{quizQuestions[currentQuestion].emoji}</span>
+                          {quizQuestions[currentQuestion].importance === 'critical' && (
+                            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary">
+                              ⭐ Key Question
+                            </span>
+                          )}
+                        </div>
+
+                        <h2 className="font-heading text-xl md:text-2xl font-semibold mb-3 text-center">
                           {quizQuestions[currentQuestion].question}
                         </h2>
+
+                        {/* Optional help text for critical questions */}
+                        {quizQuestions[currentQuestion].helpText && (
+                          <p className="text-sm text-muted-foreground text-center mb-6">
+                            {quizQuestions[currentQuestion].helpText}
+                          </p>
+                        )}
+
+                        {!quizQuestions[currentQuestion].helpText && <div className="mb-6" />}
 
                         <div className="space-y-3">
                           {quizQuestions[currentQuestion].options.map((option, index) => (
                             <motion.button
                               key={index}
-                              onClick={() => handleOptionSelect(option.scores, index)}
+                              onClick={() => handleOptionSelect(
+                                quizQuestions[currentQuestion].id,
+                                option.value,
+                                index
+                              )}
                               className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
                                 selectedOption === index
                                   ? "border-primary bg-primary/10"
@@ -202,7 +221,7 @@ const SkinQuiz = () => {
                             >
                               <div className="flex items-center gap-3">
                                 <div
-                                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                  className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
                                     selectedOption === index
                                       ? "border-primary bg-primary"
                                       : "border-muted-foreground"
@@ -212,7 +231,10 @@ const SkinQuiz = () => {
                                     <CheckCircle className="h-4 w-4 text-primary-foreground" />
                                   )}
                                 </div>
-                                <span className="text-foreground">{option.text}</span>
+                                <div>
+                                  <span className="text-foreground font-medium">{option.label}</span>
+                                  <p className="text-xs text-muted-foreground mt-0.5">{option.sublabel}</p>
+                                </div>
                               </div>
                             </motion.button>
                           ))}

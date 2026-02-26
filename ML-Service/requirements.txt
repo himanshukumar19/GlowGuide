@@ -1,0 +1,6 @@
+fastapi
+unicorn[standard]
+scikit-learn
+numpy
+joblib
+pandas

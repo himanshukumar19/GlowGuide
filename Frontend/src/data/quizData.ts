@@ -1,18 +1,24 @@
 export type SkinType = 'normal' | 'oily' | 'combination' | 'dry' | 'sensitive';
 
-// Each answer contributes weighted scores to multiple skin types
-// This is how real dermatological assessments work
-type SkinScores = Partial<Record<SkinType, number>>;
+// Each option maps directly to a numeric value matching the CSV feature range
+// These values are sent to the ML backend as a feature vector
+export interface QuizOption {
+  label: string;     // Main option text shown to user
+  sublabel: string;  // Descriptive hint below the label
+  value: number;     // Numeric value matching CSV column range (sent to ML model)
+}
 
 export interface QuizQuestion {
-  id: number;
+  id: string;                                   // Matches the CSV feature column name
   question: string;
-  weight: number; // How important this question is (1-3)
-  options: {
-    text: string;
-    scores: SkinScores; // Weighted contribution to each skin type
-  }[];
+  emoji: string;                                // Visual icon for the question
+  importance: 'critical' | 'high' | 'medium';  // Controls UI badge display
+  helpText?: string;                            // Optional tip shown below the question
+  options: QuizOption[];
 }
+
+// User answers stored as feature_name → numeric value (ready to send to ML service)
+export type QuizAnswers = Record<string, number>;
 
 export interface QuizResult {
   skinType: string;
@@ -23,125 +29,105 @@ export interface QuizResult {
   nightRoutine: string[];
 }
 
+// 6 questions ordered by ML feature importance
+// id matches the CSV column name — used as the feature key sent to the ML backend
 export const quizQuestions: QuizQuestion[] = [
   {
-    id: 1,
-    question: "How does your skin feel a few hours after washing your face?",
-    weight: 3, // Very important diagnostic question
+    id: 'sebum_level',
+    question: 'How oily is your skin throughout the day?',
+    emoji: '✨',
+    importance: 'critical',
+    helpText: 'This is our most important question — take a moment to think!',
     options: [
-      { text: "Comfortable, neither dry nor oily", scores: { normal: 3 } },
-      { text: "Shiny and greasy all over", scores: { oily: 3 } },
-      { text: "Oily in the T-zone, normal or dry on cheeks", scores: { combination: 3, oily: 1, dry: 1 } },
-      { text: "Tight, dry, or flaky", scores: { dry: 3 } },
-      { text: "Red, itchy, or irritated", scores: { sensitive: 3, dry: 1 } },
+      { label: 'Extremely Dry',   sublabel: 'Feels tight, flaky and uncomfortable all day', value: 10 },
+      { label: 'Very Dry',        sublabel: 'Often tight, always needs moisture',            value: 25 },
+      { label: 'Slightly Dry',    sublabel: 'Occasionally tight in certain areas',           value: 40 },
+      { label: 'Balanced',        sublabel: 'Comfortable, neither oily nor dry',             value: 50 },
+      { label: 'Slightly Oily',   sublabel: 'T-zone gets shiny by afternoon',                value: 65 },
+      { label: 'Very Oily',       sublabel: 'Face is shiny within 2–3 hours of washing',    value: 80 },
+      { label: 'Extremely Oily',  sublabel: 'Constantly greasy with visible oil shine',     value: 95 },
     ],
   },
   {
-    id: 2,
-    question: "How often do you experience breakouts or acne?",
-    weight: 2,
+    id: 'hydration_level',
+    question: 'How hydrated does your skin feel?',
+    emoji: '💧',
+    importance: 'critical',
+    helpText: 'Oil ≠ moisture! Oily skin can still be dehydrated.',
     options: [
-      { text: "Rarely or never", scores: { normal: 2, dry: 1 } },
-      { text: "Frequently, especially in oily areas", scores: { oily: 3 } },
-      { text: "Occasionally, mostly in the T-zone", scores: { combination: 2, oily: 1 } },
-      { text: "Rarely, but skin feels rough or flaky", scores: { dry: 2 } },
-      { text: "Sometimes, often with redness and irritation", scores: { sensitive: 2, oily: 1 } },
+      { label: 'Severely Dehydrated', sublabel: 'Cracked, peeling, very uncomfortable',       value: 10 },
+      { label: 'Very Dehydrated',     sublabel: 'Tight, flaky, rough texture',                value: 23 },
+      { label: 'Dehydrated',          sublabel: 'Tight after washing, needs constant moisture',value: 36 },
+      { label: 'Normal',              sublabel: 'Generally comfortable throughout the day',   value: 50 },
+      { label: 'Well Hydrated',       sublabel: 'Soft, plump and comfortable',                value: 64 },
+      { label: 'Very Hydrated',       sublabel: 'Always feels moisturized and supple',        value: 77 },
+      { label: 'Extremely Hydrated',  sublabel: 'Perfectly plump, never feels dry',           value: 90 },
     ],
   },
   {
-    id: 3,
-    question: "How does your skin react to new skincare products?",
-    weight: 3, // Key indicator for sensitive skin
+    id: 'acne_frequency',
+    question: 'How often do you experience breakouts?',
+    emoji: '🔬',
+    importance: 'high',
     options: [
-      { text: "Adapts well, no noticeable reaction", scores: { normal: 3 } },
-      { text: "Gets more oily or causes breakouts", scores: { oily: 2 } },
-      { text: "Some areas react differently than others", scores: { combination: 2, sensitive: 1 } },
-      { text: "Feels even drier or starts peeling", scores: { dry: 2, sensitive: 1 } },
-      { text: "Burns, stings, or turns red easily", scores: { sensitive: 3 } },
+      { label: 'Never',      sublabel: 'Clear skin, virtually no breakouts',      value: 10 },
+      { label: 'Rarely',     sublabel: '1–2 times per year',                      value: 30 },
+      { label: 'Sometimes',  sublabel: 'Monthly or around hormonal cycle',        value: 50 },
+      { label: 'Often',      sublabel: 'Weekly breakouts',                        value: 70 },
+      { label: 'Constantly', sublabel: 'Always have active breakouts',            value: 90 },
     ],
   },
   {
-    id: 4,
-    question: "How would you describe your pores?",
-    weight: 2, // Strong indicator for oily vs dry
+    id: 'pore_size',
+    question: 'How visible are your pores?',
+    emoji: '🔍',
+    importance: 'high',
     options: [
-      { text: "Small and barely noticeable", scores: { normal: 2 } },
-      { text: "Large and visible across most of my face", scores: { oily: 3 } },
-      { text: "Larger on nose and forehead, smaller on cheeks", scores: { combination: 3 } },
-      { text: "Very small or almost invisible, skin looks tight", scores: { dry: 2, normal: 1 } },
-      { text: "Varies, often with redness around them", scores: { sensitive: 2, combination: 1 } },
+      { label: 'Invisible',    sublabel: 'Cannot see them at all',                value: 15 },
+      { label: 'Very Small',   sublabel: 'Barely visible even up close',          value: 32 },
+      { label: 'Noticeable',   sublabel: 'Visible mainly on the T-zone',          value: 50 },
+      { label: 'Large',        sublabel: 'Clearly visible across the face',       value: 68 },
+      { label: 'Very Large',   sublabel: 'Prominent, enlarged pores everywhere',  value: 85 },
     ],
   },
   {
-    id: 5,
-    question: "How does your skin feel at the end of the day?",
-    weight: 3,
+    id: 'sensitivity_score',
+    question: 'How does your skin react to new products?',
+    emoji: '🌡️',
+    importance: 'medium',
     options: [
-      { text: "Still comfortable and balanced", scores: { normal: 3 } },
-      { text: "Very shiny and greasy", scores: { oily: 3 } },
-      { text: "Oily T-zone but cheeks feel normal or dry", scores: { combination: 3 } },
-      { text: "Tight, rough, and in need of moisture", scores: { dry: 3 } },
-      { text: "Irritated, uncomfortable, or inflamed", scores: { sensitive: 3 } },
+      { label: 'Not Sensitive',        sublabel: 'Rarely reacts, tolerates almost everything', value: 15 },
+      { label: 'Slightly Sensitive',   sublabel: 'Occasional mild reactions',                  value: 32 },
+      { label: 'Sensitive',            sublabel: 'Reacts to certain products',                 value: 50 },
+      { label: 'Very Sensitive',       sublabel: 'Frequent redness and irritation',            value: 68 },
+      { label: 'Extremely Sensitive',  sublabel: 'Reacts to almost everything',                value: 85 },
     ],
   },
   {
-    id: 6,
-    question: "How does your skin react to sun exposure?",
-    weight: 2,
+    id: 'roughness_score',
+    question: 'How would you describe your skin texture?',
+    emoji: '✋',
+    importance: 'medium',
     options: [
-      { text: "Tans gradually with minimal issues", scores: { normal: 2 } },
-      { text: "Gets oilier and may break out", scores: { oily: 2 } },
-      { text: "T-zone gets oilier, cheeks may feel dry", scores: { combination: 2, dry: 1 } },
-      { text: "Burns easily and feels even drier", scores: { dry: 2, sensitive: 1 } },
-      { text: "Burns quickly, gets red, and stays irritated", scores: { sensitive: 3 } },
+      { label: 'Very Rough',  sublabel: 'Bumpy, uneven, lots of visible texture', value: 20 },
+      { label: 'Rough',       sublabel: 'Some bumps and unevenness',              value: 35 },
+      { label: 'Normal',      sublabel: 'Generally smooth with minor texture',    value: 50 },
+      { label: 'Smooth',      sublabel: 'Soft and even to the touch',             value: 70 },
+      { label: 'Very Smooth', sublabel: 'Silky, almost flawless texture',         value: 90 },
     ],
   },
   {
-    id: 7,
-    question: "What does your skin look like when you wake up in the morning?",
-    weight: 2,
+    id: 'tightness_score',
+    question: 'How tight or comfortable does your skin feel after washing?',
+    emoji: '🫧',
+    importance: 'medium',
+    helpText: 'Judge right after washing — before applying any product.',
     options: [
-      { text: "Fresh and balanced, looks healthy", scores: { normal: 2 } },
-      { text: "Oily and shiny, especially on the forehead", scores: { oily: 2, combination: 1 } },
-      { text: "Oily nose and forehead, cheeks look normal", scores: { combination: 3 } },
-      { text: "Dry, dull, or with visible flakes", scores: { dry: 3 } },
-      { text: "Puffy, red, or with visible irritation", scores: { sensitive: 2 } },
-    ],
-  },
-  {
-    id: 8,
-    question: "How does your skin respond to weather changes (cold, hot, humid)?",
-    weight: 2,
-    options: [
-      { text: "Stays mostly the same regardless of weather", scores: { normal: 3 } },
-      { text: "Gets much oilier in hot or humid weather", scores: { oily: 2, combination: 1 } },
-      { text: "T-zone gets oilier in summer, cheeks dry in winter", scores: { combination: 3 } },
-      { text: "Gets very dry and flaky in cold or dry weather", scores: { dry: 2 } },
-      { text: "Reacts strongly — redness, itching, or flare-ups", scores: { sensitive: 3 } },
-    ],
-  },
-  {
-    id: 9,
-    question: "How would you describe your skin's texture when you touch it?",
-    weight: 2,
-    options: [
-      { text: "Smooth and soft", scores: { normal: 2 } },
-      { text: "Thick and slightly bumpy, especially where oily", scores: { oily: 2 } },
-      { text: "Smooth in some areas, rough or bumpy in others", scores: { combination: 2, dry: 1 } },
-      { text: "Rough, flaky, or papery", scores: { dry: 3 } },
-      { text: "Thin, delicate, and easily irritated", scores: { sensitive: 3, dry: 1 } },
-    ],
-  },
-  {
-    id: 10,
-    question: "When you apply moisturizer, how does your skin react?",
-    weight: 2,
-    options: [
-      { text: "Absorbs well and feels comfortable", scores: { normal: 2 } },
-      { text: "Feels heavy or greasy, may cause breakouts", scores: { oily: 3 } },
-      { text: "Some areas absorb it well, others feel greasy", scores: { combination: 3 } },
-      { text: "Soaks it up quickly and still feels dry", scores: { dry: 3 } },
-      { text: "May sting, tingle, or cause redness", scores: { sensitive: 3 } },
+      { label: 'Extremely Tight',  sublabel: 'Feels like it could crack, very uncomfortable', value: 90 },
+      { label: 'Very Tight',       sublabel: 'Noticeably pulls and feels stiff',              value: 70 },
+      { label: 'Slightly Tight',   sublabel: 'A little tight but bearable',                  value: 50 },
+      { label: 'Comfortable',      sublabel: 'Feels normal and relaxed',                     value: 30 },
+      { label: 'No Tightness',     sublabel: 'No tightness at all, feels soft immediately',  value: 10 },
     ],
   },
 ];
@@ -303,51 +289,57 @@ export const skinTypeResults: Record<string, QuizResult> = {
   },
 };
 
-// Selected answer stores the scores from each chosen option
-export type SelectedAnswer = SkinScores;
+// Local skin type prediction from feature values
+// This runs in the browser until the ML backend is connected (Phase 1 backend)
+// Once backend is ready, the frontend will POST these values to /api/skin-analysis instead
+export const getSkinTypeFromAnswers = (answers: QuizAnswers): SkinType => {
+  const sebum       = answers['sebum_level']      ?? 50;
+  const hydration   = answers['hydration_level']  ?? 50;
+  const acne        = answers['acne_frequency']    ?? 50;
+  const pore        = answers['pore_size']         ?? 50;
+  const sensitivity = answers['sensitivity_score'] ?? 50;
+  const roughness   = answers['roughness_score']   ?? 50;
+  const tightness   = answers['tightness_score']   ?? 30;
 
-export const getSkinTypeFromAnswers = (answers: SelectedAnswer[]): SkinType => {
-  // Accumulate weighted scores across all answers
-  const totalScores: Record<SkinType, number> = {
-    normal: 0,
-    oily: 0,
-    combination: 0,
-    dry: 0,
-    sensitive: 0,
-  };
+  // Sensitive skin — highest priority check
+  if (sensitivity >= 60) return 'sensitive';
 
-  answers.forEach((answerScores) => {
-    (Object.keys(answerScores) as SkinType[]).forEach((type) => {
-      totalScores[type] += answerScores[type] || 0;
-    });
-  });
+  // Build oily and dry scores from feature values
+  let oilyScore = 0;
+  let dryScore  = 0;
 
-  // Smart combination detection:
-  // If both oily and dry have significant scores, the user likely has combination skin
-  const oilyScore = totalScores.oily;
-  const dryScore = totalScores.dry;
-  const combinationScore = totalScores.combination;
-  const totalAllScores = Object.values(totalScores).reduce((a, b) => a + b, 0);
+  // sebum_level: high = oily, low = dry
+  if (sebum >= 65) oilyScore += 3;
+  else if (sebum >= 55) oilyScore += 1.5;
+  else if (sebum <= 30) dryScore += 3;
+  else if (sebum <= 45) dryScore += 1.5;
 
-  // If oily and dry are both strong (each > 20% of total), boost combination
-  if (totalAllScores > 0) {
-    const oilyPercent = oilyScore / totalAllScores;
-    const dryPercent = dryScore / totalAllScores;
-    if (oilyPercent > 0.2 && dryPercent > 0.2) {
-      totalScores.combination += (oilyScore + dryScore) * 0.4;
-    }
-  }
+  // hydration_level: low = dry signal
+  if (hydration <= 36) dryScore += 3;
+  else if (hydration <= 45) dryScore += 1.5;
 
-  // Find the skin type with the highest total score
-  let maxScore = 0;
-  let result: SkinType = 'normal';
+  // acne_frequency: high = oily signal
+  if (acne >= 70) oilyScore += 2;
+  else if (acne >= 55) oilyScore += 1;
 
-  (Object.keys(totalScores) as SkinType[]).forEach((type) => {
-    if (totalScores[type] > maxScore) {
-      maxScore = totalScores[type];
-      result = type;
-    }
-  });
+  // pore_size: large = oily signal
+  if (pore >= 68) oilyScore += 2;
+  else if (pore >= 55) oilyScore += 1;
 
-  return result;
+  // roughness_score: low (rough) = dry signal
+  if (roughness <= 35) dryScore += 2;
+  else if (roughness <= 45) dryScore += 1;
+
+  // tightness_score: high tightness = strong dry signal
+  if (tightness >= 70) dryScore += 3;
+  else if (tightness >= 50) dryScore += 1.5;
+
+  // Combination: both oily and dry signals are strong
+  if (oilyScore >= 2.5 && dryScore >= 2.5) return 'combination';
+  if (oilyScore >= 3) return 'oily';
+  if (dryScore >= 3) return 'dry';
+  if (oilyScore > dryScore) return 'oily';
+  if (dryScore > oilyScore) return 'dry';
+
+  return 'normal';
 };

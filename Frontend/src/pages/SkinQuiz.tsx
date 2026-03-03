@@ -33,6 +33,11 @@ const SkinQuiz = () => {
   const [answers, setAnswers] = useState<QuizAnswers>({});
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [result, setResult] = useState<QuizResult | null>(null);
+  // Optional free text — user can describe specific skin concerns in their own words
+  // Stored separately and will be sent to the ML backend in Phase 3 for richer analysis
+  const [freeText, setFreeText] = useState<string>("");
+  // Controls visibility of the free text textarea — collapsed by default so it's clearly optional
+  const [showFreeText, setShowFreeText] = useState<boolean>(false);
 
   const progress = ((currentQuestion + 1) / quizQuestions.length) * 100;
 
@@ -53,14 +58,12 @@ const SkinQuiz = () => {
       setAnswers(newAnswers);
 
       if (currentQuestion < quizQuestions.length - 1) {
+        // Not the last question — advance normally
         setCurrentQuestion(currentQuestion + 1);
         setSelectedOption(null);
-      } else {
-        // Local prediction — replaced with ML backend call in Phase 1 backend
-        const resultType = getSkinTypeFromAnswers(newAnswers);
-        setResult(skinTypeResults[resultType]);
-        setQuizState("result");
       }
+      // On the last question: stay on the same screen, show textarea + finish button
+      // handleFinish() is called when user clicks "See My Results"
     }, 400);
   };
 
@@ -82,6 +85,19 @@ const SkinQuiz = () => {
     setAnswers({});
     setSelectedOption(null);
     setResult(null);
+    setFreeText("");
+    setShowFreeText(false);
+  };
+
+  const isLastQuestion = currentQuestion === quizQuestions.length - 1;
+
+  // Called when user clicks "See My Results" on the last question
+  const handleFinish = (finalAnswers: QuizAnswers) => {
+    // Local prediction — will be replaced with backend call in Phase 1 backend
+    // freeText will also be sent to backend for NLP-based concern detection
+    const resultType = getSkinTypeFromAnswers(finalAnswers);
+    setResult(skinTypeResults[resultType]);
+    setQuizState("result");
   };
 
   return (
@@ -204,6 +220,7 @@ const SkinQuiz = () => {
 
                         <div className="space-y-3">
                           {quizQuestions[currentQuestion].options.map((option, index) => (
+
                             <motion.button
                               key={index}
                               onClick={() => handleOptionSelect(
@@ -239,6 +256,57 @@ const SkinQuiz = () => {
                             </motion.button>
                           ))}
                         </div>
+
+                        {/* Last question: show submit button + optional notes toggle */}
+                        {isLastQuestion && selectedOption !== null && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="mt-6 pt-5 border-t border-border space-y-3"
+                          >
+                            {/* Primary action — always visible, no writing required */}
+                            <Button
+                              className="w-full gradient-primary border-0 text-primary-foreground shadow-soft"
+                              onClick={() => handleFinish(answers)}
+                              size="lg"
+                            >
+                              See My Results
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+
+                            {/* Optional notes toggle — collapsed by default */}
+                            <button
+                              type="button"
+                              onClick={() => setShowFreeText(!showFreeText)}
+                              className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 py-1 transition-colors"
+                            >
+                              <span>{showFreeText ? "▲" : "▼"}</span>
+                              {showFreeText ? "Hide" : "Add skin notes (optional)"}
+                            </button>
+
+                            {/* Textarea — only visible if user explicitly opens it */}
+                            {showFreeText && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                              >
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Describe specific concerns, e.g. "dark spots", "flaky in winter", "oily after gym"
+                                </p>
+                                <textarea
+                                  value={freeText}
+                                  onChange={(e) => setFreeText(e.target.value.slice(0, 200))}
+                                  placeholder="Tell us more about your skin..."
+                                  rows={3}
+                                  className="w-full rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                                />
+                                <p className="text-xs text-muted-foreground text-right mt-1">{freeText.length}/200</p>
+                              </motion.div>
+                            )}
+                          </motion.div>
+                        )}
                       </motion.div>
                     </AnimatePresence>
                   </CardContent>

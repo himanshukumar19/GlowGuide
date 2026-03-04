@@ -14,7 +14,7 @@ app.use(cors({ origin: process.env.FRONTEND_URL || "*"}));
 app.use(express.json());
 
 app.get("/api/health", (_req, res)=>{
-    res.json({ status: "ok", service: "GlowGuide Backend" });
+    return res.json({ status: "ok", service: "GlowGuide Backend" });
 })
 
 app.post("/api/skin-analysis", async (req, res) => {

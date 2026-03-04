@@ -20,7 +20,6 @@ import Layout from "@/components/layout/Layout";
 import {
   quizQuestions,
   skinTypeResults,
-  getSkinTypeFromAnswers,
   QuizResult,
   QuizAnswers,
 } from "@/data/quizData";
@@ -38,6 +37,7 @@ const SkinQuiz = () => {
   const [freeText, setFreeText] = useState<string>("");
   // Controls visibility of the free text textarea — collapsed by default so it's clearly optional
   const [showFreeText, setShowFreeText] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const progress = ((currentQuestion + 1) / quizQuestions.length) * 100;
 
@@ -92,12 +92,30 @@ const SkinQuiz = () => {
   const isLastQuestion = currentQuestion === quizQuestions.length - 1;
 
   // Called when user clicks "See My Results" on the last question
-  const handleFinish = (finalAnswers: QuizAnswers) => {
-    // Local prediction — will be replaced with backend call in Phase 1 backend
-    // freeText will also be sent to backend for NLP-based concern detection
-    const resultType = getSkinTypeFromAnswers(finalAnswers);
-    setResult(skinTypeResults[resultType]);
-    setQuizState("result");
+  const handleFinish = async (finalAnswers: QuizAnswers) => {
+    setLoading(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const response = await fetch(`${API_URL}/api/skin-analysis`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          answers: finalAnswers,
+          skinNotes: freeText || null,
+        }),
+      });
+      const data = await response.json();
+      const skinTypeKey = data.skin_type.toLowerCase();
+      setResult(skinTypeResults[skinTypeKey]);
+      setQuizState("result");
+    }catch (error){
+      console.error("API error:", error);
+      alert("Sorry, we couldn't analyze your skin type at the moment. Please try again later.");        
+    }finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -144,7 +162,7 @@ const SkinQuiz = () => {
                         <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
                           <span className="text-2xl">❓</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">6 Questions</p>
+                        <p className="text-sm text-muted-foreground">7 Questions</p>
                       </div>
                       <div>
                         <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
@@ -269,9 +287,10 @@ const SkinQuiz = () => {
                             <Button
                               className="w-full gradient-primary border-0 text-primary-foreground shadow-soft"
                               onClick={() => handleFinish(answers)}
+                              disabled={loading}
                               size="lg"
                             >
-                              See My Results
+                              {loading ? "Analyzing..." : "See My Results"}
                               <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
 

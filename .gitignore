@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+*.js.map
+
+# Environment variables (NEVER commit these)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+ML-Service/model/
+*.pkl
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/settings.json
+.idea/

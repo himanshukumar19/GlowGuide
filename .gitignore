@@ -11,7 +11,7 @@ build/
 # Environment variables (NEVER commit these)
 .env
 .env.local
-.env.production
+# .env.production is intentionally tracked — contains only public VITE_ URLs (no secrets)
 .env.*.local
 
 # Python

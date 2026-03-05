@@ -50,8 +50,8 @@ app.get("/api/wake", (_req, res) => {
 })
 
 app.post("/api/skin-analysis", async (req, res) => {
+  const { answers, skinNotes } = req.body;
   try {
-    const { answers, skinNotes } = req.body;
 
     const mlPayload = {
       quiz_answers: {

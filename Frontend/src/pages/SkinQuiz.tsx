@@ -107,8 +107,9 @@ const SkinQuiz = () => {
     setLoading(true);
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-    // Retry once — the ML service may still be cold-starting
+    // Retry only on network errors / timeouts — never on 4xx (retrying a 429 makes it worse)
     for (let attempt = 1; attempt <= 2; attempt++) {
+      let httpStatus: number | null = null;
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 55_000); // 55 s
@@ -120,6 +121,7 @@ const SkinQuiz = () => {
           signal: controller.signal,
         });
         clearTimeout(timeoutId);
+        httpStatus = response.status;
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
@@ -128,14 +130,25 @@ const SkinQuiz = () => {
         setResult(skinTypeResults[skinTypeKey]);
         setQuizState("result");
         setLoading(false);
-        return; // success — exit
+        return; // success
       } catch (error: any) {
         console.error(`API attempt ${attempt} failed:`, error?.message);
+
+        // 4xx errors are definitive — retrying won't help
+        if (httpStatus !== null && httpStatus >= 400 && httpStatus < 500) {
+          if (httpStatus === 429) {
+            alert("Our analysis service is getting a lot of requests right now. Please wait 30 seconds and try again.");
+          } else {
+            alert("Something went wrong with your request. Please refresh the page and try again.");
+          }
+          break;
+        }
+
+        // Network error or 5xx — retry once after a short wait
         if (attempt < 2) {
-          // Wait 8 s before retrying (gives ML service time to finish cold-start)
           await new Promise((r) => setTimeout(r, 8_000));
         } else {
-          alert("Sorry, we couldn't analyze your skin type at the moment. Please try again in a few seconds.");
+          alert("Sorry, we couldn't reach the analysis service. Please try again in a few seconds.");
         }
       }
     }

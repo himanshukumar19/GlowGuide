@@ -17,14 +17,11 @@ app.get("/api/health", (_req, res)=>{
     return res.json({ status: "ok", service: "GlowGuide Backend" });
 })
 
-// Wake-up endpoint — frontend calls this on quiz-page mount to warm the ML service
-app.get("/api/wake", async (_req, res) => {
-  try {
-    await axios.get(`${ML_SERVICE_URL}/health`, { timeout: 55_000 });
-    return res.json({ status: "ready" });
-  } catch {
-    return res.json({ status: "warming" }); // Not a hard error — just heating up
-  }
+// Wake-up endpoint — frontend calls this on quiz-page mount.
+// We only confirm the backend is alive here; we do NOT ping the ML service
+// because that wastes the ML service's free-tier rate-limit quota.
+app.get("/api/wake", (_req, res) => {
+  return res.json({ status: "ready" });
 })
 
 app.post("/api/skin-analysis", async (req, res) => {

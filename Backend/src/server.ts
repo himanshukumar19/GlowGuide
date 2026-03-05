@@ -8,6 +8,31 @@ dotenv.config();
 const PORT = process.env.PORT || 3001;
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "http://localhost:8000";
 
+// ── Rule-based fallback classifier ───────────────────────────────────────────
+// Uses the same 7 quiz features as the ML model. Runs instantly when the ML
+// service is unavailable (cold start, rate-limit, timeout, etc.).
+// Feature ranges come from quizData.ts option values (0-100 scale).
+function fallbackClassify(answers: Record<string, number>): string {
+  const s  = answers.sebum_level      ?? 50;  // 10-95  (higher = oilier)
+  const h  = answers.hydration_level  ?? 50;  // 10-90  (higher = more hydrated)
+  const sn = answers.sensitivity_score ?? 30; // 15-85  (higher = more sensitive)
+  const t  = answers.tightness_score  ?? 30;  // 10-90  (higher = tighter/drier)
+
+  // Priority 1 — strong sensitivity overrides other signals
+  if (sn >= 68) return "sensitive";
+
+  // Priority 2 — clearly oily (high sebum, well-hydrated, no tightness)
+  if (s >= 65 && h >= 45 && t <= 30) return "oily";
+
+  // Priority 3 — oily T-zone with some dryness = combination
+  if (s >= 55) return "combination";
+
+  // Priority 4 — low hydration or high tightness = dry
+  if (h <= 36 || t >= 70) return "dry";
+
+  return "normal";
+}
+
 const app = express();
 
 app.use(cors({ origin: process.env.FRONTEND_URL || "*"}));
@@ -42,24 +67,27 @@ app.post("/api/skin-analysis", async (req, res) => {
     };
 
     const mlResponse = await axios.post(`${ML_SERVICE_URL}/predict`, mlPayload, {
-      timeout: 50_000, // 50 s — free-tier ML service can take ~30-40 s to cold-start
+      // 25 s — short enough to leave time for the fallback within Vercel's 60 s limit
+      timeout: 25_000,
     });
-    res.json(mlResponse.data);
+    return res.json(mlResponse.data);
 
   } catch (error: any) {
-    console.error("ML Service error:", error.message);
-
-    if (error.response) {
-      res.status(error.response.status).json({
-        error: "ML prediction failed",
-        detail: error.response.data,
-      });
-    } else {
-      res.status(503).json({
-        error: "ML Service unavailable",
-        detail: "Could not connect to ML service",
-      });
+    // If the ML call itself failed (timeout, 429, 502 from Render, etc.),
+    // use the rule-based fallback so the user always gets a result.
+    const isMLError = !error.response || error.response?.status >= 500 || error.code === "ECONNABORTED";
+    if (isMLError) {
+      console.warn("ML Service unavailable, using fallback classifier:", error?.message);
+      const skinType = fallbackClassify(answers);
+      return res.json({ skin_type: skinType, source: "fallback" });
     }
+
+    // 4xx from ML service (bad request, etc.) — surface it
+    console.error("ML Service 4xx error:", error.message);
+    return res.status(error.response.status).json({
+      error: "ML prediction failed",
+      detail: error.response.data,
+    });
   }
 });
 

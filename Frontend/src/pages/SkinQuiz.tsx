@@ -144,7 +144,13 @@ const SkinQuiz = () => {
           break;
         }
 
-        // Network error or 5xx — retry once after a short wait
+        // 502/504 = Vercel gateway timeout — the function is dead, immediate retry won't help
+        if (httpStatus === 502 || httpStatus === 504) {
+          alert("The analysis took too long. Please try again in a moment.");
+          break;
+        }
+
+        // Network error or other 5xx — retry once after a short wait
         if (attempt < 2) {
           await new Promise((r) => setTimeout(r, 8_000));
         } else {

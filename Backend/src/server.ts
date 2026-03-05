@@ -75,7 +75,7 @@ app.post("/api/skin-analysis", async (req, res) => {
   } catch (error: any) {
     // If the ML call itself failed (timeout, 429, 502 from Render, etc.),
     // use the rule-based fallback so the user always gets a result.
-    const isMLError = !error.response || error.response?.status >= 500 || error.code === "ECONNABORTED";
+    const isMLError = !error.response || error.response?.status >= 500 || error.response?.status === 429 || error.code === "ECONNABORTED";
     if (isMLError) {
       console.warn("ML Service unavailable, using fallback classifier:", error?.message);
       const skinType = fallbackClassify(answers);

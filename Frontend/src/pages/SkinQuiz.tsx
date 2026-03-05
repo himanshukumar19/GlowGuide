@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -38,6 +38,17 @@ const SkinQuiz = () => {
   // Controls visibility of the free text textarea — collapsed by default so it's clearly optional
   const [showFreeText, setShowFreeText] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [serverWarming, setServerWarming] = useState<boolean>(false);
+
+  // Ping the backend as soon as the quiz page loads so the ML service wakes up
+  // from its free-tier sleep *before* the user finishes answering questions.
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+    setServerWarming(true);
+    fetch(`${API_URL}/api/wake`, { method: "GET" })
+      .catch(() => {/* silently ignore — warm-up is best-effort */})
+      .finally(() => setServerWarming(false));
+  }, []);
 
   const progress = ((currentQuestion + 1) / quizQuestions.length) * 100;
 
@@ -94,28 +105,41 @@ const SkinQuiz = () => {
   // Called when user clicks "See My Results" on the last question
   const handleFinish = async (finalAnswers: QuizAnswers) => {
     setLoading(true);
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
-      const response = await fetch(`${API_URL}/api/skin-analysis`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          answers: finalAnswers,
-          skinNotes: freeText || null,
-        }),
-      });
-      const data = await response.json();
-      const skinTypeKey = data.skin_type.toLowerCase();
-      setResult(skinTypeResults[skinTypeKey]);
-      setQuizState("result");
-    }catch (error){
-      console.error("API error:", error);
-      alert("Sorry, we couldn't analyze your skin type at the moment. Please try again later.");        
-    }finally {
-      setLoading(false);
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+    // Retry once — the ML service may still be cold-starting
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 55_000); // 55 s
+
+        const response = await fetch(`${API_URL}/api/skin-analysis`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers: finalAnswers, skinNotes: freeText || null }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        const skinTypeKey = data.skin_type.toLowerCase();
+        setResult(skinTypeResults[skinTypeKey]);
+        setQuizState("result");
+        setLoading(false);
+        return; // success — exit
+      } catch (error: any) {
+        console.error(`API attempt ${attempt} failed:`, error?.message);
+        if (attempt < 2) {
+          // Wait 8 s before retrying (gives ML service time to finish cold-start)
+          await new Promise((r) => setTimeout(r, 8_000));
+        } else {
+          alert("Sorry, we couldn't analyze your skin type at the moment. Please try again in a few seconds.");
+        }
+      }
     }
+    setLoading(false);
   };
 
   return (
@@ -290,7 +314,7 @@ const SkinQuiz = () => {
                               disabled={loading}
                               size="lg"
                             >
-                              {loading ? "Analyzing..." : "See My Results"}
+                              {loading ? (serverWarming ? "Waking up server…" : "Analyzing…") : "See My Results"}
                               <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
 

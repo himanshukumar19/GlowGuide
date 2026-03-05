@@ -17,6 +17,16 @@ app.get("/api/health", (_req, res)=>{
     return res.json({ status: "ok", service: "GlowGuide Backend" });
 })
 
+// Wake-up endpoint — frontend calls this on quiz-page mount to warm the ML service
+app.get("/api/wake", async (_req, res) => {
+  try {
+    await axios.get(`${ML_SERVICE_URL}/health`, { timeout: 55_000 });
+    return res.json({ status: "ready" });
+  } catch {
+    return res.json({ status: "warming" }); // Not a hard error — just heating up
+  }
+})
+
 app.post("/api/skin-analysis", async (req, res) => {
   try {
     const { answers, skinNotes } = req.body;
@@ -34,7 +44,9 @@ app.post("/api/skin-analysis", async (req, res) => {
       skin_notes: skinNotes || null,
     };
 
-    const mlResponse = await axios.post(`${ML_SERVICE_URL}/predict`, mlPayload);
+    const mlResponse = await axios.post(`${ML_SERVICE_URL}/predict`, mlPayload, {
+      timeout: 50_000, // 50 s — free-tier ML service can take ~30-40 s to cold-start
+    });
     res.json(mlResponse.data);
 
   } catch (error: any) {

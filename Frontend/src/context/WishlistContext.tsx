@@ -8,6 +8,7 @@ interface WishlistContextType {
   isInWishlist: (productId: string) => boolean;
   clearWishlist: () => void;
   itemCount: number;
+  toggleWishlist: (product: Product) => void;
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
@@ -51,6 +52,15 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     return items.some(item => item.id === productId);
   };
 
+  const toggleWishlist = (product: Product) => {
+    setItems(prevItems => {
+      if (prevItems.find(item => item.id === product.id)) {
+        return prevItems.filter(item => item.id !== product.id);
+      }
+      return [...prevItems, product];
+    });
+  };
+
   const clearWishlist = () => {
     setItems([]);
   };
@@ -65,7 +75,8 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
         removeFromWishlist,
         isInWishlist,
         clearWishlist,
-        itemCount
+        itemCount,
+        toggleWishlist
       }}
     >
       {children}

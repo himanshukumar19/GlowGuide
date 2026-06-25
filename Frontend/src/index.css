@@ -6,92 +6,71 @@
 
 @layer base {
   :root {
-    /* Pink Theme (Default) */
-    --background: 20 33% 98%;
-    --foreground: 0 0% 20%;
+    /* Clinical Eucalyptus Sage Theme (Default) */
+    --background: 140 13% 95%;
+    --foreground: 0 0% 18%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
+    --card-foreground: 0 0% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
+    --popover-foreground: 0 0% 18%;
 
-    --primary: 350 60% 75%;
+    --primary: 154 22% 30%;
+    --primary-hover: 154 22% 23%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 15 30% 90%;
-    --secondary-foreground: 0 0% 25%;
+    --secondary: 9 38% 64%;
+    --secondary-hover: 9 38% 54%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 20 20% 95%;
-    --muted-foreground: 0 0% 45%;
+    --success: 148 41% 64%;
+    --success-foreground: 154 30% 15%;
 
-    --accent: 15 80% 70%;
-    --accent-foreground: 0 0% 100%;
+    --warning: 38 88% 60%;
+    --warning-foreground: 30 60% 15%;
 
-    --destructive: 0 84.2% 60.2%;
+    --info: 195 40% 60%;
+    --info-foreground: 195 50% 15%;
+
+    --muted: 132 11% 91%;
+    --muted-foreground: 0 0% 48%;
+
+    --accent: 30 47% 83%;
+    --accent-foreground: 0 0% 18%;
+
+    --destructive: 0 69% 67%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 20 20% 90%;
-    --input: 20 20% 90%;
-    --ring: 350 60% 75%;
+    --border: 137 11% 88%;
+    --input: 137 11% 88%;
+    --ring: 154 22% 30%;
 
-    --radius: 0.75rem;
+    --radius: 1.0rem;
 
     /* Custom skincare theme tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(350 60% 75%) 0%, hsl(15 80% 70%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(20 33% 98%) 0%, hsl(350 40% 95%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(20 30% 98%) 100%);
-    --shadow-soft: 0 4px 20px -4px hsl(350 30% 70% / 0.2);
-    --shadow-card: 0 8px 30px -8px hsl(350 30% 50% / 0.15);
-    --shadow-hover: 0 12px 40px -8px hsl(350 30% 50% / 0.25);
+    --gradient-primary: linear-gradient(135deg, #3B5D4E 0%, #7EC8A0 100%);
+    --gradient-accent: linear-gradient(135deg, #E8D4C0 0%, #C58A7F 100%);
+    --gradient-subtle: linear-gradient(135deg, #F2F5F3 0%, #E6EBE7 100%);
+    --gradient-success: linear-gradient(135deg, #7EC8A0 0%, #A8D5BA 100%);
+    --gradient-hero: linear-gradient(180deg, #F2F5F3 0%, #E6EBE7 100%);
+    --gradient-card: linear-gradient(145deg, #FFFFFF 0%, #F2F5F3 100%);
+    
+    --shadow-soft: 0 2px 8px rgba(45, 45, 45, 0.08);
+    --shadow-card: 0 4px 12px rgba(45, 45, 45, 0.1);
+    --shadow-hover: 0 8px 24px rgba(45, 45, 45, 0.15);
+    --shadow-elevated: 0 12px 32px rgba(45, 45, 45, 0.2);
+    --shadow-primary: 0 4px 16px rgba(59, 93, 78, 0.3);
+    --shadow-secondary: 0 4px 16px rgba(197, 138, 127, 0.3);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .teal-theme {
-    /* Teal Theme */
-    --background: 180 30% 98%;
-    --foreground: 180 30% 15%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 180 30% 15%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 180 30% 15%;
-
-    --primary: 175 60% 45%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 175 30% 92%;
-    --secondary-foreground: 180 30% 20%;
-
-    --muted: 175 20% 95%;
-    --muted-foreground: 180 20% 45%;
-
-    --accent: 160 70% 55%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 175 20% 88%;
-    --input: 175 20% 88%;
-    --ring: 175 60% 45%;
-
-    /* Teal theme tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(175 60% 45%) 0%, hsl(160 70% 55%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(180 30% 98%) 0%, hsl(175 40% 95%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(175 30% 98%) 100%);
-    --shadow-soft: 0 4px 20px -4px hsl(175 30% 50% / 0.2);
-    --shadow-card: 0 8px 30px -8px hsl(175 30% 40% / 0.15);
-    --shadow-hover: 0 12px 40px -8px hsl(175 30% 40% / 0.25);
+    --sidebar-background: 140 13% 95%;
+    --sidebar-foreground: 0 0% 18%;
+    --sidebar-primary: 154 22% 30%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 132 11% 91%;
+    --sidebar-accent-foreground: 0 0% 18%;
+    --sidebar-border: 137 11% 88%;
+    --sidebar-ring: 154 22% 30%;
   }
 }
 

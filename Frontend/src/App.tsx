@@ -4,8 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
+import { AuthGuard } from "@/components/layout/AuthGuard";
 import Index from "./pages/Index";
 import SkinQuiz from "./pages/SkinQuiz";
 import SkinTypesOverview from "./pages/SkinTypesOverview";
@@ -16,6 +18,11 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import CartPage from "./pages/CartPage";
 import WishlistPage from "./pages/WishlistPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Pricing from "./pages/Pricing";
+import IngredientsGlossary from "./pages/IngredientsGlossary";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,30 +30,41 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <CartProvider>
-        <WishlistProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/quiz" element={<SkinQuiz />} />
-                <Route path="/skin-types" element={<SkinTypesOverview />} />
-                <Route path="/skin-types/:type" element={<SkinTypeDetail />} />
-                <Route path="/about" element={<AboutSkincare />} />
-                <Route path="/shop" element={<ShopPage />} />
-                <Route path="/product/:id" element={<ProductDetailPage />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/wishlist" element={<WishlistPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </WishlistProvider>
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/skin-types" element={<SkinTypesOverview />} />
+                  <Route path="/skin-types/:type" element={<SkinTypeDetail />} />
+                  <Route path="/about" element={<AboutSkincare />} />
+                  <Route path="/shop" element={<ShopPage />} />
+                  <Route path="/product/:id" element={<ProductDetailPage />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/ingredients" element={<IngredientsGlossary />} />
+
+                  {/* Protected routes */}
+                  <Route path="/quiz" element={<SkinQuiz />} />
+                  <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+                  <Route path="/cart" element={<AuthGuard><CartPage /></AuthGuard>} />
+                  <Route path="/wishlist" element={<AuthGuard><WishlistPage /></AuthGuard>} />
+                  <Route path="/checkout" element={<AuthGuard><CheckoutPage /></AuthGuard>} />
+                  
+                  {/* Catch-all */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

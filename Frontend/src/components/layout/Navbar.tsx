@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sparkles, ChevronDown, ShoppingCart, Heart } from "lucide-react";
-import ThemeToggle from "./ThemeToggle";
+import { Menu, X, Sparkles, ChevronDown, ShoppingCart, Heart, User, LogOut, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { label: "Home", path: "/" },
@@ -22,18 +22,8 @@ const navItems = [
     ]
   },
   { label: "About Skincare", path: "/about" },
-  { label: "Skin Quiz", path: "/quiz" },
-  {
-    label: "Skin Types",
-    path: "/skin-types",
-    children: [
-      { label: "Oily Skin", path: "/skin-types/oily" },
-      { label: "Dry Skin", path: "/skin-types/dry" },
-      { label: "Combination", path: "/skin-types/combination" },
-      { label: "Sensitive", path: "/skin-types/sensitive" },
-      { label: "Normal", path: "/skin-types/normal" },
-    ],
-  },
+  { label: "Ingredients", path: "/ingredients" },
+  { label: "Pricing", path: "/pricing" },
 ];
 
 const Navbar = () => {
@@ -42,6 +32,7 @@ const Navbar = () => {
   const location = useLocation();
   const { itemCount: cartCount } = useCart();
   const { itemCount: wishlistCount } = useWishlist();
+  const { customer, isAuthenticated, logout } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -91,7 +82,7 @@ const Navbar = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 8 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full left-0 mt-1 w-48 rounded-lg border border-border bg-card shadow-card overflow-hidden"
+                      className="absolute top-full left-0 mt-1 w-48 rounded-lg border border-border bg-card shadow-card overflow-hidden before:content-[''] before:absolute before:-top-1 before:left-0 before:right-0 before:h-1"
                     >
                       {item.children.map((child) => (
                         <Link
@@ -107,17 +98,27 @@ const Navbar = () => {
                 </AnimatePresence>
               </div>
             ))}
+            
+            {/* Show Quiz link conditionally based on auth */}
+            <Link
+              to={isAuthenticated ? "/quiz" : "/login"}
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive("/quiz")
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              Skin Quiz
+            </Link>
           </div>
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            <ThemeToggle />
-            
             {/* Wishlist */}
             <Link to="/wishlist" className="relative p-2 rounded-lg hover:bg-muted transition-colors">
               <Heart className="h-5 w-5" />
               {wishlistCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-medium">
                   {wishlistCount}
                 </span>
               )}
@@ -127,22 +128,52 @@ const Navbar = () => {
             <Link to="/cart" className="relative p-2 rounded-lg hover:bg-muted transition-colors">
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-medium">
                   {cartCount}
                 </span>
               )}
             </Link>
 
-            <Link to="/shop" className="hidden md:block">
-              <Button variant="default" size="sm" className="gradient-primary border-0 text-primary-foreground">
-                Shop Now
-              </Button>
-            </Link>
+            {/* User Account / Login State */}
+            {isAuthenticated ? (
+              <div className="relative group ml-1">
+                <Link to="/dashboard" className="flex items-center gap-1.5 p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-all">
+                  <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold relative">
+                    {customer?.name?.split(" ").map(n => n[0]).join("") || "GG"}
+                    {customer?.subscriptionTier === "paid" && (
+                      <Crown className="h-2.5 w-2.5 text-secondary absolute -top-1 -right-1 fill-secondary" />
+                    )}
+                  </div>
+                </Link>
+                <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-lg shadow-card py-1.5 hidden group-hover:block animate-fade-in z-50 before:content-[''] before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
+                  <div className="px-4 py-2 border-b border-border/40 mb-1">
+                    <span className="font-semibold text-xs text-foreground block truncate">{customer?.name}</span>
+                    <span className="text-[10px] text-muted-foreground block uppercase font-bold mt-0.5">
+                      {customer?.subscriptionTier === "paid" ? "★ Pro Tier" : "Free Tier"}
+                    </span>
+                  </div>
+                  <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 text-xs text-foreground hover:bg-muted transition-colors font-medium">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    Dashboard
+                  </Link>
+                  <button onClick={logout} className="w-full flex items-center gap-2 px-4 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors font-medium text-left">
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <Link to="/login" className="ml-1">
+                <Button size="sm" className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground rounded-gg-sm shadow-primary font-semibold text-xs py-2">
+                  Sign In
+                </Button>
+              </Link>
+            )}
 
             {/* Mobile menu button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-muted transition-colors"
+              className="lg:hidden p-2 rounded-lg hover:bg-muted transition-colors ml-1"
               aria-label="Toggle menu"
             >
               {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -190,8 +221,9 @@ const Navbar = () => {
                   )}
                 </div>
               ))}
-              <Link to="/quiz" onClick={() => setIsOpen(false)}>
-                <Button className="w-full mt-4 gradient-primary border-0 text-primary-foreground">
+              
+              <Link to={isAuthenticated ? "/quiz" : "/login"} onClick={() => setIsOpen(false)}>
+                <Button className="w-full mt-4 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm py-4 rounded-gg-sm shadow-primary">
                   Take the Skin Quiz
                 </Button>
               </Link>

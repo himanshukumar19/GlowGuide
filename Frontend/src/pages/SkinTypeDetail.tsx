@@ -1088,7 +1088,7 @@ const SkinTypeDetail = () => {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to={`/shop?skinType=${skinType}`}>
-              <Button size="lg" variant="secondary" className="gap-2">
+              <Button size="lg" className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground shadow-primary rounded-gg-sm border-0 gap-2">
                 <ShoppingBag className="h-5 w-5" />
                 Shop {data.type} Skin Products
               </Button>

@@ -100,19 +100,19 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden gradient-hero">
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-background">
         {/* Background Image with Overlay */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-primary/5">
           <motion.img
             key={theme}
             src={heroImage}
             alt=""
-            className="w-full h-full object-cover opacity-30"
+            className="w-full h-full object-cover opacity-20 filter grayscale sepia-[0.15] contrast-110 mix-blend-luminosity"
             initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 0.3, scale: 1 }}
+            animate={{ opacity: 0.2, scale: 1 }}
             transition={{ duration: 1 }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-background/30 to-background" />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
@@ -155,13 +155,13 @@ const Index = () => {
               transition={{ duration: 0.8, delay: 0.3 }}
             >
               <Link to="/quiz">
-                <Button size="lg" className="gradient-primary border-0 text-primary-foreground shadow-soft hover:shadow-hover transition-shadow text-base px-8">
+                <Button size="lg" className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground shadow-primary rounded-gg-sm transition-all text-base px-8 border-0">
                   Take the Skin Quiz
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/about">
-                <Button size="lg" variant="outline" className="text-base px-8">
+                <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 text-base px-8">
                   Learn About Skincare
                 </Button>
               </Link>
@@ -301,7 +301,7 @@ const Index = () => {
             viewport={{ once: true }}
           >
             <Link to="/skin-types">
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300">
                 Explore All Skin Types
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -341,7 +341,7 @@ const Index = () => {
                 ))}
               </div>
               <Link to="/quiz">
-                <Button size="lg" variant="secondary" className="text-base px-8 shadow-soft">
+                <Button size="lg" className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground text-base px-8 shadow-primary rounded-gg-sm border-0">
                   Start the Quiz Now
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -383,7 +383,7 @@ const Index = () => {
                 ))}
               </ul>
               <Link to="/about" className="inline-block mt-8">
-                <Button variant="outline">
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300">
                   Learn More
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>

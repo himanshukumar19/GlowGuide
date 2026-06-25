@@ -19,24 +19,21 @@ Every color is derived from natural, botanical, and mineral skin treatments.
 ### Brand Colors
 | Token | Hex Code | Purpose | Contrast (on white) |
 | :--- | :--- | :--- | :--- |
-| **Primary** | `#3B5D4E` | Eucalyptus Sage (main buttons, active text, headers) | **7.5:1** (WCAG AAA) |
-| **Primary Hover** | `#2E493D` | Darker eucalyptus sage for interactive hover states | **9.2:1** (WCAG AAA) |
-| **Primary Active** | `#23382E` | Deepest sage for pressed buttons / focus states | **11.4:1** (WCAG AAA) |
-| **Secondary** | `#C58A7F` | Terracotta Clay (accents, secondary actions, indicators) | **2.6:1** (Large text/bg only) |
-| **Secondary Hover** | `#B3766B` | Terracotta hover | **3.0:1** (Large text/bg only) |
-| **Secondary Active** | `#9F6156` | Terracotta active | **3.7:1** (Large text/bg only) |
-| **Accent** | `#E8D4C0` | Chamomile Gold (badges, promo alerts, light tags) | **1.3:1** (Use dark text) |
+| **Primary** | `#355245` | Refined Eucalyptus Sage (main buttons, active text, headers) | **8.2:1** (WCAG AAA) |
+| **Primary Hover** | `#294036` | Darker eucalyptus sage for interactive hover states | **10.5:1** (WCAG AAA) |
+| **Secondary** | `#854438` | Deep Terracotta Clay (highlights, Pro subscriptions, badge borders) | **6.1:1** (WCAG AA) |
+| **Secondary Hover** | `#69352B` | Darker terracotta hover | **8.0:1** (WCAG AAA) |
+| **Accent** | `#F3EFEA` | Alabaster / Chamomile Sand (light badges, promo alerts, light tags) | **1.2:1** (Use dark text) |
 
 ### Neutrals & Surfaces
 | Token | Hex Code | Name | Purpose |
 | :--- | :--- | :--- | :--- |
-| **Background** | `#F2F5F3` | Sage Linen | Default page background |
+| **Background** | `#F7F9F8` | Sage Linen (Refined) | Default page background |
 | **Card** | `#FFFFFF` | Pure White | Grid card surfaces and main panels |
-| **Muted** | `#E6EBE7` | Sage Mist | Scrollbar tracks, circular SVG backgrounds, and secondary wells |
-| **Border** | `#DCE3DE` | Sage Border | Standard dividers, borders, and input strokes |
-| **Border Strong** | `#C4CFC8` | Strong Sage Border | High-contrast borders for hover or focus states |
-| **Foreground** | `#2D2D2D` | Soft Black | Primary text copy and solid icons |
-| **Muted FG** | `#7A7A7A` | Slate Grey | Subtitles, meta-text, captions, and secondary labels |
+| **Muted** | `#EDF0EE` | Sage Mist (Refined) | Scrollbar tracks, circular SVG backgrounds, and secondary wells |
+| **Border** | `#DFE3E1` | Sage Border (Refined) | Standard dividers, borders, and input strokes |
+| **Foreground** | `#262626` | Charcoal Black | Primary text copy and solid icons |
+| **Muted FG** | `#737373` | Slate Grey | Subtitles, meta-text, captions, and secondary labels |
 
 ### Semantic Colors
 | Token | Hex Code | Role | Purpose |
@@ -52,10 +49,10 @@ Every color is derived from natural, botanical, and mineral skin treatments.
 
 Used for hero banners, active card states, and luxurious accents:
 
-* **Primary Gradient**: `linear-gradient(135deg, #3B5D4E 0%, #7EC8A0 100%)` (Deep Eucalyptus to Sage Green)
-* **Accent Gradient**: `linear-gradient(135deg, #E8D4C0 0%, #C58A7F 100%)` (Chamomile Gold to Terracotta Clay)
-* **Subtle Gradient**: `linear-gradient(135deg, #F2F5F3 0%, #E6EBE7 100%)` (Sage Linen to Sage Mist)
-* **Success Gradient**: `linear-gradient(135deg, #7EC8A0 0%, #A8D5BA 100%)` (Sage Green to Pale Mint)
+* **Primary Gradient**: `linear-gradient(135deg, #355245 0%, #75BFA2 100%)` (Deep Eucalyptus to Sage Green)
+* **Accent Gradient**: `linear-gradient(135deg, #F3EFEA 0%, #854438 100%)` (Chamomile Gold to Terracotta Clay)
+* **Subtle Gradient**: `linear-gradient(135deg, #F7F9F8 0%, #EDF0EE 100%)` (Sage Linen to Sage Mist)
+* **Success Gradient**: `linear-gradient(135deg, #75BFA2 0%, #9BD9BF 100%)` (Sage Green to Pale Mint)
 
 ---
 
@@ -100,8 +97,8 @@ Soft, diffused depth inspired by modern boutique sites:
 * **shadow-card**: `0 4px 12px rgba(45, 45, 45, 0.1)` (Standard card styling)
 * **shadow-hover**: `0 8px 24px rgba(45, 45, 45, 0.15)` (Active item hover states)
 * **shadow-elevated**: `0 12px 32px rgba(45, 45, 45, 0.2)` (Flyouts, drop-down menus, toasts)
-* **shadow-primary**: `0 4px 16px rgba(59, 93, 78, 0.3)` (Sage glow button shadow)
-* **shadow-secondary**: `0 4px 16px rgba(197, 138, 127, 0.3)` (Terracotta glow button shadow)
+* **shadow-primary**: `0 4px 16px rgba(53, 82, 69, 0.3)` (Sage glow button shadow)
+* **shadow-secondary**: `0 4px 16px rgba(133, 68, 56, 0.3)` (Terracotta glow button shadow)
 
 ---
 
@@ -121,17 +118,17 @@ Consistent corner curvature prevents visual clashes:
 ## 8. UI Primitives & Components
 
 ### Buttons
-* **Primary**: Eucalyptus Sage background (`bg-primary`), white text, shadow-primary, scaling feedback (`active:scale-95`).
-* **Secondary**: Terracotta Clay background (`bg-secondary`), white text, shadow-secondary.
+* **Primary**: Eucalyptus Sage background (`bg-primary`), white text, shadow-primary, scaling feedback (`active:scale-95`). Used for primary actions (e.g., *"Take the Skin Quiz"*, *"Start the Quiz Now"*).
+* **Secondary**: Terracotta Clay background (`bg-secondary`), white text, shadow-secondary. Used for premium upgrade links, subscription panels, and accent actions.
 * **Accent**: Chamomile Gold background (`bg-accent`), soft black text.
-* **Outline**: Transparent background with Sage Border (`border-border`), transitions to light background on hover.
+* **Outline**: Transparent background with Sage Border (`border-border`), transitions to `--accent` cream background and forest text on hover.
 * **Ghost**: Borderless, transitions to `bg-muted` on hover.
 
 ### Form Inputs
-* Default outline uses `border-border` (`#DCE3DE`). Focus states shift outline to `border-primary` (`#3B5D4E`) with a glow ring `ring-2 ring-primary/20`.
+* Default outline uses `border-border` (`#DFE3E1`). Focus states shift outline to `border-primary` (`#355245`) with a glow ring `ring-2 ring-primary/20`.
 
 ### Cards
-* Cards utilize `bg-card` (`#FFFFFF`), `border-border` (`#DCE3DE`), `shadow-soft`, and `hover-lift` transition utilities to elevate on cursor hover.
+* Cards utilize `bg-card` (`#FFFFFF`), `border-border` (`#DFE3E1`), `shadow-soft`, and `hover-lift` transition utilities to elevate on cursor hover.
 
 ### Badges
 * Rounded tags (`rounded-full`) with a small font sizes (`text-[10px]` or `text-xs`) used to show catalog metadata, stock status, or score indicators.

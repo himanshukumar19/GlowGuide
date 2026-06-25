@@ -6,22 +6,22 @@
 
 @layer base {
   :root {
-    /* Clinical Eucalyptus Sage Theme (Default) */
-    --background: 140 13% 95%;
-    --foreground: 0 0% 18%;
+    /* Clinical Eucalyptus Sage Theme (Refined) */
+    --background: 140 8% 97.5%;
+    --foreground: 0 0% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 18%;
+    --card-foreground: 0 0% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 18%;
+    --popover-foreground: 0 0% 15%;
 
-    --primary: 154 22% 30%;
-    --primary-hover: 154 22% 23%;
+    --primary: 154 24% 28%;
+    --primary-hover: 154 24% 22%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 9 38% 64%;
-    --secondary-hover: 9 38% 54%;
+    --secondary: 16 38% 38%;
+    --secondary-hover: 16 38% 30%;
     --secondary-foreground: 0 0% 100%;
 
     --success: 148 41% 64%;
@@ -33,28 +33,28 @@
     --info: 195 40% 60%;
     --info-foreground: 195 50% 15%;
 
-    --muted: 132 11% 91%;
-    --muted-foreground: 0 0% 48%;
+    --muted: 140 10% 93%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 30 47% 83%;
-    --accent-foreground: 0 0% 18%;
+    --accent: 32 38% 93%;
+    --accent-foreground: 154 24% 20%;
 
     --destructive: 0 69% 67%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 137 11% 88%;
-    --input: 137 11% 88%;
-    --ring: 154 22% 30%;
+    --border: 140 8% 88%;
+    --input: 140 8% 88%;
+    --ring: 154 24% 28%;
 
     --radius: 1.0rem;
 
-    /* Custom skincare theme tokens */
-    --gradient-primary: linear-gradient(135deg, #3B5D4E 0%, #7EC8A0 100%);
-    --gradient-accent: linear-gradient(135deg, #E8D4C0 0%, #C58A7F 100%);
-    --gradient-subtle: linear-gradient(135deg, #F2F5F3 0%, #E6EBE7 100%);
-    --gradient-success: linear-gradient(135deg, #7EC8A0 0%, #A8D5BA 100%);
-    --gradient-hero: linear-gradient(180deg, #F2F5F3 0%, #E6EBE7 100%);
-    --gradient-card: linear-gradient(145deg, #FFFFFF 0%, #F2F5F3 100%);
+    /* Custom skincare theme tokens (Refined) */
+    --gradient-primary: linear-gradient(135deg, #355245 0%, #75BFA2 100%);
+    --gradient-accent: linear-gradient(135deg, #F3EFEA 0%, #854438 100%);
+    --gradient-subtle: linear-gradient(135deg, #F7F9F8 0%, #EDF0EE 100%);
+    --gradient-success: linear-gradient(135deg, #75BFA2 0%, #9BD9BF 100%);
+    --gradient-hero: linear-gradient(180deg, #F7F9F8 0%, #EDF0EE 100%);
+    --gradient-card: linear-gradient(145deg, #FFFFFF 0%, #F7F9F8 100%);
     
     --shadow-soft: 0 2px 8px rgba(45, 45, 45, 0.08);
     --shadow-card: 0 4px 12px rgba(45, 45, 45, 0.1);

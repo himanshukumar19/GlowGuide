@@ -118,7 +118,7 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center overflow-hidden">
+      <section className="relative min-h-screen py-24 lg:py-0 flex items-center overflow-hidden">
         {/* Animated gradient background */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.07] via-background to-primary/[0.03] animate-gradient-shift" />
         
@@ -307,49 +307,51 @@ const Index = () => {
             >
               {/* Decorative floating avatar circles */}
               <motion.div
-                className="absolute -top-6 -right-6 w-16 h-16 rounded-full overflow-hidden border-2 border-primary bg-background shadow-elevated z-10 group cursor-pointer"
+                className="absolute -top-4 -right-2 lg:-top-6 lg:-right-6 w-12 h-12 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 border-primary bg-background shadow-elevated z-10 group cursor-pointer"
                 animate={{ y: [0, -10, 0], rotate: [0, -6, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
                 whileHover={{ scale: 1.15 }}
               >
                 <img src={skincareDroplet} alt="Skincare avatar" className="w-full h-full object-cover" />
-                <span className="absolute bottom-1 right-1 w-3 h-3 rounded-full bg-emerald-400 border border-white animate-pulse" />
+                <span className="absolute bottom-1 right-1 w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-emerald-400 border border-white animate-pulse" />
                 
                 {/* Tooltip */}
                 <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
                   Glowy Assistant
                 </div>
               </motion.div>
+
+              {/* Decorative emojis hidden on mobile to avoid cluttering and overlapping */}
               <motion.div
-                className="absolute -top-8 left-8 w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-amber-400 border-2 border-background flex items-center justify-center text-xs font-bold text-white shadow-elevated z-10"
+                className="hidden sm:flex absolute -top-8 left-8 w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-amber-400 border-2 border-background items-center justify-center text-xs font-bold text-white shadow-elevated z-10"
                 animate={{ y: [0, -10, 0], rotate: [0, 8, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
               >
                 😊
               </motion.div>
               <motion.div
-                className="absolute bottom-12 -right-6 w-9 h-9 rounded-full bg-gradient-to-br from-sky-300 to-sky-400 border-2 border-background flex items-center justify-center text-xs font-bold text-white shadow-elevated z-10"
+                className="hidden sm:flex absolute bottom-12 -right-6 w-9 h-9 rounded-full bg-gradient-to-br from-sky-300 to-sky-400 border-2 border-background items-center justify-center text-xs font-bold text-white shadow-elevated z-10"
                 animate={{ y: [0, -6, 0], rotate: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
               >
                 🌸
               </motion.div>
               <motion.div
-                className="absolute -bottom-6 right-16 w-8 h-8 rounded-full bg-gradient-to-br from-violet-300 to-violet-400 border-2 border-background flex items-center justify-center text-[10px] font-bold text-white shadow-elevated z-10"
+                className="hidden sm:flex absolute -bottom-6 right-16 w-8 h-8 rounded-full bg-gradient-to-br from-violet-300 to-violet-400 border-2 border-background items-center justify-center text-[10px] font-bold text-white shadow-elevated z-10"
                 animate={{ y: [0, -7, 0], rotate: [0, 6, 0] }}
                 transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
               >
                 💛
               </motion.div>
               <motion.div
-                className="absolute top-1/4 -left-5 w-7 h-7 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-400 border-2 border-background flex items-center justify-center text-[8px] font-bold text-white shadow-elevated z-10"
+                className="hidden sm:flex absolute top-1/4 -left-5 w-7 h-7 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-400 border-2 border-background items-center justify-center text-[8px] font-bold text-white shadow-elevated z-10"
                 animate={{ y: [0, -9, 0], rotate: [0, -7, 0] }}
                 transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
               >
                 💚
               </motion.div>
               <motion.div
-                className="absolute top-1/2 -right-8 w-6 h-6 rounded-full bg-gradient-to-br from-rose-300 to-rose-400 border-2 border-background flex items-center justify-center text-[7px] font-bold text-white shadow-elevated z-10"
+                className="hidden sm:flex absolute top-1/2 -right-8 w-6 h-6 rounded-full bg-gradient-to-br from-rose-300 to-rose-400 border-2 border-background items-center justify-center text-[7px] font-bold text-white shadow-elevated z-10"
                 animate={{ y: [0, -5, 0], rotate: [0, 12, 0] }}
                 transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 2 }}
               >
@@ -361,9 +363,9 @@ const Index = () => {
                 animate={{ y: [0, -12, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               >
-                {/* Pulsing glow behind image */}
+                {/* Pulsing glow behind image (sized responsively to prevent horizontal scroll) */}
                 <motion.div
-                  className="absolute -inset-12 bg-gradient-to-tr from-primary/20 via-success/20 to-transparent rounded-[5rem] blur-3xl"
+                  className="absolute -inset-6 lg:-inset-12 bg-gradient-to-tr from-primary/20 via-success/20 to-transparent rounded-[5rem] blur-3xl"
                   animate={{ opacity: [0.3, 0.65, 0.3], scale: [1, 1.03, 1] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 />
@@ -380,18 +382,18 @@ const Index = () => {
                   />
                 </div>
 
-                {/* Floating stat badge */}
+                {/* Floating stat badge - scaled and positioned cleanly on mobile */}
                 <motion.div
-                  className="absolute -bottom-3 -left-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-elevated px-4 py-3 flex items-center gap-3"
+                  className="absolute bottom-2 left-2 lg:-bottom-3 lg:-left-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-elevated px-3 py-2 lg:px-4 lg:py-3 flex items-center gap-2 lg:gap-3"
                   animate={{ y: [0, -8, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 >
-                  <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
-                    <Sparkles className="h-5 w-5 text-white" />
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-lg gradient-primary flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="h-4.5 w-4.5 lg:h-5 lg:w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-foreground">94%</p>
-                    <p className="text-xs text-muted-foreground whitespace-nowrap">Satisfaction Rate</p>
+                    <p className="text-xs lg:text-sm font-bold text-foreground leading-tight">94%</p>
+                    <p className="text-[10px] lg:text-xs text-muted-foreground whitespace-nowrap leading-none mt-0.5">Satisfaction Rate</p>
                   </div>
                 </motion.div>
               </motion.div>

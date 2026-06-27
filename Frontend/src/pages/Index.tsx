@@ -100,9 +100,9 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-background">
-        {/* Multi-layer background */}
-        <div className="absolute inset-0">
+      <section className="relative min-h-screen flex items-center overflow-hidden bg-primary/10">
+        {/* Full-width background - no container constraints */}
+        <div className="absolute inset-0 -left-[50vw] -right-[50vw] -top-[50vh] -bottom-[50vh] w-[200vw] h-[200vh]">
           {/* Base gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5" />
           
@@ -219,19 +219,17 @@ const Index = () => {
             </motion.div>
           </div>
         </div>
-
-        {/* Floating decorative elements */}
       </section>
 
       {/* Hero bottom separator */}
-      <div className="relative h-24 -mt-24 z-10 pointer-events-none">
-        <svg viewBox="0 0 1440 96" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute bottom-0 w-full h-full">
-          <path d="M0 96H1440V48C1440 48 1200 0 720 48C240 96 0 48 0 48V96Z" fill="hsl(var(--background))" />
+      <div className="relative h-16 -mt-16 z-10 pointer-events-none">
+        <svg viewBox="0 0 1440 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute bottom-0 w-full h-full">
+          <path d="M0 64H1440V32C1440 32 1200 0 720 32C240 64 0 32 0 32V64Z" fill="hsl(var(--background))" />
         </svg>
       </div>
 
       {/* Features Section */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <motion.div
             className="grid md:grid-cols-3 gap-6"

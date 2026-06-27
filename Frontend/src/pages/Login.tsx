@@ -19,7 +19,7 @@ const Login = () => {
   const location = useLocation();
   
   // Retrieve redirect target location, default to /dashboard
-  const from = (location.state as any)?.from?.pathname || "/dashboard";
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/dashboard";
 
   // Redirect if already authenticated
   useEffect(() => {

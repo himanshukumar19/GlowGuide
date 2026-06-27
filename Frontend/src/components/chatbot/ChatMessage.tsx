@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { User, Sparkles } from "lucide-react";
+import { User } from "lucide-react";
 import type { ChatMessage as ChatMessageType } from "@/store/useChatbotStore";
 import { cn } from "@/lib/utils";
+import skincareChemist from "@/assets/skincare_chemist.jpg";
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -18,8 +19,8 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
       className={cn("flex gap-3 items-end", isUser ? "justify-end" : "justify-start")}
     >
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-          <Sparkles className="h-4 w-4 text-primary" />
+        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-primary/20">
+          <img src={skincareChemist} alt="Glowy" className="w-full h-full object-cover" />
         </div>
       )}
 

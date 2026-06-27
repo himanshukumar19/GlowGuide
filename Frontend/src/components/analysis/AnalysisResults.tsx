@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, AlertTriangle, ShieldCheck, Sun, Moon, Sparkles, ShoppingBag, RotateCcw, Heart } from "lucide-react";
 import { products } from "@/data/products";
+import type { Product } from "@/types/product";
 import { Link } from "react-router-dom";
 import { useWishlist } from "@/store/useWishlistStore";
 import { useCart } from "@/store/useCartStore";
@@ -122,7 +123,7 @@ export const AnalysisResults = ({
     .filter((p) => p.skinTypes.some((t) => t.toLowerCase() === formattedType))
     .slice(0, 3); // show top 3 recommendations
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: Product) => {
     addToCart(product);
     toast.success(`${product.name} added to cart!`);
   };

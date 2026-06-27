@@ -21,6 +21,7 @@ interface CartState {
   getCartSubtotal: () => number;
   getCartTax: () => number;
   getShippingCost: () => number;
+  getSubscriptionDiscount: () => number;
   getPromoDiscount: () => number;
   getCartTotal: () => number;
   getItemCount: () => number;

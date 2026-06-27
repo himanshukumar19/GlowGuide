@@ -27,6 +27,7 @@ import skinNormal from "@/assets/skin-normal.png";
 import skincareProducts from "@/assets/skincare-products.png";
 import skincareLifestyle from "@/assets/skincare-lifestyle.png";
 import skinAnalysisTech from "@/assets/skin-analysis-tech.png";
+import skincareDroplet from "@/assets/skincare_droplet.jpg";
 
 const benefits = [
   {
@@ -306,11 +307,18 @@ const Index = () => {
             >
               {/* Decorative floating avatar circles */}
               <motion.div
-                className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-gradient-to-br from-pink-300 to-pink-400 border-2 border-background flex items-center justify-center text-sm font-bold text-white shadow-elevated z-10"
-                animate={{ y: [0, -8, 0], rotate: [0, -5, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+                className="absolute -top-6 -right-6 w-16 h-16 rounded-full overflow-hidden border-2 border-primary bg-background shadow-elevated z-10 group cursor-pointer"
+                animate={{ y: [0, -10, 0], rotate: [0, -6, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+                whileHover={{ scale: 1.15 }}
               >
-                ✨
+                <img src={skincareDroplet} alt="Skincare avatar" className="w-full h-full object-cover" />
+                <span className="absolute bottom-1 right-1 w-3 h-3 rounded-full bg-emerald-400 border border-white animate-pulse" />
+                
+                {/* Tooltip */}
+                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
+                  Glowy Assistant
+                </div>
               </motion.div>
               <motion.div
                 className="absolute -top-8 left-8 w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-amber-400 border-2 border-background flex items-center justify-center text-xs font-bold text-white shadow-elevated z-10"

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, RefreshCw, CheckCircle, AlertTriangle, ChevronRight, RotateCcw } from "lucide-react";
@@ -73,7 +73,7 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
   useEffect(() => {
     startCamera();
     return () => stopCamera();
-  }, []);
+  }, [startCamera]);
 
   // 1. Real-time Optical Motion & Presence Analyzer (runs when camera is active)
   useEffect(() => {
@@ -199,7 +199,7 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
     }
   }, [isCameraActive]);
 
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     setCameraError(null);
     try {
       if (streamRef.current) {
@@ -222,14 +222,15 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch (err: any) {
-      console.warn("Camera access denied or unsupported, enabling demo mode:", err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.warn("Camera access denied or unsupported, enabling demo mode:", message);
       setCameraError(
         "Could not access camera. Enabling interactive simulator to complete analysis."
       );
       setIsCameraActive(false);
     }
-  };
+  }, []);
 
   const stopCamera = () => {
     if (streamRef.current) {

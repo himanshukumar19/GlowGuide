@@ -121,7 +121,7 @@ export default function AdminProductForm() {
         suitableFor: existingProduct.suitableFor,
         concerns: existingProduct.concerns.join(", "),
         badges: (existingProduct.badges ?? []).filter((b) =>
-          badgeOptions.includes(b as any),
+          badgeOptions.includes(b as typeof badgeOptions[number]),
         ),
       });
     }

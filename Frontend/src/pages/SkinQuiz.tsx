@@ -121,8 +121,9 @@ const SkinQuiz = () => {
         setStep("results");
       }, 1500);
 
-    } catch (err: any) {
-      console.error("API Diagnostic failed, calculating offline score:", err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("API Diagnostic failed, calculating offline score:", message);
       
       // Offline fallback: Use the same fallback rules as the backend inside server.ts
       setTimeout(() => {

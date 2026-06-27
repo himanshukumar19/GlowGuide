@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import { useChatbotStore } from "@/store/useChatbotStore";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
+
+import skincareChemist from "@/assets/skincare_chemist.jpg";
 
 export const ChatbotWidget = () => {
   const { isOpen, toggleOpen, messages } = useChatbotStore();
@@ -41,9 +43,12 @@ export const ChatbotWidget = () => {
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                        <Sparkles className="h-7 w-7 text-primary" />
+                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20 shadow-soft mb-4 animate-float">
+                        <img src={skincareChemist} alt="Glowy" className="w-full h-full object-cover" />
                       </div>
+                      <h4 className="font-heading text-base font-bold text-foreground mb-1">
+                        Chat with Glowy
+                      </h4>
                       <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
                         Ask me anything about skincare products, routines, and
                         ingredients!
@@ -71,9 +76,12 @@ export const ChatbotWidget = () => {
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                        <Sparkles className="h-7 w-7 text-primary" />
+                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20 shadow-soft mb-4 animate-float">
+                        <img src={skincareChemist} alt="Glowy" className="w-full h-full object-cover" />
                       </div>
+                      <h4 className="font-heading text-base font-bold text-foreground mb-1">
+                        Chat with Glowy
+                      </h4>
                       <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
                         Ask me anything about skincare products, routines, and
                         ingredients!
@@ -110,10 +118,19 @@ export const ChatbotWidget = () => {
             ease: "easeOut",
           },
         }}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full gradient-primary text-white flex items-center justify-center shadow-elevated"
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full overflow-hidden flex items-center justify-center shadow-elevated bg-card border border-border"
         aria-label={isOpen ? "Close chatbot" : "Open chatbot"}
       >
-        <Sparkles className="h-6 w-6" />
+        {isOpen ? (
+          <div className="w-full h-full flex items-center justify-center bg-primary text-white">
+            <X className="h-6 w-6" />
+          </div>
+        ) : (
+          <div className="relative w-full h-full">
+            <img src={skincareChemist} alt="Glowy Chat" className="w-full h-full object-cover" />
+            <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-background animate-pulse" />
+          </div>
+        )}
       </motion.button>
     </>
   );

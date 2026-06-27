@@ -101,14 +101,14 @@ const Navbar = () => {
             
             {/* Show Quiz link conditionally based on auth */}
             <Link
-              to={isAuthenticated ? "/quiz" : "/login"}
+              to={isAuthenticated ? "/analysis" : "/login"}
               className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive("/quiz")
+                isActive("/analysis")
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
-              Skin Quiz
+              Skin Analysis
             </Link>
           </div>
 
@@ -222,9 +222,9 @@ const Navbar = () => {
                 </div>
               ))}
               
-              <Link to={isAuthenticated ? "/quiz" : "/login"} onClick={() => setIsOpen(false)}>
+              <Link to={isAuthenticated ? "/analysis" : "/login"} onClick={() => setIsOpen(false)}>
                 <Button className="w-full mt-4 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm py-4 rounded-gg-sm shadow-primary">
-                  Take the Skin Quiz
+                  Start Skin Analysis
                 </Button>
               </Link>
             </div>

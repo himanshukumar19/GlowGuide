@@ -102,6 +102,18 @@
     background: var(--gradient-card);
   }
 
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  .gradient-subtle {
+    background: var(--gradient-subtle);
+  }
+
+  .gradient-success {
+    background: var(--gradient-success);
+  }
+
   .shadow-soft {
     box-shadow: var(--shadow-soft);
   }
@@ -112,6 +124,18 @@
 
   .shadow-hover {
     box-shadow: var(--shadow-hover);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .shadow-primary {
+    box-shadow: var(--shadow-primary);
+  }
+
+  .shadow-secondary {
+    box-shadow: var(--shadow-secondary);
   }
 
   .text-gradient {

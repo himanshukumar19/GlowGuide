@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Product, CartItem } from '@/types/product';
+import { useAuthStore } from './useAuthStore';
 
 const PROMO_CODES: Record<string, { discount: number; minOrder: number; freeShipping?: boolean }> = {
   'FIRST10': { discount: 10, minOrder: 0 },
@@ -80,6 +81,11 @@ export const useCartStore = create<CartState>()(
         }
         return subtotal >= 999 ? 0 : 99;
       },
+      getSubscriptionDiscount: () => {
+        const customer = useAuthStore.getState().customer;
+        if (customer?.subscriptionTier !== 'paid') return 0;
+        return Math.round(get().getCartSubtotal() * 0.05);
+      },
       getPromoDiscount: () => {
         const code = get().appliedPromoCode;
         if (!code) return 0;
@@ -92,7 +98,8 @@ export const useCartStore = create<CartState>()(
         const tax = get().getCartTax();
         const shipping = get().getShippingCost();
         const promoDiscount = get().getPromoDiscount();
-        return subtotal + tax + shipping - promoDiscount;
+        const subscriptionDiscount = get().getSubscriptionDiscount();
+        return subtotal + tax + shipping - promoDiscount - subscriptionDiscount;
       },
       getItemCount: () => {
         return get().items.reduce((count, item) => count + item.quantity, 0);

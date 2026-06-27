@@ -4,7 +4,7 @@ import { Sparkles, Heart, Instagram, Twitter, Youtube, Mail } from "lucide-react
 const footerLinks = {
   explore: [
     { label: "Skin Types", path: "/skin-types" },
-    { label: "Skin Quiz", path: "/quiz" },
+    { label: "Skin Analysis", path: "/analysis" },
     { label: "K-Beauty", path: "/korean-skincare" },
     { label: "Diet & Nutrition", path: "/diet" },
   ],

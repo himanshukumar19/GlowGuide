@@ -35,7 +35,7 @@ const NotFound = () => {
                 Go Home
               </Button>
             </Link>
-            <Link to="/quiz">
+            <Link to="/analysis">
               <Button size="lg" variant="outline">
                 <Sparkles className="mr-2 h-4 w-4" />
                 Take the Quiz

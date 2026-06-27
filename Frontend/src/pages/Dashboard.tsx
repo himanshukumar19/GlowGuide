@@ -224,7 +224,7 @@ const Dashboard = () => {
                   ) : (
                     <p className="text-xs text-muted-foreground italic">No analysis score</p>
                   )}
-                  <Link to="/quiz" className="mt-4 w-full">
+                  <Link to="/analysis" className="mt-4 w-full">
                     <Button className="w-full text-xs font-semibold uppercase tracking-wider bg-primary hover:bg-primary-hover text-primary-foreground rounded-gg-sm">
                       New Diagnosis Scan
                       <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
@@ -289,7 +289,7 @@ const Dashboard = () => {
                   <p className="text-muted-foreground text-xs max-w-sm mx-auto mb-4">
                     You need to complete at least 2 skin diagnoses before we can calculate health scores and tracking trends.
                   </p>
-                  <Link to="/quiz">
+                  <Link to="/analysis">
                     <Button variant="outline" className="border-border rounded-gg-sm text-xs font-bold uppercase tracking-wider py-4">
                       Complete Step 2 Scan
                     </Button>

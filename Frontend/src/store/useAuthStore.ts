@@ -1,16 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export interface Customer {
-  id: string;
-  email: string;
-  name: string;
-  phone?: string;
-  avatar?: string;
-  subscriptionTier: "free" | "paid";
-  subscriptionEndsAt?: string;
-  createdAt: string;
-}
+import type { Customer } from "@/types/customer";
 
 const MOCK_USERS = [
   {

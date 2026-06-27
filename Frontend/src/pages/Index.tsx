@@ -154,9 +154,9 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              <Link to="/quiz">
+              <Link to="/analysis">
                 <Button size="lg" className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground shadow-primary rounded-gg-sm transition-all text-base px-8 border-0">
-                  Take the Skin Quiz
+                  Start Skin Analysis
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -340,7 +340,7 @@ const Index = () => {
                   </span>
                 ))}
               </div>
-              <Link to="/quiz">
+              <Link to="/analysis">
                 <Button size="lg" className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground text-base px-8 shadow-primary rounded-gg-sm border-0">
                   Start the Quiz Now
                   <ArrowRight className="ml-2 h-5 w-5" />

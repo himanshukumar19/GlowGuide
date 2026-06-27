@@ -380,9 +380,9 @@ const AboutSkincare = () => {
                 Take our skin type quiz to get personalized recommendations for your unique skin.
               </p>
               <div className="flex flex-wrap gap-4 justify-center">
-                <Link to="/quiz">
+                <Link to="/analysis">
                   <Button size="lg" className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground shadow-primary rounded-gg-sm border-0">
-                    Take the Skin Quiz
+                    Start Skin Analysis
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>

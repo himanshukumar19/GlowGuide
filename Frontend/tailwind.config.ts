@@ -80,6 +80,10 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "gg-sm": "0.5rem",
+        "gg": "1.0rem",
+        "gg-lg": "1.5rem",
+        "gg-xl": "2.0rem",
       },
       keyframes: {
         "accordion-down": {

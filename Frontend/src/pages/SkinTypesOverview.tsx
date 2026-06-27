@@ -120,7 +120,7 @@ const SkinTypesOverview = () => {
                   <p className="text-muted-foreground text-sm">Take our quick quiz to find out!</p>
                 </div>
               </div>
-              <Link to="/quiz">
+              <Link to="/analysis">
                 <Button className="gradient-primary border-0 text-primary-foreground">
                   Take the Quiz
                   <ArrowRight className="ml-2 h-4 w-4" />

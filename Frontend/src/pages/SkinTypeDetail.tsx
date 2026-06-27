@@ -745,7 +745,7 @@ const SkinTypeDetail = () => {
       <section className="py-8 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap gap-4">
-            <Link to="/quiz">
+            <Link to="/analysis">
               <Button variant="outline" className="gap-2">
                 <Sparkles className="h-4 w-4" />
                 Retake Quiz

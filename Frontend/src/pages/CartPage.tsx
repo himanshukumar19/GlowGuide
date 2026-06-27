@@ -23,7 +23,8 @@ const CartPage = () => {
     appliedPromoCode,
     applyPromoCode,
     removePromoCode,
-    getPromoDiscount
+    getPromoDiscount,
+    getSubscriptionDiscount
   } = useCart();
   const { addToWishlist } = useWishlist();
   const [promoInput, setPromoInput] = useState('');
@@ -228,6 +229,12 @@ const CartPage = () => {
                   <div className="flex justify-between text-green-500">
                     <span>Promo Discount</span>
                     <span>-{formatPrice(getPromoDiscount())}</span>
+                  </div>
+                )}
+                {getSubscriptionDiscount() > 0 && (
+                  <div className="flex justify-between text-primary">
+                    <span>Pro Discount (5%)</span>
+                    <span>-{formatPrice(getSubscriptionDiscount())}</span>
                   </div>
                 )}
               </div>

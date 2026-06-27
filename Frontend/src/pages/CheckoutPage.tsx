@@ -32,6 +32,7 @@ const CheckoutPage = () => {
     getShippingCost, 
     getCartTotal,
     getPromoDiscount,
+    getSubscriptionDiscount,
     appliedPromoCode,
     clearCart
   } = useCart();
@@ -92,6 +93,7 @@ const CheckoutPage = () => {
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2500));
 
+    const subDiscount = getSubscriptionDiscount();
     const newOrder: Order = {
       orderId: generateOrderId(),
       items: items,
@@ -99,7 +101,7 @@ const CheckoutPage = () => {
       subtotal: getCartSubtotal(),
       tax: getCartTax(),
       shipping: getShippingCost(),
-      discount: getPromoDiscount(),
+      discount: getPromoDiscount() + subDiscount,
       total: getCartTotal(),
       status: 'confirmed',
       paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' : 'Card Payment',
@@ -493,8 +495,14 @@ const CheckoutPage = () => {
                       </div>
                       {order.discount > 0 && (
                         <div className="flex justify-between text-green-600">
-                          <span>Discount</span>
+                          <span>Promo Discount</span>
                           <span>-{formatPrice(order.discount)}</span>
+                        </div>
+                      )}
+                      {getSubscriptionDiscount() > 0 && (
+                        <div className="flex justify-between text-primary">
+                          <span>Pro Discount (5%)</span>
+                          <span>-{formatPrice(getSubscriptionDiscount())}</span>
                         </div>
                       )}
                       <Separator />
@@ -564,6 +572,12 @@ const CheckoutPage = () => {
                     <div className="flex justify-between text-green-600">
                       <span>Promo ({appliedPromoCode})</span>
                       <span>-{formatPrice(getPromoDiscount())}</span>
+                    </div>
+                  )}
+                  {getSubscriptionDiscount() > 0 && (
+                    <div className="flex justify-between text-primary">
+                      <span>Pro Discount (5%)</span>
+                      <span>-{formatPrice(getSubscriptionDiscount())}</span>
                     </div>
                   )}
                 </div>

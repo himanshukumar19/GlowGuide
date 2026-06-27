@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useTheme } from "@/context/ThemeContext";
+import { useTheme } from "@/store/useThemeStore";
 import { Droplets, Heart } from "lucide-react";
 
 const ThemeToggle = () => {

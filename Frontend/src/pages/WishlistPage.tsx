@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
-import { useWishlist } from '@/context/WishlistContext';
-import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/store/useWishlistStore';
+import { useCart } from '@/store/useCartStore';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';

@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, AlertTriangle, ShieldCheck, Sun, Moon, Sparkles, ShoppingBag, RotateCcw, Heart } from "lucide-react";
 import { products } from "@/data/products";
 import { Link } from "react-router-dom";
-import { useWishlist } from "@/context/WishlistContext";
-import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/store/useWishlistStore";
+import { useCart } from "@/store/useCartStore";
 import { toast } from "sonner";
 
 interface AnalysisResultsProps {

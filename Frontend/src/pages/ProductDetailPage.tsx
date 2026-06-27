@@ -20,8 +20,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { getProductById, getRelatedProducts, generateReviews, categoryLabels } from '@/data/products';
-import { useCart } from '@/context/CartContext';
-import { useWishlist } from '@/context/WishlistContext';
+import { useCart } from '@/store/useCartStore';
+import { useWishlist } from '@/store/useWishlistStore';
 import ProductCard from '@/components/shop/ProductCard';
 import { toast } from 'sonner';
 

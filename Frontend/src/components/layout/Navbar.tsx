@@ -3,9 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Sparkles, ChevronDown, ShoppingCart, Heart, User, LogOut, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/context/CartContext";
-import { useWishlist } from "@/context/WishlistContext";
-import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/store/useCartStore";
+import { useWishlist } from "@/store/useWishlistStore";
+import { useAuth } from "@/store/useAuthStore";
 
 const navItems = [
   { label: "Home", path: "/" },

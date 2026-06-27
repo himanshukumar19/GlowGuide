@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Layout from "@/components/layout/Layout";
-import { useTheme } from "@/context/ThemeContext";
+import { useTheme } from "@/store/useThemeStore";
 import heroPink from "@/assets/hero-pink.jpg";
 import heroTeal from "@/assets/hero-teal.jpg";
 

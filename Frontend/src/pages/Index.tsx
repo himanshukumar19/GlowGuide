@@ -101,18 +101,69 @@ const Index = () => {
     <Layout>
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-background">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 bg-primary/5">
+        {/* Multi-layer background */}
+        <div className="absolute inset-0">
+          {/* Base gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5" />
+          
+          {/* Animated mesh pattern */}
+          <div className="absolute inset-0 opacity-[0.03]">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `radial-gradient(circle at 2px 2px, hsl(var(--primary)) 1px, transparent 0)`,
+              backgroundSize: '40px 40px'
+            }} />
+          </div>
+          
+          {/* Hero image overlay */}
           <motion.img
             key={theme}
             src={heroImage}
             alt=""
-            className="w-full h-full object-cover opacity-20 filter grayscale sepia-[0.15] contrast-110 mix-blend-luminosity"
+            className="w-full h-full object-cover opacity-20 mix-blend-overlay"
             initial={{ opacity: 0, scale: 1.1 }}
             animate={{ opacity: 0.2, scale: 1 }}
-            transition={{ duration: 1 }}
+            transition={{ duration: 1.5 }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-background/30 to-background" />
+          
+          {/* Animated wavy decorative elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            {/* Wave layer 1 - deep */}
+            <motion.svg 
+              viewBox="0 0 1440 800" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="absolute inset-0 w-full h-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1 }}
+            >
+              <path d="M0 300C240 200 480 400 720 300C960 200 1200 400 1440 300V0H0V300Z" fill="url(#heroWave1)" fillOpacity="0.2" />
+              <path d="M0 450C240 350 480 550 720 450C960 350 1200 550 1440 450V0H0V450Z" fill="url(#heroWave2)" fillOpacity="0.12" />
+              <path d="M0 600C240 500 480 700 720 600C960 500 1200 700 1440 600V0H0V600Z" fill="url(#heroWave3)" fillOpacity="0.06" />
+              <defs>
+                <linearGradient id="heroWave1" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#355245" />
+                  <stop offset="0.5" stopColor="#75BFA2" />
+                  <stop offset="1" stopColor="#355245" stopOpacity="0.4" />
+                </linearGradient>
+                <linearGradient id="heroWave2" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#75BFA2" stopOpacity="0.8" />
+                  <stop offset="0.5" stopColor="#355245" stopOpacity="0.5" />
+                  <stop offset="1" stopColor="#9BD9BF" stopOpacity="0.3" />
+                </linearGradient>
+                <linearGradient id="heroWave3" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#9BD9BF" stopOpacity="0.6" />
+                  <stop offset="1" stopColor="#75BFA2" stopOpacity="0.2" />
+                </linearGradient>
+              </defs>
+            </motion.svg>
+          </div>
+          
+          {/* Radial glow behind text */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/10 rounded-full blur-3xl" />
+          
+          {/* Soft gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/50 to-transparent" />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
@@ -122,14 +173,14 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+              <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/15 text-primary text-sm font-semibold mb-8 shadow-soft border border-primary/10 backdrop-blur-sm">
                 <Sparkles className="h-4 w-4" />
                 Your Complete Skincare Guide
               </span>
             </motion.div>
 
             <motion.h1
-              className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6"
+              className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1 }}
@@ -139,7 +190,7 @@ const Index = () => {
             </motion.h1>
 
             <motion.p
-              className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
+              className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -161,7 +212,7 @@ const Index = () => {
                 </Button>
               </Link>
               <Link to="/about">
-                <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 text-base px-8">
+                <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 text-base px-8 backdrop-blur-sm">
                   Learn About Skincare
                 </Button>
               </Link>
@@ -169,22 +220,15 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Floating elements */}
-        <motion.div
-          className="absolute bottom-10 left-10 hidden lg:block"
-          animate={{ y: [0, -10, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <div className="w-20 h-20 rounded-full gradient-primary opacity-20 blur-xl" />
-        </motion.div>
-        <motion.div
-          className="absolute top-40 right-20 hidden lg:block"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <div className="w-32 h-32 rounded-full gradient-primary opacity-10 blur-2xl" />
-        </motion.div>
+        {/* Floating decorative elements */}
       </section>
+
+      {/* Hero bottom separator */}
+      <div className="relative h-24 -mt-24 z-10 pointer-events-none">
+        <svg viewBox="0 0 1440 96" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute bottom-0 w-full h-full">
+          <path d="M0 96H1440V48C1440 48 1200 0 720 48C240 96 0 48 0 48V96Z" fill="hsl(var(--background))" />
+        </svg>
+      </div>
 
       {/* Features Section */}
       <section className="py-16 bg-muted/30">

@@ -13,6 +13,7 @@ import {
   Users,
   BookOpen,
   Lightbulb,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -99,6 +100,18 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
+const headingWords = ["Discover", "Your", "Path", "to", "Healthy,", "Glowing", "Skin"];
+
+const wordVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+};
+
+const staggerWords = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.06 } },
+};
+
 const Index = () => {
 
   return (
@@ -137,6 +150,33 @@ const Index = () => {
           <Leaf className="h-8 w-8" />
         </motion.div>
 
+        {/* Floating particles */}
+        {[
+          { size: 100, color: "primary", top: "10%", left: "10%", dur: 8, del: 0 },
+          { size: 60, color: "success", top: "25%", right: "20%", dur: 7, del: 0.5 },
+          { size: 80, color: "primary", top: "60%", left: "5%", dur: 10, del: 1 },
+          { size: 50, color: "success", top: "15%", right: "35%", dur: 6, del: 1.5 },
+          { size: 70, color: "primary", top: "70%", right: "15%", dur: 9, del: 0.8 },
+          { size: 40, color: "success", top: "45%", left: "30%", dur: 7.5, del: 2 },
+        ].map((p, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              width: p.size,
+              height: p.size,
+              top: p.top,
+              left: "left" in p ? p.left : undefined,
+              right: "right" in p ? p.right : undefined,
+              background: p.color === "primary" ? "hsl(var(--primary))" : "hsl(var(--success))",
+              opacity: 0.12,
+              filter: "blur(40px)",
+            }}
+            animate={{ x: [0, 20, -10, 0], y: [0, -15, 10, 0] }}
+            transition={{ duration: p.dur, repeat: Infinity, delay: p.del, ease: "easeInOut" }}
+          />
+        ))}
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
             {/* Left: Text Content */}
@@ -153,15 +193,22 @@ const Index = () => {
                 </span>
               </motion.div>
 
-              {/* Heading */}
+              {/* Heading — staggered word reveal */}
               <motion.h1
                 className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mt-8 mb-6 leading-[1.08] tracking-tight"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
+                variants={staggerWords}
+                initial="hidden"
+                animate="visible"
               >
-                Discover Your Path to{" "}
-                <span className="text-gradient">Healthy, Glowing Skin</span>
+                {headingWords.map((word, i) => (
+                  <motion.span
+                    key={i}
+                    className={`inline-block mr-[0.3em] last:mr-0 ${i >= 4 ? "text-gradient" : ""}`}
+                    variants={wordVariants}
+                  >
+                    {word}
+                  </motion.span>
+                ))}
               </motion.h1>
 
               {/* Subtitle */}
@@ -178,20 +225,30 @@ const Index = () => {
               {/* CTA Buttons */}
               <motion.div
                 className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.9 }}
               >
                 <Link to="/analysis">
-                  <Button size="lg" className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground shadow-primary rounded-gg-sm transition-all text-base px-8 border-0 w-full sm:w-auto group">
-                    Start Skin Analysis
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                  </Button>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <Button size="lg" className="bg-primary hover:bg-primary-hover text-primary-foreground shadow-primary rounded-gg-sm transition-all text-base px-8 border-0 w-full sm:w-auto group cursor-pointer">
+                      Start Skin Analysis
+                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </motion.div>
                 </Link>
                 <Link to="/about">
-                  <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 text-base px-8 backdrop-blur-sm w-full sm:w-auto">
-                    Learn About Skincare
-                  </Button>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 text-base px-8 backdrop-blur-sm w-full sm:w-auto cursor-pointer">
+                      Learn About Skincare
+                    </Button>
+                  </motion.div>
                 </Link>
               </motion.div>
 
@@ -204,22 +261,35 @@ const Index = () => {
               >
                 <div className="flex -space-x-2">
                   {[...Array(4)].map((_, i) => (
-                    <div
+                    <motion.div
                       key={i}
                       className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/30 to-success/30 border-2 border-background flex items-center justify-center text-[10px] font-bold text-primary"
+                      animate={{ y: [0, -5, 0] }}
+                      transition={{ duration: 3 + i * 0.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
                     >
                       {String.fromCharCode(65 + i)}
-                    </div>
+                    </motion.div>
                   ))}
-                  <div className="w-9 h-9 rounded-full bg-primary border-2 border-background flex items-center justify-center text-xs text-primary-foreground font-bold">
+                  <motion.div
+                    className="w-9 h-9 rounded-full bg-primary border-2 border-background flex items-center justify-center text-xs text-primary-foreground font-bold"
+                    animate={{ scale: [1, 1.15, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
                     +
-                  </div>
+                  </motion.div>
                 </div>
                 <div className="text-left">
                   <p className="text-sm font-semibold text-foreground">Trusted by 10K+ Customers</p>
                   <div className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      <motion.div
+                        key={i}
+                        initial={{ scale: 0, color: "#D1D5DB" }}
+                        animate={{ scale: 1, color: "#FBBF24" }}
+                        transition={{ delay: 1.2 + i * 0.1, type: "spring", stiffness: 300 }}
+                      >
+                        <Star className="h-3 w-3 fill-current text-amber-400" />
+                      </motion.div>
                     ))}
                     <span className="text-xs text-muted-foreground ml-1.5">4.9/5</span>
                   </div>
@@ -229,12 +299,60 @@ const Index = () => {
 
             {/* Right: Hero Image */}
             <motion.div
-              className="flex-1 w-full max-w-xl lg:max-w-none"
+              className="flex-1 w-full max-w-xl lg:max-w-none relative"
               initial={{ opacity: 0, x: 80 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, delay: 0.4 }}
             >
-              <div className="relative">
+              {/* Decorative floating avatar circles */}
+              <motion.div
+                className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-gradient-to-br from-pink-300 to-pink-400 border-2 border-background flex items-center justify-center text-sm font-bold text-white shadow-elevated z-10"
+                animate={{ y: [0, -8, 0], rotate: [0, -5, 0] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+              >
+                ✨
+              </motion.div>
+              <motion.div
+                className="absolute -top-8 left-8 w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-amber-400 border-2 border-background flex items-center justify-center text-xs font-bold text-white shadow-elevated z-10"
+                animate={{ y: [0, -10, 0], rotate: [0, 8, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+              >
+                😊
+              </motion.div>
+              <motion.div
+                className="absolute bottom-12 -right-6 w-9 h-9 rounded-full bg-gradient-to-br from-sky-300 to-sky-400 border-2 border-background flex items-center justify-center text-xs font-bold text-white shadow-elevated z-10"
+                animate={{ y: [0, -6, 0], rotate: [0, -10, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+              >
+                🌸
+              </motion.div>
+              <motion.div
+                className="absolute -bottom-6 right-16 w-8 h-8 rounded-full bg-gradient-to-br from-violet-300 to-violet-400 border-2 border-background flex items-center justify-center text-[10px] font-bold text-white shadow-elevated z-10"
+                animate={{ y: [0, -7, 0], rotate: [0, 6, 0] }}
+                transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+              >
+                💛
+              </motion.div>
+              <motion.div
+                className="absolute top-1/4 -left-5 w-7 h-7 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-400 border-2 border-background flex items-center justify-center text-[8px] font-bold text-white shadow-elevated z-10"
+                animate={{ y: [0, -9, 0], rotate: [0, -7, 0] }}
+                transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+              >
+                💚
+              </motion.div>
+              <motion.div
+                className="absolute top-1/2 -right-8 w-6 h-6 rounded-full bg-gradient-to-br from-rose-300 to-rose-400 border-2 border-background flex items-center justify-center text-[7px] font-bold text-white shadow-elevated z-10"
+                animate={{ y: [0, -5, 0], rotate: [0, 12, 0] }}
+                transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+              >
+                ❤️
+              </motion.div>
+
+              <motion.div
+                className="relative"
+                animate={{ y: [0, -12, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              >
                 {/* Pulsing glow behind image */}
                 <motion.div
                   className="absolute -inset-12 bg-gradient-to-tr from-primary/20 via-success/20 to-transparent rounded-[5rem] blur-3xl"
@@ -268,7 +386,7 @@ const Index = () => {
                     <p className="text-xs text-muted-foreground whitespace-nowrap">Satisfaction Rate</p>
                   </div>
                 </motion.div>
-              </div>
+              </motion.div>
             </motion.div>
           </div>
         </div>
@@ -281,13 +399,12 @@ const Index = () => {
           transition={{ delay: 1.5 }}
         >
           <span className="text-[10px] font-medium tracking-[0.2em] uppercase">Scroll</span>
-          <div className="w-5 h-8 rounded-full border-2 border-muted-foreground/20 flex items-start justify-center p-1">
-            <motion.div
-              className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40"
-              animate={{ y: [0, 12, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </div>
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <ChevronDown className="h-5 w-5" />
+          </motion.div>
         </motion.div>
       </section>
 
@@ -309,12 +426,15 @@ const Index = () => {
             viewport={{ once: true }}
           >
             {features.map((feature, index) => (
-              <motion.div key={index} variants={itemVariants}>
-                <Card className="border-0 shadow-card hover-lift gradient-card h-full">
+              <motion.div key={index} variants={itemVariants} whileHover={{ y: -6, boxShadow: "0 20px 40px rgba(0,0,0,0.10)" }}>
+                <Card className="border-0 shadow-card gradient-card h-full">
                   <CardContent className="p-6 text-center">
-                    <div className="w-14 h-14 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center">
+                    <motion.div
+                      className="w-14 h-14 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center"
+                      whileHover={{ scale: 1.1, rotate: -5 }}
+                    >
                       <feature.icon className="h-7 w-7 text-primary-foreground" />
-                    </div>
+                    </motion.div>
                     <h3 className="font-heading text-lg font-semibold mb-2">{feature.title}</h3>
                     <p className="text-muted-foreground text-sm">{feature.description}</p>
                   </CardContent>
@@ -367,12 +487,15 @@ const Index = () => {
               viewport={{ once: true }}
             >
               {benefits.slice(0, 4).map((benefit, index) => (
-                <motion.div key={index} variants={itemVariants}>
-                  <Card className="border border-border/50 shadow-soft hover-lift h-full">
+                <motion.div key={index} variants={itemVariants} whileHover={{ y: -6, borderColor: "hsl(var(--success))", boxShadow: "0 16px 40px rgba(45,106,79,0.12)" }}>
+                  <Card className="border border-border/50 shadow-soft h-full transition-colors">
                     <CardContent className="p-5">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                      <motion.div
+                        className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3"
+                        whileHover={{ scale: 1.15, rotate: -8 }}
+                      >
                         <benefit.icon className="h-5 w-5 text-primary" />
-                      </div>
+                      </motion.div>
                       <h3 className="font-heading font-semibold mb-1">{benefit.title}</h3>
                       <p className="text-muted-foreground text-sm">{benefit.description}</p>
                     </CardContent>
@@ -410,9 +533,9 @@ const Index = () => {
             viewport={{ once: true }}
           >
             {skinTypes.map((skin, index) => (
-              <motion.div key={index} variants={itemVariants}>
+              <motion.div key={index} variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }}>
                 <Link to={`/skin-types/${skin.type.toLowerCase()}`}>
-                  <Card className="border-0 shadow-card hover-lift cursor-pointer overflow-hidden group">
+                  <Card className="border-0 shadow-card cursor-pointer overflow-hidden group">
                     <div className="relative aspect-[3/4] overflow-hidden">
                       <img
                         src={skin.image}
@@ -493,10 +616,26 @@ const Index = () => {
                 ))}
               </div>
               <Link to="/analysis">
-                <Button size="lg" className="bg-white hover:bg-white/90 text-primary active:scale-95 text-base px-8 rounded-gg-sm border-0 shadow-primary">
-                  Start the Quiz Now
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+                <motion.div
+                  className="relative inline-block"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <Button size="lg" className="bg-white hover:bg-white/90 text-primary active:scale-95 text-base px-8 rounded-gg-sm border-0 shadow-primary relative overflow-hidden">
+                    <span className="relative z-10 flex items-center gap-2">
+                      Start the Quiz Now
+                      <ArrowRight className="h-5 w-5" />
+                    </span>
+                    <motion.div
+                      className="absolute inset-0 pointer-events-none"
+                      animate={{ x: ["-100%", "200%"] }}
+                      transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 1 }}
+                      style={{
+                        background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
+                      }}
+                    />
+                  </Button>
+                </motion.div>
               </Link>
             </motion.div>
           </div>
@@ -520,7 +659,7 @@ const Index = () => {
                 A consistent skincare routine does more than just improve appearance—it 
                 supports your overall health and wellbeing.
               </p>
-              <ul className="space-y-4">
+              <motion.ul className="space-y-4" variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
                 {[
                   "Protects against environmental damage and pollutants",
                   "Prevents premature aging and maintains elasticity",
@@ -528,17 +667,19 @@ const Index = () => {
                   "Addresses specific concerns like acne, dryness, and sensitivity",
                   "Supports skin's natural healing and renewal process",
                 ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
+                  <motion.li key={i} className="flex items-start gap-3" variants={itemVariants}>
                     <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                     <span className="text-foreground">{item}</span>
-                  </li>
+                  </motion.li>
                 ))}
-              </ul>
+              </motion.ul>
               <Link to="/about" className="inline-block mt-8">
-                <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300">
-                  Learn More
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 cursor-pointer">
+                    Learn More
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </motion.div>
               </Link>
             </motion.div>
 
@@ -547,13 +688,17 @@ const Index = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <div className="rounded-2xl overflow-hidden shadow-card">
+              <motion.div
+                className="rounded-2xl overflow-hidden shadow-card"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+              >
                 <img
                   src={skincareLifestyle}
                   alt="Skincare routine"
                   className="w-full h-full object-cover"
                 />
-              </div>
+              </motion.div>
             </motion.div>
           </div>
         </div>

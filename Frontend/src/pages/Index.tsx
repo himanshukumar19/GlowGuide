@@ -17,9 +17,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Layout from "@/components/layout/Layout";
-import { useTheme } from "@/store/useThemeStore";
-import heroPink from "@/assets/hero-pink.jpg";
-import heroTeal from "@/assets/hero-teal.jpg";
+import heroBg from "@/assets/hero-background.png";
+import skinOily from "@/assets/skin-oily.png";
+import skinDry from "@/assets/skin-dry.png";
+import skinCombination from "@/assets/skin-combination.png";
+import skinSensitive from "@/assets/skin-sensitive.png";
+import skinNormal from "@/assets/skin-normal.png";
+import skincareProducts from "@/assets/skincare-products.png";
+import skincareLifestyle from "@/assets/skincare-lifestyle.png";
+import skinAnalysisTech from "@/assets/skin-analysis-tech.png";
 
 const benefits = [
   {
@@ -73,11 +79,11 @@ const features = [
 ];
 
 const skinTypes = [
-  { type: "Oily", emoji: "💧", color: "from-blue-100 to-blue-200" },
-  { type: "Dry", emoji: "🏜️", color: "from-amber-100 to-amber-200" },
-  { type: "Combination", emoji: "⚖️", color: "from-green-100 to-green-200" },
-  { type: "Sensitive", emoji: "🌸", color: "from-pink-100 to-pink-200" },
-  { type: "Normal", emoji: "✨", color: "from-purple-100 to-purple-200" },
+  { type: "Oily", image: skinOily },
+  { type: "Dry", image: skinDry },
+  { type: "Combination", image: skinCombination },
+  { type: "Sensitive", image: skinSensitive },
+  { type: "Normal", image: skinNormal },
 ];
 
 const containerVariants = {
@@ -94,128 +100,83 @@ const itemVariants = {
 };
 
 const Index = () => {
-  const { theme } = useTheme();
-  const heroImage = theme === "pink" ? heroPink : heroTeal;
 
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center overflow-hidden bg-primary/10">
-        {/* Full-width background - no container constraints */}
-        <div className="absolute inset-0 -left-[50vw] -right-[50vw] -top-[50vh] -bottom-[50vh] w-[200vw] h-[200vh]">
-          {/* Base gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5" />
-          
-          {/* Animated mesh pattern */}
-          <div className="absolute inset-0 opacity-[0.03]">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `radial-gradient(circle at 2px 2px, hsl(var(--primary)) 1px, transparent 0)`,
-              backgroundSize: '40px 40px'
-            }} />
-          </div>
-          
-          {/* Hero image overlay */}
-          <motion.img
-            key={theme}
-            src={heroImage}
-            alt=""
-            className="w-full h-full object-cover opacity-20 mix-blend-overlay"
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 0.2, scale: 1 }}
-            transition={{ duration: 1.5 }}
-          />
-          
-          {/* Animated wavy decorative elements */}
-          <div className="absolute inset-0 overflow-hidden">
-            {/* Wave layer 1 - deep */}
-            <motion.svg 
-              viewBox="0 0 1440 800" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="absolute inset-0 w-full h-full"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1 }}
-            >
-              <path d="M0 300C240 200 480 400 720 300C960 200 1200 400 1440 300V0H0V300Z" fill="url(#heroWave1)" fillOpacity="0.2" />
-              <path d="M0 450C240 350 480 550 720 450C960 350 1200 550 1440 450V0H0V450Z" fill="url(#heroWave2)" fillOpacity="0.12" />
-              <path d="M0 600C240 500 480 700 720 600C960 500 1200 700 1440 600V0H0V600Z" fill="url(#heroWave3)" fillOpacity="0.06" />
-              <defs>
-                <linearGradient id="heroWave1" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#355245" />
-                  <stop offset="0.5" stopColor="#75BFA2" />
-                  <stop offset="1" stopColor="#355245" stopOpacity="0.4" />
-                </linearGradient>
-                <linearGradient id="heroWave2" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#75BFA2" stopOpacity="0.8" />
-                  <stop offset="0.5" stopColor="#355245" stopOpacity="0.5" />
-                  <stop offset="1" stopColor="#9BD9BF" stopOpacity="0.3" />
-                </linearGradient>
-                <linearGradient id="heroWave3" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#9BD9BF" stopOpacity="0.6" />
-                  <stop offset="1" stopColor="#75BFA2" stopOpacity="0.2" />
-                </linearGradient>
-              </defs>
-            </motion.svg>
-          </div>
-          
-          {/* Radial glow behind text */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/10 rounded-full blur-3xl" />
-          
-          {/* Soft gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/50 to-transparent" />
-        </div>
+      <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-primary/[0.04] via-background to-primary/[0.02]">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+            {/* Left: Text Content */}
+            <div className="flex-1 text-center lg:text-left">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-8 shadow-soft border border-primary/10 backdrop-blur-sm">
+                  <Sparkles className="h-4 w-4" />
+                  Your Complete Skincare Guide
+                </span>
+              </motion.div>
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
+              <motion.h1
+                className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1 }}
+              >
+                Discover Your Path to{" "}
+                <span className="text-gradient">Healthy, Glowing Skin</span>
+              </motion.h1>
+
+              <motion.p
+                className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                Expert skincare education for every skin type, age, and concern. 
+                Build personalized routines backed by science and dermatologist insights.
+              </motion.p>
+
+              <motion.div
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              >
+                <Link to="/analysis">
+                  <Button size="lg" className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground shadow-primary rounded-gg-sm transition-all text-base px-8 border-0 w-full sm:w-auto">
+                    Start Skin Analysis
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/about">
+                  <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 text-base px-8 backdrop-blur-sm w-full sm:w-auto">
+                    Learn About Skincare
+                  </Button>
+                </Link>
+              </motion.div>
+            </div>
+
+            {/* Right: Hero Image */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              className="flex-1 w-full max-w-lg lg:max-w-none"
+              initial={{ opacity: 0, x: 60 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1, delay: 0.3 }}
             >
-              <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/15 text-primary text-sm font-semibold mb-8 shadow-soft border border-primary/10 backdrop-blur-sm">
-                <Sparkles className="h-4 w-4" />
-                Your Complete Skincare Guide
-              </span>
-            </motion.div>
-
-            <motion.h1
-              className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
-            >
-              Discover Your Path to{" "}
-              <span className="text-gradient">Healthy, Glowing Skin</span>
-            </motion.h1>
-
-            <motion.p
-              className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              Expert skincare education for every skin type, age, and concern. 
-              Build personalized routines backed by science and dermatologist insights.
-            </motion.p>
-
-            <motion.div
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-            >
-              <Link to="/analysis">
-                <Button size="lg" className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground shadow-primary rounded-gg-sm transition-all text-base px-8 border-0">
-                  Start Skin Analysis
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/about">
-                <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 text-base px-8 backdrop-blur-sm">
-                  Learn About Skincare
-                </Button>
-              </Link>
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 via-primary/5 to-transparent rounded-[2rem] blur-xl" />
+                <div className="relative rounded-2xl overflow-hidden shadow-elevated">
+                  <img
+                    src={heroBg}
+                    alt="Glowing healthy skin"
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
@@ -259,7 +220,7 @@ const Index = () => {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <motion.div
-            className="max-w-3xl mx-auto text-center mb-16"
+            className="max-w-3xl mx-auto text-center mb-12"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -273,27 +234,44 @@ const Index = () => {
             </p>
           </motion.div>
 
-          <motion.div
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {benefits.map((benefit, index) => (
-              <motion.div key={index} variants={itemVariants}>
-                <Card className="border border-border/50 shadow-soft hover-lift h-full">
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                      <benefit.icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <h3 className="font-heading text-lg font-semibold mb-2">{benefit.title}</h3>
-                    <p className="text-muted-foreground text-sm">{benefit.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
+          <div className="grid lg:grid-cols-5 gap-6 items-start">
+            <motion.div
+              className="lg:col-span-2"
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="rounded-2xl overflow-hidden shadow-card">
+                <img
+                  src={skincareProducts}
+                  alt="GlowGuide Skincare Products"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="lg:col-span-3 grid sm:grid-cols-2 gap-4"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              {benefits.slice(0, 4).map((benefit, index) => (
+                <motion.div key={index} variants={itemVariants}>
+                  <Card className="border border-border/50 shadow-soft hover-lift h-full">
+                    <CardContent className="p-5">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                        <benefit.icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <h3 className="font-heading font-semibold mb-1">{benefit.title}</h3>
+                      <p className="text-muted-foreground text-sm">{benefit.description}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -326,10 +304,16 @@ const Index = () => {
               <motion.div key={index} variants={itemVariants}>
                 <Link to={`/skin-types/${skin.type.toLowerCase()}`}>
                   <Card className="border-0 shadow-card hover-lift cursor-pointer overflow-hidden group">
-                    <CardContent className={`p-6 text-center bg-gradient-to-br ${skin.color} group-hover:scale-105 transition-transform`}>
-                      <span className="text-4xl mb-3 block">{skin.emoji}</span>
-                      <h3 className="font-heading font-semibold text-foreground">{skin.type}</h3>
-                    </CardContent>
+                    <div className="relative aspect-[3/4] overflow-hidden">
+                      <img
+                        src={skin.image}
+                        alt={skin.type}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12">
+                        <h3 className="font-heading font-semibold text-white text-lg">{skin.type}</h3>
+                      </div>
+                    </div>
                   </Card>
                 </Link>
               </motion.div>
@@ -355,41 +339,58 @@ const Index = () => {
       {/* Quiz CTA Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <motion.div
-            className="max-w-4xl mx-auto rounded-3xl gradient-primary p-8 md:p-12 shadow-card relative overflow-hidden"
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-          >
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-white/10 translate-y-1/2 -translate-x-1/2" />
+          <div className="grid lg:grid-cols-2 gap-12 items-center rounded-3xl bg-gradient-to-br from-primary to-primary/80 p-8 md:p-12 shadow-card relative overflow-hidden">
+            {/* Decorative background */}
+            <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/[0.06] -translate-y-1/2 translate-x-1/3" />
+            <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-white/[0.04] translate-y-1/2 -translate-x-1/3" />
 
-            <div className="relative z-10 text-center">
-              <Sparkles className="h-12 w-12 mx-auto mb-6 text-primary-foreground" />
+            {/* Left: Tech Mockup */}
+            <motion.div
+              className="relative z-10 order-2 lg:order-1"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="rounded-2xl overflow-hidden shadow-elevated border border-white/10">
+                <img
+                  src={skinAnalysisTech}
+                  alt="Skin Analysis App"
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+            </motion.div>
+
+            {/* Right: CTA Content */}
+            <motion.div
+              className="relative z-10 order-1 lg:order-2 text-center lg:text-left"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <Sparkles className="h-10 w-10 text-primary-foreground/80 mb-6 mx-auto lg:mx-0" />
               <h2 className="font-heading text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
                 Discover Your Skin Type
               </h2>
-              <p className="text-primary-foreground/90 text-lg mb-8 max-w-2xl mx-auto">
+              <p className="text-primary-foreground/80 text-lg mb-8 max-w-md">
                 Take our quick 5-question quiz to identify your skin type and get personalized 
                 routine recommendations tailored just for you.
               </p>
-              <div className="flex flex-wrap gap-4 justify-center mb-8">
+              <div className="flex flex-wrap gap-3 mb-8 justify-center lg:justify-start">
                 {["Quick & Easy", "Personalized Results", "Expert Recommendations"].map((item, i) => (
-                  <span key={i} className="flex items-center gap-2 text-primary-foreground/90 text-sm">
+                  <span key={i} className="flex items-center gap-2 text-primary-foreground/80 text-sm">
                     <CheckCircle className="h-4 w-4" />
                     {item}
                   </span>
                 ))}
               </div>
               <Link to="/analysis">
-                <Button size="lg" className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground text-base px-8 shadow-primary rounded-gg-sm border-0">
+                <Button size="lg" className="bg-white hover:bg-white/90 text-primary active:scale-95 text-base px-8 rounded-gg-sm border-0 shadow-primary">
                   Start the Quiz Now
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -433,24 +434,17 @@ const Index = () => {
             </motion.div>
 
             <motion.div
-              className="grid grid-cols-2 gap-4"
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              {[
-                { num: "5+", label: "Skin Types Covered" },
-                { num: "4", label: "Age Groups" },
-                { num: "10+", label: "Step Routines" },
-                { num: "50+", label: "Skincare Tips" },
-              ].map((stat, i) => (
-                <Card key={i} className="border-0 shadow-card">
-                  <CardContent className="p-6 text-center">
-                    <span className="font-heading text-4xl font-bold text-gradient">{stat.num}</span>
-                    <p className="text-muted-foreground text-sm mt-1">{stat.label}</p>
-                  </CardContent>
-                </Card>
-              ))}
+              <div className="rounded-2xl overflow-hidden shadow-card">
+                <img
+                  src={skincareLifestyle}
+                  alt="Skincare routine"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </motion.div>
           </div>
         </div>

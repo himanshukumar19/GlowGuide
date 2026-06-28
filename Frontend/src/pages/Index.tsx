@@ -321,41 +321,61 @@ const Index = () => {
                 </div>
               </motion.div>
 
-              {/* Decorative emojis hidden on mobile to avoid cluttering and overlapping */}
+              {/* Decorative floating skincare avatar icons */}
               <motion.div
-                className="hidden sm:flex absolute -top-8 left-8 w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-amber-400 border-2 border-background items-center justify-center text-xs font-bold text-white shadow-elevated z-10"
+                className="hidden sm:flex absolute -top-8 left-8 w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-amber-400 border-2 border-background items-center justify-center shadow-elevated z-10 group cursor-pointer"
                 animate={{ y: [0, -10, 0], rotate: [0, 8, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+                whileHover={{ scale: 1.15 }}
               >
-                😊
+                <Sun className="h-4 w-4 text-white" />
+                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
+                  SPF Protection
+                </div>
               </motion.div>
               <motion.div
-                className="hidden sm:flex absolute bottom-12 -right-6 w-9 h-9 rounded-full bg-gradient-to-br from-sky-300 to-sky-400 border-2 border-background items-center justify-center text-xs font-bold text-white shadow-elevated z-10"
+                className="hidden sm:flex absolute bottom-12 -right-6 w-9 h-9 rounded-full bg-gradient-to-br from-sky-300 to-sky-400 border-2 border-background items-center justify-center shadow-elevated z-10 group cursor-pointer"
                 animate={{ y: [0, -6, 0], rotate: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+                whileHover={{ scale: 1.15 }}
               >
-                🌸
+                <Droplets className="h-3.5 w-3.5 text-white" />
+                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
+                  Deep Hydration
+                </div>
               </motion.div>
               <motion.div
-                className="hidden sm:flex absolute -bottom-6 right-16 w-8 h-8 rounded-full bg-gradient-to-br from-violet-300 to-violet-400 border-2 border-background items-center justify-center text-[10px] font-bold text-white shadow-elevated z-10"
+                className="hidden sm:flex absolute -bottom-6 right-16 w-8 h-8 rounded-full bg-gradient-to-br from-violet-300 to-violet-400 border-2 border-background items-center justify-center shadow-elevated z-10 group cursor-pointer"
                 animate={{ y: [0, -7, 0], rotate: [0, 6, 0] }}
                 transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                whileHover={{ scale: 1.15 }}
               >
-                💛
+                <Shield className="h-3 w-3 text-white" />
+                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
+                  Skin Barrier
+                </div>
               </motion.div>
               <motion.div
-                className="hidden sm:flex absolute top-1/4 -left-5 w-7 h-7 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-400 border-2 border-background items-center justify-center text-[8px] font-bold text-white shadow-elevated z-10"
+                className="hidden sm:flex absolute top-1/4 -left-5 w-7 h-7 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-400 border-2 border-background items-center justify-center shadow-elevated z-10 group cursor-pointer"
                 animate={{ y: [0, -9, 0], rotate: [0, -7, 0] }}
                 transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                whileHover={{ scale: 1.15 }}
               >
-                💚
+                <Leaf className="h-2.5 w-2.5 text-white" />
+                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
+                  Natural Ingredients
+                </div>
               </motion.div>
               <motion.div
-                className="hidden sm:flex absolute top-1/2 -right-8 w-6 h-6 rounded-full bg-gradient-to-br from-rose-300 to-rose-400 border-2 border-background items-center justify-center text-[7px] font-bold text-white shadow-elevated z-10"
+                className="hidden sm:flex absolute top-1/2 -right-8 w-6 h-6 rounded-full bg-gradient-to-br from-rose-300 to-rose-400 border-2 border-background items-center justify-center shadow-elevated z-10 group cursor-pointer"
                 animate={{ y: [0, -5, 0], rotate: [0, 12, 0] }}
                 transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                whileHover={{ scale: 1.15 }}
               >
-                ❤️
+                <Heart className="h-2.5 w-2.5 text-white" />
+                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
+                  Self Care
+                </div>
               </motion.div>
 
               <motion.div

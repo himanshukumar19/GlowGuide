@@ -1,25 +1,25 @@
 import { Product, Review } from '@/types/product';
 
 // Product images - stored in public/images/products/
-const plixGuavaCleanser = '/images/products/plix-guava-glow-cleanser.png';
-const mamaEarthVitaminCFaceWash = '/images/products/mamaearth-vitamin-c-face-wash.png';
-const theOrdinaryToner = '/images/products/the-ordinary-glycolic-toner.png';
-const dotKeyWatermelonSunscreen = '/images/products/dot-key-watermelon-sunscreen.png';
-const theManCompanySerum = '/images/products/the-man-company-vitamin-c-serum.png';
-const cetaphilMoisturisingLotion = '/images/products/cetaphil-moisturising-lotion.png';
-const glamvedaKoreanKit = '/images/products/glamveda-korean-7-step-kit.png';
-const mamaEarthBabyFaceWash = '/images/products/mamaearth-baby-foaming-face-wash.png';
-const mamaEarthBabyFaceCream = '/images/products/mamaearth-baby-milky-soft-cream.png';
-const mamaEarthChildSunscreen = '/images/products/mamaearth-child-sunscreen.png';
-const motherSparshLipBalm = '/images/products/mother-sparsh-baby-lip-balm.png';
-const cetaphilBabyDiaperCream = '/images/products/cetaphil-baby-diaper-cream.png';
-const simpleFaceWash = '/images/products/simple-face-wash.png';
-const cetaphilMoisturisingCream = '/images/products/cetaphil-moisturising-cream.png';
-const cetaphilOptimalHydration = '/images/products/cetaphil-optimal-hydration.png';
-const mamaEarthVitaminCSunscreen = '/images/products/mamaearth-vitamin-c-daily-glow-sunscreen.png';
-const bioLaser = '/images/products/bio-laser.png';
-const laserDevice = '/images/products/laser-device-unnamed.png';
-const beforeAfter = '/images/products/laser-before-after.png';
+const plixGuavaCleanser = '/images/plix-guava-glow-cleanser.png';
+const mamaEarthVitaminCFaceWash = '/images/mamaearth-vitamin-c-face-wash.png';
+const theOrdinaryToner = '/images/the-ordinary-glycolic-toner.png';
+const dotKeyWatermelonSunscreen = '/images/dot-key-watermelon-sunscreen.png';
+const theManCompanySerum = '/images/the-man-company-vitamin-c-serum.png';
+const cetaphilMoisturisingLotion = '/images/cetaphil-moisturising-lotion.png';
+const glamvedaKoreanKit = '/images/glamveda-korean-7-step-kit.png';
+const mamaEarthBabyFaceWash = '/images/mamaearth-baby-foaming-face-wash.png';
+const mamaEarthBabyFaceCream = '/images/mamaearth-baby-milky-soft-cream.png';
+const mamaEarthChildSunscreen = '/images/mamaearth-child-sunscreen.png';
+const motherSparshLipBalm = '/images/mother-sparsh-baby-lip-balm.png';
+const cetaphilBabyDiaperCream = '/images/cetaphil-baby-diaper-cream.png';
+const simpleFaceWash = '/images/simple-face-wash.png';
+const cetaphilMoisturisingCream = '/images/cetaphil-moisturising-cream.png';
+const cetaphilOptimalHydration = '/images/cetaphil-optimal-hydration.png';
+const mamaEarthVitaminCSunscreen = '/images/mamaearth-vitamin-c-daily-glow-sunscreen.png';
+const bioLaser = '/images/bio-laser.png';
+const laserDevice = '/images/laser-device-unnamed.png';
+const beforeAfter = '/images/laser-before-after.png';
 
 const placeholderImage = '/placeholder.svg';
 

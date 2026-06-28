@@ -1,6 +1,6 @@
 # GlowGuide — Backend Analysis & Planning Report
 
-> **Prepared**: 2026-06-27  
+> **Prepared**: 2026-06-29  
 > **Scope**: Full analysis of `Frontend/`, `plan/`, `CONTEXT.md`, `IMPLEMENTATION_ROADMAP.md` and `OPTIMIZED_QUIZ_DESIGN.md` to define everything required to build the GlowGuide backend.  
 > **Status**: Planning only — no code changes made.
 
@@ -18,8 +18,10 @@
 8. [Technology Stack](#8-technology-stack)
 9. [Environment Variables](#9-environment-variables)
 10. [Data Types Contract](#10-data-types-contract)
-11. [Build Order](#11-build-order)
-12. [Open Decisions](#12-open-decisions)
+11. [Testing Strategy](#11-testing-strategy)
+12. [Build Order](#12-build-order)
+13. [Open Decisions](#13-open-decisions)
+14. [Free Tier Budget & Limits](#14-free-tier-budget--limits)
 
 ---
 
@@ -41,7 +43,7 @@
 | **Skin Analysis** | 7-question quiz + 5-angle live camera → ML prediction → skin type, concerns, health score, routine |
 | **Shop** | Product catalog with advanced filtering, cart, wishlist, checkout, promo codes |
 | **Dashboard** | History timeline, health score trends, routine tracker, auto-tracked products, account settings |
-| **Chatbot** | AI assistant (OpenAI/Gemini) accessible site-wide, quota-gated by tier |
+| **Chatbot** | AI assistant (Gemini Flash) accessible site-wide, quota-gated by tier |
 | **Subscription** | Paid tier unlocking extended history, unlimited chatbot, 5% checkout discount |
 | **Admin Panel** | Product/order/customer/CMS management under `/admin/*` |
 
@@ -74,290 +76,264 @@ Everything in the table above marked as "mock" or "localStorage" needs real back
 ## 3. Architecture
 
 ```
-┌─────────────────────────────────┐
-│     Browser (React SPA)         │
-│   Vite + React + TypeScript     │
-│   Deployed → Vercel             │
-└────────────────┬────────────────┘
-                 │ HTTPS (JWT in Authorization header)
-                 ▼
-┌─────────────────────────────────┐
-│  GlowGuide Backend              │
-│  Node.js + Express + TypeScript │
-│  Deployed → Render / Railway    │
-└─────┬───────────┬───────────────┘
-      │           │
-      ▼           ▼
-┌──────────┐ ┌──────────────────┐
-│PostgreSQL│ │  ML Service       │
-│(Prisma)  │ │  Python FastAPI   │
-│Render DB │ │  Random Forest    │
-└──────────┘ │  Deployed →Render │
-             └──────────────────┘
-                      │
-          ┌───────────┴──────────┐
-          │                      │
-     ┌─────────┐          ┌────────────┐
-     │  Redis  │          │ Cloudinary │
-     │ Quota + │          │ Photo      │
-     │ Rate    │          │ Storage    │
-     │ Limit   │          └────────────┘
-     └─────────┘
+                         ┌──────────────────────────────────┐
+                         │   Browser (React SPA)             │
+                         │ Vite + React + TypeScript         │
+                         │ Deployed → Vercel (free tier)     │
+                         └──────────────┬───────────────────┘
+                                        │ Firebase ID Token (Authorization header)
+                                        ▼
+                         ┌──────────────────────────────────┐
+                         │  GlowGuide Backend                │
+                         │  Node.js + Express + TypeScript   │
+                         │  Deployed → Render (free tier)    │
+                         └──────┬───────────┬────────────────┘
+                                │           │
+                                ▼           ▼
+                    ┌──────────────┐  ┌──────────────────┐
+                    │  Firestore   │  │  ML Service       │
+                    │  (NoSQL)     │  │  Python FastAPI   │
+                    │  Customers,  │  │  Random Forest    │
+                    │  Analyses,   │  │  Deployed → Render│
+                    │  Orders,     │  └──────────────────┘
+                    │  Products    │
+                    └──────────────┘
+                           │
+                    ┌──────┴──────┐
+                    │ Firebase    │
+                    │ Auth        │
+                    │ (Email +    │
+                    │  Google)    │
+                    └─────────────┘
+
+                    ┌──────────────┐
+                    │ Cloudinary   │
+                    │ Photo        │
+                    │ Storage      │
+                    └──────────────┘
 ```
 
 ### Service Responsibilities
 
 | Service | Responsibility |
 |---|---|
-| **Backend (Node.js)** | Auth, business logic, data access, ML proxy, chatbot proxy, file orchestration |
+| **Firebase Auth** | All authentication — Email/password signup/login, Google sign-in, token issuance/verification |
+| **Firestore (NoSQL)** | All persistent data: customers, analyses, orders, products, subscriptions, cart, wishlist |
+| **Backend (Node.js)** | Business logic, Firestore read/write, ML proxy, chatbot proxy, file orchestration, Firebase token verification middleware |
 | **ML Service (Python)** | Random Forest / VIT model inference — receives quiz answers + photos, returns skin type + confidence |
-| **PostgreSQL** | All persistent data: customers, analyses, orders, products, subscriptions |
-| **Redis** | Chatbot daily quota counters, refresh token blacklist, rate limiting |
 | **Cloudinary** | Storage for 5-angle face scan photos and product images |
 
 ---
 
-## 4. Database Schema
+## 4. Database Schema (Firestore)
 
-### Customer
-```prisma
-model Customer {
-  id                 String           @id @default(cuid())
-  email              String           @unique
-  name               String
-  phone              String?
-  avatar             String?          // Cloudinary URL
-  passwordHash       String
-  role               Role             @default(CUSTOMER)
-  subscriptionTier   SubscriptionTier @default(FREE)
-  subscriptionEndsAt DateTime?
-  chatbotQueriesUsed Int              @default(0)
-  chatbotResetDate   DateTime?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+Firestore is a NoSQL document database. Data is organized into **collections** containing **documents**. Relations are handled via document references or denormalization (no JOINs).
 
-  analyses           SkinAnalysis[]
-  orders             Order[]
-  wishlistItems      WishlistItem[]
-  cartItems          CartItem[]
-  addresses          Address[]
-}
+### Collection: `customers`
 
-enum Role             { CUSTOMER ADMIN }
-enum SubscriptionTier { FREE PAID }
+**Document ID:** Firebase Auth `uid` (auto-matched via `requireAuth` middleware)
+
+```
+customers/{uid}
+  ├── email: string
+  ├── name: string
+  ├── phone: string?
+  ├── avatar: string?            // URL
+  ├── role: "CUSTOMER" | "ADMIN"
+  ├── subscriptionTier: "FREE" | "PAID"
+  ├── subscriptionEndsAt: Timestamp?
+  ├── chatbotQueriesUsed: number
+  ├── chatbotResetDate: Timestamp?
+  └── createdAt: Timestamp
 ```
 
-### SkinAnalysis
-```prisma
-model SkinAnalysis {
-  id               String          @id @default(cuid())
-  customerId       String
-  customer         Customer        @relation(fields: [customerId], references: [id])
+### Collection: `analyses`
 
-  status           AnalysisStatus  @default(PENDING)
+```
+analyses/{analysisId}
+  ├── customerId: string          // ref -> customers/{uid}
+  ├── status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED"
+  ├── quizAnswers: { sebum_level, hydration_level, ... }
+  ├── skinNotes: string?
+  ├── skinType: string?           // "oily" | "dry" | "combination" | "sensitive" | "normal"
+  ├── confidence: number?         // 0–1
+  ├── probabilities: { oily: 0.85, ... }
+  ├── concernsDetected: string[]
+  ├── healthScore: number?        // 0–100
+  ├── photoUrls: { front: "url", "left-profile": "url", ... }
+  └── createdAt: Timestamp
 
-  // Input
-  quizAnswers      Json            // { sebum_level: 65, hydration_level: 50, ... }
-  skinNotes        String?         // free-text notes from user
-
-  // Output (populated when status = COMPLETED)
-  skinType         SkinType?
-  confidence       Float?
-  probabilities    Json?           // { oily: 0.85, dry: 0.05, ... }
-  concernsDetected String[]        // ["acne", "pore_size"]
-  healthScore      Int?            // 0-100
-
-  // Photos
-  photoUrls        Json?           // { front: "url", left-profile: "url", ... }
-
-  createdAt        DateTime        @default(now())
-}
-
-enum AnalysisStatus { PENDING PROCESSING COMPLETED FAILED }
-enum SkinType       { oily dry combination sensitive normal }
+Indexes:
+  - customerId + createdAt DESC (for history queries)
+  - customerId + status (for active analysis polling)
 ```
 
-### Product
-```prisma
-model Product {
-  id               String       @id @default(cuid())
-  name             String
-  brand            String
-  category         String       // 'men-women' | 'korean' | 'children' | 'senior' | 'laser-devices'
-  subcategory      String?
-  price            Int          // stored in paise (₹499 → 49900) to avoid float errors
-  originalPrice    Int?
-  discount         Int?         // percentage
-  rating           Float        @default(0)
-  reviewCount      Int          @default(0)
-  images           String[]     // Cloudinary URLs
-  description      String       @db.Text
-  shortDescription String
-  keyBenefits      String[]
-  ingredients      String[]
-  howToUse         String       @db.Text
-  skinTypes        String[]     // ['oily', 'dry', 'combination', 'sensitive', 'normal']
-  suitableFor      String[]     // ['men', 'women', 'children', 'teens', 'adults', 'seniors']
-  concerns         String[]
-  volume           String
-  inStock          Boolean      @default(true)
-  stockCount       Int          @default(0)
-  badges           String[]     // ['bestseller', 'new', 'organic', ...]
-  whereToBuy       Json         // { amazon: "url", nykaa: "url", ... }
-  isDeleted        Boolean      @default(false)  // soft delete
+### Collection: `products`
 
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-
-  orderItems       OrderItem[]
-  wishlistItems    WishlistItem[]
-  cartItems        CartItem[]
-}
+```
+products/{productId}
+  ├── name: string
+  ├── brand: string
+  ├── category: string           // "men-women" | "korean" | "children" | "senior" | "laser-devices"
+  ├── subcategory: string?
+  ├── price: number              // stored in paise (₹499 → 49900)
+  ├── originalPrice: number?
+  ├── discount: number?
+  ├── rating: number
+  ├── reviewCount: number
+  ├── images: string[]           // Cloudinary URLs
+  ├── description: string
+  ├── shortDescription: string
+  ├── keyBenefits: string[]
+  ├── ingredients: string[]
+  ├── howToUse: string
+  ├── skinTypes: string[]
+  ├── suitableFor: string[]
+  ├── concerns: string[]
+  ├── volume: string
+  ├── inStock: boolean
+  ├── stockCount: number
+  ├── badges: string[]
+  ├── whereToBuy: { amazon?: string, nykaa?: string, ... }
+  ├── isDeleted: boolean
+  └── createdAt: Timestamp
 ```
 
-### Order & OrderItem
-```prisma
-model Order {
-  id              String        @id @default(cuid())
-  orderId         String        @unique  // human-readable: "GG3K9XA12"
-  customerId      String
-  customer        Customer      @relation(fields: [customerId], references: [id])
-  items           OrderItem[]
-  shippingAddress Json          // snapshot of Address at time of purchase
-  subtotal        Int           // paise
-  tax             Int           // 18% GST
-  shippingCost    Int           // 0 or 9900 (₹99)
-  promoDiscount   Int           @default(0)
-  subscriptionDiscount Int      @default(0)  // 5% if paid tier
-  promoCode       String?
-  total           Int
-  status          OrderStatus   @default(PENDING)
-  paymentMethod   String
-  paymentStatus   PaymentStatus @default(PENDING)
-  razorpayOrderId String?       // for Phase 2 payment integration
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-}
+### Collection: `orders`
 
-model OrderItem {
-  id              String   @id @default(cuid())
-  orderId         String
-  order           Order    @relation(fields: [orderId], references: [id])
-  productId       String
-  product         Product  @relation(fields: [productId], references: [id])
-  quantity        Int
-  priceAtPurchase Int      // paise snapshot — price may change later
-}
+```
+orders/{orderId}
+  ├── orderId: string             // human-readable: "GG3K9XA12"
+  ├── customerId: string
+  ├── items: [{ productId, productName, quantity, priceAtPurchase }]
+  ├── shippingAddress: { fullName, email, phone, street, city, state, pincode, type }
+  ├── subtotal: number            // paise
+  ├── tax: number                 // 18% GST
+  ├── shippingCost: number        // 0 or 9900
+  ├── promoDiscount: number
+  ├── subscriptionDiscount: number
+  ├── promoCode: string?
+  ├── total: number
+  ├── status: "PENDING" | "PROCESSING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED"
+  ├── paymentMethod: string
+  ├── paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED"
+  ├── razorpayOrderId: string?
+  └── createdAt: Timestamp
 
-enum OrderStatus   { PENDING PROCESSING CONFIRMED SHIPPED DELIVERED CANCELLED }
-enum PaymentStatus { PENDING PAID FAILED REFUNDED }
+Indexes:
+  - customerId + createdAt DESC
+  - status (for admin order management)
 ```
 
-### CartItem & WishlistItem
-```prisma
-model CartItem {
-  id         String   @id @default(cuid())
-  customerId String
-  productId  String
-  quantity   Int      @default(1)
-  @@unique([customerId, productId])
-}
+### Collection: `cart`
 
-model WishlistItem {
-  id         String   @id @default(cuid())
-  customerId String
-  productId  String
-  createdAt  DateTime @default(now())
-  @@unique([customerId, productId])
-}
+```
+cart/{customerId}                 // one document per customer
+  ├── items: [{ productId: string, quantity: number }]
+  └── updatedAt: Timestamp
 ```
 
-### Address
-```prisma
-model Address {
-  id         String      @id @default(cuid())
-  customerId String
-  customer   Customer    @relation(fields: [customerId], references: [id])
-  fullName   String
-  email      String
-  phone      String
-  street     String
-  city       String
-  state      String
-  pincode    String
-  type       AddressType // home | office
-  isDefault  Boolean     @default(false)
-  createdAt  DateTime    @default(now())
+### Collection: `wishlist`
 
-  enum AddressType { home office }
-}
+```
+wishlist/{customerId}             // one document per customer
+  ├── productIds: string[]
+  └── updatedAt: Timestamp
 ```
 
-### Ingredient
-```prisma
-model Ingredient {
-  id                String   @id @default(cuid())
-  name              String   @unique
-  category          String   // "Humectant", "AHA", "Barrier Restorer", ...
-  description       String   @db.Text
-  benefits          String[]
-  sideEffects       String[]
-  suitableSkinTypes String[]
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-}
+### Collection: `addresses`
+
+```
+addresses/{addressId}
+  ├── customerId: string
+  ├── fullName: string
+  ├── email: string
+  ├── phone: string
+  ├── street: string
+  ├── city: string
+  ├── state: string
+  ├── pincode: string
+  ├── type: "home" | "office"
+  ├── isDefault: boolean
+  └── createdAt: Timestamp
+
+Indexes:
+  - customerId (for listing customer's addresses)
 ```
 
-### PromoCode
-```prisma
-model PromoCode {
-  id           String    @id @default(cuid())
-  code         String    @unique
-  discount     Int       // percentage
-  minOrder     Int       // paise minimum subtotal
-  freeShipping Boolean   @default(false)
-  isActive     Boolean   @default(true)
-  expiresAt    DateTime?
-  usageLimit   Int?
-  usageCount   Int       @default(0)
-}
+### Collection: `ingredients`
+
+```
+ingredients/{ingredientId}
+  ├── name: string
+  ├── category: string            // "Humectant", "AHA", "Barrier Restorer", ...
+  ├── description: string
+  ├── benefits: string[]
+  ├── sideEffects: string[]
+  ├── suitableSkinTypes: string[]
+  └── createdAt: Timestamp
 ```
 
-### SkinContent (CMS)
-```prisma
-model SkinContent {
-  id          String   @id @default(cuid())
-  slug        String   @unique  // e.g. "skin-type-oily", "concern-acne"
-  title       String
-  body        String   @db.Text // HTML from WYSIWYG editor
-  type        ContentType
-  updatedAt   DateTime @updatedAt
-  createdAt   DateTime @default(now())
+### Collection: `promoCodes`
 
-  enum ContentType { SKIN_TYPE CONCERN INGREDIENT_GUIDE INFO_PAGE }
-}
+```
+promoCodes/{code}                 // document ID = promo code string
+  ├── discount: number            // percentage
+  ├── minOrder: number            // paise
+  ├── freeShipping: boolean
+  ├── isActive: boolean
+  ├── expiresAt: Timestamp?
+  ├── usageLimit: number?
+  └── usageCount: number
+```
+
+### Collection: `skinContent`
+
+```
+skinContent/{slug}               // document ID = slug string
+  ├── title: string
+  ├── body: string               // HTML from WYSIWYG editor
+  ├── type: "SKIN_TYPE" | "CONCERN" | "INGREDIENT_GUIDE" | "INFO_PAGE"
+  └── updatedAt: Timestamp
 ```
 
 ---
 
 ## 5. API Endpoint Reference
 
-### Auth
+### Auth (Firebase)
+
+Auth is handled **client-side** via the Firebase SDK. The backend only verifies the Firebase ID Token on protected routes.
 
 | Method | Route | Auth | Description |
 |---|---|---|---|
-| POST | `/api/auth/signup` | Public | Register new customer |
-| POST | `/api/auth/login` | Public | Customer login → JWT |
-| POST | `/api/auth/admin/login` | Public | Admin-specific login → JWT with role=ADMIN |
-| POST | `/api/auth/logout` | Required | Blacklist refresh token |
-| GET | `/api/auth/me` | Required | Current customer profile |
-| PATCH | `/api/auth/me` | Required | Update name, phone, avatar |
-| POST | `/api/auth/refresh` | Required | Issue new access token |
+| — | — | Public | **Signup**: `createUserWithEmailAndPassword` (Firebase SDK, client-side) |
+| — | — | Public | **Login**: `signInWithEmailAndPassword` (Firebase SDK, client-side) |
+| — | — | Public | **Google Sign-In**: `signInWithPopup(googleProvider)` (Firebase SDK, client-side) |
+| — | — | Public | **Password Reset**: `sendPasswordResetEmail` (Firebase SDK, client-side) |
+| GET | `/api/auth/me` | Required (Firebase ID Token) | Fetch customer profile from Firestore by `uid` |
+| PATCH | `/api/auth/me` | Required | Update name, phone, avatar in Firestore |
+| POST | `/api/auth/customer` | Required | Create/ensure customer doc in Firestore after Firebase signup |
 
-**JWT Strategy:**
-- Access token: 15 min expiry
-- Refresh token: 30 days, stored in HttpOnly cookie
-- Blacklist expired/logged-out refresh tokens in Redis
+**Firebase Auth Flow:**
+- User signs up/logs in via Firebase SDK on the frontend
+- Firebase returns an **ID Token** (JWT) valid for 1 hour
+- Frontend sends `Authorization: Bearer <idToken>` on every API call
+- Backend verifies token via `firebase-admin` SDK → extracts `uid`
+- Backend uses `uid` to read/write customer data in Firestore
+- Firebase SDK auto-refreshes the token transparently — no refresh endpoint needed
+
+---
+
+### Demo Accounts (Seed via Firebase Console or Admin SDK)
+
+| Email | Password | Tier | Purpose |
+|---|---|---|---|
+| `demo.free@glowguide.com` | `demo123456` | FREE | Test free tier limits (max 3 analyses, 10 chat queries/day) |
+| `demo.paid@glowguide.com` | `demo123456` | PAID | Test paid features (unlimited analyses, 12-month history, 5% discount) |
+| `demo.admin@glowguide.com` | `demo123456` | PAID + role=ADMIN | Test admin panel (product CRUD, order management) |
+
+Created once via Firebase Console → Authentication → Add user, then Firestore `customers/{uid}` docs are seeded with the admin script. The login page shows "click to autofill" buttons for each.
 
 ---
 
@@ -578,25 +554,34 @@ limit=20
 
 ## 6. Feature-by-Feature Flow
 
-### Auth Flow
-```
-Signup:
-  POST /api/auth/signup { name, email, phone, password }
-  → Hash password (bcrypt, 12 rounds)
-  → Create Customer in DB (tier=FREE)
-  → Issue JWT access + refresh token
-  → Return { customer, token }
+### Auth Flow (Firebase)
 
-Login:
-  POST /api/auth/login { email, password }
-  → Find Customer by email
-  → Compare password hash
-  → Issue JWT access + refresh token
-  → Return { customer, token }
+```
+Signup (Email/Password):
+  Frontend: createUserWithEmailAndPassword(auth, email, password)
+  → Firebase creates user, returns { uid, email }
+  → Frontend calls POST /api/auth/customer with { name, phone }
+  → Backend creates customer doc in Firestore: customers/{uid}
+  → Return { customer }
+
+Signup (Google):
+  Frontend: signInWithPopup(auth, googleProvider)
+  → Firebase creates/returns user with { uid, email, displayName, photoURL }
+  → Frontend calls POST /api/auth/customer (first sign-in only)
+  → Backend creates customer doc in Firestore: customers/{uid}
+  → Return { customer }
+
+Login (Email/Password):
+  Frontend: signInWithEmailAndPassword(auth, email, password)
+  → Firebase returns user + ID token
+  → Frontend calls GET /api/auth/me with token
+  → Backend verifies token, fetches customers/{uid}
+  → Return { customer }
 
 Protected request:
-  Authorization: Bearer <token>
-  → Middleware: verify JWT, attach req.customer
+  Authorization: Bearer <firebase-id-token>
+  → Middleware: admin.auth().verifyIdToken(token) → { uid, email }
+  → Attach req.customer = merged({ uid, email } + Firestore doc)
 ```
 
 ---
@@ -662,7 +647,7 @@ POST /api/chatbot/query { message, history? }
    → Reset chatbotQueriesUsed = 0, chatbotResetDate = today
 3. If FREE tier AND chatbotQueriesUsed >= 10:
    → Return 429 { code: "QUOTA_EXCEEDED", message: "Subscribe for unlimited queries" }
-4. Call LLM API (OpenAI / Gemini) with system prompt + history + message
+4. Call Gemini API with system prompt + history + message
 5. Increment chatbotQueriesUsed
 6. Return { reply, queriesRemaining }
 ```
@@ -672,19 +657,19 @@ POST /api/chatbot/query { message, history? }
 ### Subscription Flow
 ```
 POST /api/subscription/create
-→ Phase 1: directly set subscriptionTier=PAID, subscriptionEndsAt=+30 days
+→ Phase 1: directly set subscriptionTier=PAID, subscriptionEndsAt=+30 days in customers/{uid}
 → Phase 2: create Razorpay subscription, webhook updates tier on payment success
 
-Cron job (daily):
-→ Find all Customers WHERE subscriptionTier=PAID AND subscriptionEndsAt < NOW()
-→ SET subscriptionTier=FREE
+Cron job (daily — Cloud Function or scheduled task):
+→ Query customers collection where subscriptionTier == "PAID" AND subscriptionEndsAt < now()
+→ For each: update doc — set subscriptionTier = "FREE"
 → NOTE: Do NOT delete any SkinAnalysis records — data is preserved
 
 When FREE user accesses history:
-→ SELECT * FROM SkinAnalysis WHERE customerId=? ORDER BY createdAt DESC LIMIT 3
+→ Query analyses collection where customerId == uid, order by createdAt DESC, limit 3
 
 When PAID user accesses history:
-→ SELECT * FROM SkinAnalysis WHERE customerId=? AND createdAt > NOW()-12months
+→ Query analyses collection where customerId == uid AND createdAt > 12-months-ago, order by createdAt DESC
 ```
 
 ---
@@ -731,22 +716,79 @@ Server-generated. Never trust client: `'GG' + Date.now().toString(36).toUpperCas
 
 ## 8. Technology Stack
 
-| Layer | Technology | Reason |
-|---|---|---|
-| Runtime | Node.js 20 LTS | Matches existing backend scaffold |
-| Framework | Express.js + TypeScript | Already chosen in project |
-| ORM | Prisma | Type-safe, migrations, great DX |
-| Database | PostgreSQL | Required for relational order/user data |
-| Auth | JWT (jsonwebtoken) + bcrypt | Stateless, industry standard |
-| Validation | Zod | Runtime type safety, matches TS types |
-| File Upload | Multer + Cloudinary SDK | Easy image hosting + CDN |
-| Cache / Rate Limit | Redis (ioredis) | Chatbot quota, token blacklist |
-| LLM | OpenAI GPT-4o-mini or Google Gemini Flash | Cost-effective chatbot |
-| Payment | Razorpay (Phase 2) | Best INR support in India |
-| Email | Resend or Nodemailer + SendGrid | Order confirmations |
-| Logging | Winston + Morgan | Structured server logs |
-| Testing | Jest + Supertest | Unit and integration tests |
-| Containerisation | Docker + docker-compose | All 3 services orchestrated locally |
+| Layer | Technology | Reason | Free Tier |
+|---|---|---|---|---|
+| Runtime | Node.js 20 LTS | Matches existing backend scaffold | ✅ |
+| Framework | Express.js + TypeScript | Already chosen in project | ✅ |
+| Database | Firestore (NoSQL) | Serverless, auto-scaling, real-time listeners | ✅ 50K reads/day, 1GB stored |
+| Auth | Firebase Auth (Email/Password + Google) | Secure, serverless, no password hash management | ✅ 50K MAU |
+| Admin SDK | firebase-admin | Server-side token verification + Firestore admin access | ✅ |
+| Validation | Zod | Runtime type safety for request bodies | ✅ |
+| HTTP Status Codes | http-status-codes | Named constants instead of magic numbers | ✅ |
+| Date Utils | dayjs | Lightweight date math (quota resets, subscription expiry) | ✅ |
+| File Upload | Multer + Cloudinary SDK | Easy image hosting + CDN | ✅ 25GB storage, 25GB bandwidth/mo |
+| LLM | **Google Gemini Flash** (not OpenAI) | Gemini free tier allows 60 req/min — OpenAI is pay-as-you-go | ✅ 60 req/min free |
+| Payment | Razorpay (Phase 2) | Best INR support in India | ✅ 0% fee on UPI, per-transaction only |
+| Email | **Resend** | 100 emails/day free, simple API | ✅ 100 emails/day |
+| Logging | Winston + Morgan | Structured server logs | ✅ |
+| Testing | Jest + Supertest (with Firestore emulator) | Unit and integration tests | ✅ |
+| **Backend hosting** | **Render free tier** | 512MB RAM, 750 hours/month (sleeps after 15 min idle). Vercel free (10s timeout) is too short for ML proxy. | ✅ |
+| **Frontend hosting** | **Vercel** | SPA hosting with CDN, free SSL, auto-deploys from GitHub, already has `vercel.json` config | ✅ 100GB bandwidth, 6000 build min/mo |
+| Containerisation | Docker + docker-compose | ML service + Backend orchestrated locally | ✅ |
+
+### Folder Structure
+
+```
+Backend/
+├── service-account.json         # Firebase Admin SDK key (gitignored)
+├── src/
+│   ├── server.ts               # Express app bootstrap + middleware stack
+│   ├── config/
+│   │   ├── env.ts              # Validated env loader (Zod)
+│   │   └── firebase-admin.ts   # Firebase Admin SDK init
+│   ├── routes/                 # Route definitions only (thin)
+│   │   ├── customer.routes.ts  # POST /auth/customer, GET /auth/me, PATCH /auth/me
+│   │   ├── analysis.routes.ts
+│   │   ├── products.routes.ts
+│   │   ├── cart.routes.ts
+│   │   ├── wishlist.routes.ts
+│   │   ├── orders.routes.ts
+│   │   ├── subscription.routes.ts
+│   │   ├── chatbot.routes.ts
+│   │   ├── ingredients.routes.ts
+│   │   ├── skin-content.routes.ts
+│   │   ├── admin.routes.ts
+│   │   └── recommendations.routes.ts
+│   ├── controllers/            # Request handling, calls services
+│   │   ├── customer.controller.ts
+│   │   ├── analysis.controller.ts
+│   │   └── ...
+│   ├── services/               # Business logic, Firestore queries
+│   │   ├── customer.service.ts
+│   │   ├── analysis.service.ts
+│   │   ├── order.service.ts    # Pricing calc, GST, promotions
+│   │   ├── recommendation.service.ts
+│   │   └── ...
+│   ├── middleware/
+│   │   ├── requireAuth.ts      # Firebase ID token verify → attach req.uid
+│   │   ├── requireAdmin.ts     # role === ADMIN check in Firestore
+│   │   ├── validate.ts         # Zod schema validation wrapper
+│   │   ├── rateLimiter.ts      # 100 req/min per IP
+│   │   └── errorHandler.ts     # Global error handler
+│   ├── utils/
+│   │   ├── pricing.ts          # GST calc, shipping, discount logic
+│   │   ├── healthScore.ts      # Health score formula
+│   │   ├── orderId.ts          # GG-prefixed human-readable IDs
+│   │   └── response.ts         # Unified JSON response helpers
+│   ├── types/
+│   │   └── express.d.ts        # Express Request augmentation
+│   └── __tests__/
+│       ├── setup.ts            # Firestore emulator setup
+│       ├── auth.test.ts
+│       ├── products.test.ts
+│       └── ...
+└── tsconfig.json
+```
 
 ### Middleware Stack (Express)
 ```
@@ -756,9 +798,41 @@ compression   → gzip responses
 express.json  → body parsing
 morgan        → HTTP request logging
 rateLimiter   → 100 req/min per IP (express-rate-limit)
-requireAuth   → JWT verify on protected routes
-requireAdmin  → role===ADMIN check on admin routes
+validate      → Zod schema validation on request body/query/params
+requireAuth   → admin.auth().verifyIdToken(token) → attach req.uid
+requireAdmin  → Firestore lookup: role === ADMIN check
+errorHandler  → Catches thrown errors, returns unified JSON
 ```
+
+### Unified API Response Format
+
+Every endpoint returns a consistent envelope:
+
+```typescript
+// Success
+{ success: true, data: { ... } }
+
+// Error
+{ success: false, error: { code: "ERROR_CODE", message: "Human-readable message" } }
+
+// Paginated
+{ success: true, data: [...], pagination: { page, limit, total, totalPages } }
+```
+
+This lets the frontend handle responses generically instead of parsing status codes per endpoint.
+
+**Error codes reference:**
+
+| HTTP Status | Code | Meaning |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Zod validation failed (malformed request body) |
+| 401 | `UNAUTHORIZED` | Missing or invalid access token |
+| 403 | `FORBIDDEN` | Valid token but insufficient role |
+| 403 | `ANALYSIS_LIMIT_REACHED` | Free tier max analyses exceeded |
+| 404 | `NOT_FOUND` | Resource doesn't exist |
+| 409 | `DUPLICATE_ENTRY` | Email already registered, product already in cart |
+| 429 | `QUOTA_EXCEEDED` | Chatbot daily limit or rate limit |
+| 500 | `INTERNAL_ERROR` | Unhandled server error |
 
 ---
 
@@ -769,26 +843,17 @@ requireAdmin  → role===ADMIN check on admin routes
 PORT=3001
 NODE_ENV=development
 
-# Database
-DATABASE_URL=postgresql://user:password@host:5432/glowguide
-
-# Auth
-JWT_SECRET=<256-bit-secret>
-JWT_REFRESH_SECRET=<another-256-bit-secret>
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=30d
+# Firebase Admin SDK
+GOOGLE_APPLICATION_CREDENTIALS=./service-account.json
+FIREBASE_PROJECT_ID=glowguide-xxxxx
 
 # ML Service
 ML_SERVICE_URL=http://localhost:8000
 
 # Frontend (CORS whitelist)
-FRONTEND_URL=http://localhost:8081
+FRONTEND_URL=http://localhost:5173
 
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# LLM (choose one)
-OPENAI_API_KEY=sk-...
+# LLM (Gemini recommended — generous free tier)
 GEMINI_API_KEY=...
 
 # Cloudinary (photo storage)
@@ -802,6 +867,17 @@ RAZORPAY_KEY_SECRET=...
 
 # Email — Phase 2
 RESEND_API_KEY=re_...
+```
+
+### Frontend Environment (`.env`)
+
+```env
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=glowguide-xxxxx.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=glowguide-xxxxx
+VITE_FIREBASE_STORAGE_BUCKET=glowguide-xxxxx.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
 ```
 
 ---
@@ -909,45 +985,91 @@ interface Address {
 
 ---
 
-## 11. Build Order
+## 11. Testing Strategy
+
+### Test Setup (Phase 1)
+- **Framework**: Jest + Supertest
+- **Firestore emulator**: Use `@firebase/rules-unit-testing` with Firestore emulator for test isolation
+- **Auth emulator**: Use Firebase Auth emulator for token generation in tests
+- **Pattern**: Integration tests that hit real Express routes with emulated Firebase
+
+### What to Test per Phase
+
+| Phase | Focus | Example Tests |
+|---|---|---|
+| **1** | Health endpoint, Firebase Admin init | `GET /api/health` returns 200 |
+| **2** | Firebase token verification | Valid token → 200, missing token → 401, expired token → 401 |
+| **2** | Customer doc creation | POST `/api/auth/customer` creates Firestore doc for new uid |
+| **4** | Product CRUD + filters | Filter by category, price range, search term, pagination |
+| **6** | Order lifecycle | Create order, validate promo, verify price calc (paise math) |
+| **10** | Admin gating | Non-admin gets 403, admin can CRUD products |
+
+### Key Assertions
+- Every endpoint returns the **unified response envelope** (`{ success, data }` or `{ success, error }`)
+- Prices are correct: no floating point drift after GST + discount + shipping
+- Auth middleware rejects missing/invalid Firebase ID tokens
+- Firestore documents have expected fields after write operations
+
+---
+
+## 12. Build Order
 
 Build the backend in this sequence to minimise blockers:
 
 | Phase | Module | Endpoints | Depends On |
-|---|---|---|---|
-| **1** | Foundation | Express setup, Prisma init, DB migrations, health check | — |
-| **2** | Auth | `/api/auth/*` — signup, login, admin/login, me, refresh | DB |
-| **3** | Skin Analysis | `/api/analysis/*` — create, photos, poll, history | Auth, ML Service |
-| **4** | Products | Seed from `products.ts`, `/api/products`, categories, brands | DB |
-| **5** | Cart & Wishlist | `/api/cart/*`, `/api/wishlist/*` | Auth, Products |
-| **6** | Orders | `/api/orders/*`, promo validation | Auth, Products, Cart |
-| **7** | Dashboard | `/api/dashboard` aggregate | Auth, Analysis, Orders |
-| **8** | Chatbot | `/api/chatbot/*` + quota enforcement | Auth, Redis, LLM API |
-| **9** | Subscription | `/api/subscription/*` + daily cron | Auth, DB |
-| **10** | Admin Panel | `/api/admin/*` CRUD | Auth (role=ADMIN), all above |
-| **11** | Ingredients API | `/api/ingredients/*` — move from hardcoded frontend | DB |
-| **12** | CMS Content | `/api/skin-content`, `/api/admin/content` | Admin |
-| **13** | Recommendations | `/api/recommendations` — algorithm | Analysis, Products |
-| **14** | Razorpay | Replace simulated payment | Orders |
+|---|---|---|---|---|
+| **1** | Foundation | Firebase project setup, Firestore collections, Firebase Hosting config, health check | — |
+| **2** | Firebase Auth (Frontend) | Firebase SDK init, `useAuthStore` rewrite, Google sign-in button, Login/Signup pages update | — |
+| **3** | Backend Auth Middleware | `/api/auth/me`, `/api/auth/customer`, `requireAuth`, `requireAdmin`, `firebase-admin` config | Phase 2 |
+| **4** | Skin Analysis | `/api/analysis/*` — create, photos, poll, history | Phase 3, ML Service |
+| **5** | Products | Seed `products.ts` → Firestore, `/api/products`, categories, brands + product endpoint tests | Phase 3 |
+| **6** | Cart & Wishlist | `/api/cart/*`, `/api/wishlist/*` | Phase 3, Phase 5 |
+| **7** | Orders | `/api/orders/*`, promo validation | Phase 3, Phase 5, Phase 6 |
+| **8** | Dashboard | `/api/dashboard` aggregate | Phase 4, Phase 7 |
+| **9** | Chatbot | `/api/chatbot/*` + quota enforcement | Phase 3, LLM API |
+| **10** | Subscription | `/api/subscription/*` + daily cron | Phase 3 |
+| **11** | Admin Panel | `/api/admin/*` CRUD + admin endpoint tests | Phase 3 (role=ADMIN) |
+| **12** | Ingredients API | `/api/ingredients/*` — move from hardcoded frontend | Phase 3 |
+| **13** | CMS Content | `/api/skin-content`, `/api/admin/content` | Phase 11 |
+| **14** | Recommendations | `/api/recommendations` — algorithm | Phase 4, Phase 5 |
+| **15** | Razorpay | Replace simulated payment | Phase 7 |
 
 ---
 
-## 12. Open Decisions
+## 13. Open Decisions
 
 The following questions are not answered by the existing codebase and require a decision before implementation:
 
 | # | Question | Options | Recommendation |
 |---|---|---|---|
-| **1** | **LLM provider for chatbot** | OpenAI GPT-4o-mini vs Google Gemini Flash | Either works. Gemini if you already have a Google account/key; OpenAI for wider documentation |
+| **1** | **LLM provider for chatbot** | OpenAI GPT-4o-mini vs Google Gemini Flash | **Gemini Flash** — free tier allows 60 requests/min vs OpenAI which is pay-as-you-go |
 | **2** | **Photo upload flow** | All 5 in one multipart request vs 5 separate POSTs | 5 separate POSTs (matches DATA-FLOW.md plan and allows per-angle progress UI) |
 | **3** | **Analysis processing** | Sync (wait for ML) vs Async (job queue + polling) | Async + polling (matches plan, better UX, ML calls can be slow) |
 | **4** | **Subscription payment** | Simulate only vs Razorpay integration | Simulate for Phase 1, Razorpay for Phase 2 |
-| **5** | **Admin auth** | Same JWT with `role=ADMIN` field vs completely separate token | Same JWT with role field — simpler, no CORS complexity |
+| **5** | **Admin auth** | Custom claim (Firebase) vs Firestore role field | Firestore role field — simpler, no custom claim refresh issues |
 | **6** | **Email notifications** | Resend vs SendGrid vs Nodemailer | Resend (simplest API, free tier generous) |
-| **7** | **Chat history persistence** | Session only (in-memory/Redux) vs persist to DB | Session only for Phase 1 (plan confirms this); DB for Phase 2 |
-| **8** | **Redis requirement** | Use Redis vs store quota in PostgreSQL | PostgreSQL for Phase 1 (simpler setup); Redis for production scale |
-| **9** | **Product images** | Keep affiliate links (`whereToBuy`) as-is vs Cloudinary hosted | Keep affiliate links for now; Cloudinary for custom product photos |
-| **10** | **VIT model** | Use existing Random Forest ML service vs add Vision Transformer | Use Random Forest for Phase 1; VIT is Phase 2+ (already in IMPLEMENTATION_ROADMAP.md) |
+| **7** | **Chat history persistence** | Session only (in-memory/Redux) vs persist to Firestore | Session only for Phase 1; Firestore for Phase 2 |
+| **8** | **Firestore composite indexes** | Auto-index vs manual composite indexes | Composite indexes needed for: analyses(customerId, createdAt DESC), orders(customerId, createdAt DESC) |
+| **9** | **Frontend hosting** | Firebase Hosting vs Vercel | **Vercel** — already has `vercel.json` config, auto-deploys from GitHub, free tier generous. Firebase Hosting would require adding `firebase.json` and separate deploy setup |
+| **10** | **Product images** | Keep affiliate links (`whereToBuy`) as-is vs Cloudinary hosted | Keep affiliate links for now; Cloudinary for custom product photos |
+| **11** | **VIT model** | Use existing Random Forest ML service vs add Vision Transformer | Use Random Forest for Phase 1; VIT is Phase 2+ (already in IMPLEMENTATION_ROADMAP.md) |
+
+---
+
+## 14. Free Tier Budget & Limits
+
+| Service | Free Limit | When to Upgrade |
+|---|---|---|
+| **Firebase Auth** | 50,000 MAU (monthly active users) | >50K signups/month |
+| **Firestore** | 50K reads/day, 20K writes/day, 20K deletes/day, 1GB stored | >1GB or >50K reads/day |
+| **Vercel (Frontend)** | 100GB bandwidth, 6000 build minutes/month, free SSL | >100GB bandwidth or need server-side rendering |
+| **Render (Backend)** | 512MB RAM, shared CPU, sleeps after 15 min idle, 750 hours/month | Need no cold starts, more RAM, or >750 hours |
+| **Cloudinary** | 25GB storage, 25GB bandwidth/month, 25 transformations | Need more than 25 image transformations |
+| **Gemini API** | 60 requests/min, 1M tokens/min (free tier) | >60 chat requests/min |
+| **Resend (Email)** | 100 emails/day, 500 emails total | Need >100 order confirmations/day |
+| **Razorpay** | 0% fee on UPI payments, 2% on cards | Production scale only (transaction fees are %-based) |
+
+**Realistic scale the free tier supports:** 1,000–5,000 customers, 50–100 orders/day, ~10,000 analyses stored.
 
 ---
 

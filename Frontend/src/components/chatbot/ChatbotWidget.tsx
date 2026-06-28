@@ -6,7 +6,7 @@ import { ChatHeader } from "./ChatHeader";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 
-import skincareChemist from "@/assets/skincare_chemist.jpg";
+const skincareChemist = "/images/skincare-chemist.jpg";
 
 export const ChatbotWidget = () => {
   const { isOpen, toggleOpen, messages } = useChatbotStore();

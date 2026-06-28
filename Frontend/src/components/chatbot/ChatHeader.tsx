@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { useChatbotStore } from "@/store/useChatbotStore";
 import { useAuth } from "@/store/useAuthStore";
-import skincareChemist from "@/assets/skincare_chemist.jpg";
+const skincareChemist = "/images/skincare-chemist.jpg";
 
 export const ChatHeader = () => {
   const { close, queryCount, maxQueries } = useChatbotStore();

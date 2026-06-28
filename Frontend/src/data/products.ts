@@ -1,33 +1,25 @@
 import { Product, Review } from '@/types/product';
 
-// Product images - imported from assets
-import plixGuavaCleanser from '@/assets/images/Skincare/Skincare for men and women /Plix Guava Glow Juicy Cleanser.png';
-import mamaEarthVitaminCFaceWash from '@/assets/images/Skincare/Skincare for men and women /MamaEarth Vitamin C Face Wash.png';
-import theOrdinaryToner from '@/assets/images/Skincare/Skincare for men and women /THe Ordinary Tonerprovider.png';
-import dotKeyWatermelonSunscreen from '@/assets/images/Skincare/Skincare for men and women /Dot & Key WaterMelon Cooling Sunscreen.png';
-import theManCompanySerum from '@/assets/images/Skincare/Skincare for men and women /THe Man Company Vitamic C Face Serum .png';
-import cetaphilMoisturisingLotion from '@/assets/images/Skincare/Skincare for men and women /Cetaphil Moisturising Lotion.png';
-
-// Korean Skincare
-import glamvedaKoreanKit from '@/assets/images/Skincare/Korean Skincare/Glamveda Korean 7 Step Winter Skincare Kit for Women.png';
-
-// Children Skincare
-import mamaEarthBabyFaceWash from '@/assets/images/Skincare/Skincare for children/MamaEarth Baby Foaming Face Wash .png';
-import mamaEarthBabyFaceCream from '@/assets/images/Skincare/Skincare for children/MamaEarth Baby Milky Soft Face Cream.png';
-import mamaEarthChildSunscreen from '@/assets/images/Skincare/Skincare for children/Mamaearth child sunscreen .png';
-import motherSparshLipBalm from '@/assets/images/Skincare/Skincare for children/Mother Sparsh Milky Soft Baby Lip Balm.png';
-import cetaphilBabyDiaperCream from '@/assets/images/Skincare/Skincare for children/Cetaphil Baby Diaper Cream .png';
-
-// Senior Skincare
-import simpleFaceWash from '@/assets/images/Skincare/Skincare for old age /Simple face wash.png';
-import cetaphilMoisturisingCream from '@/assets/images/Skincare/Skincare for old age /Cetaphil Moisturising Cream.png';
-import cetaphilOptimalHydration from '@/assets/images/Skincare/Skincare for old age /Cetaphil Optimal Hydration.png';
-import mamaEarthVitaminCSunscreen from '@/assets/images/Skincare/Skincare for old age /MamaEarth Vitamin C Daily Glow Sunscreen.png';
-
-// Laser Hair Removal
-import bioLaser from '@/assets/images/Skincare/Laser Hair Removal/Bio-Laser.png';
-import laserDevice from '@/assets/images/Skincare/Laser Hair Removal/unnamed.png';
-import beforeAfter from '@/assets/images/Skincare/Laser Hair Removal/Before&Afterpng.png';
+// Product images - stored in public/images/products/
+const plixGuavaCleanser = '/images/products/plix-guava-glow-cleanser.png';
+const mamaEarthVitaminCFaceWash = '/images/products/mamaearth-vitamin-c-face-wash.png';
+const theOrdinaryToner = '/images/products/the-ordinary-glycolic-toner.png';
+const dotKeyWatermelonSunscreen = '/images/products/dot-key-watermelon-sunscreen.png';
+const theManCompanySerum = '/images/products/the-man-company-vitamin-c-serum.png';
+const cetaphilMoisturisingLotion = '/images/products/cetaphil-moisturising-lotion.png';
+const glamvedaKoreanKit = '/images/products/glamveda-korean-7-step-kit.png';
+const mamaEarthBabyFaceWash = '/images/products/mamaearth-baby-foaming-face-wash.png';
+const mamaEarthBabyFaceCream = '/images/products/mamaearth-baby-milky-soft-cream.png';
+const mamaEarthChildSunscreen = '/images/products/mamaearth-child-sunscreen.png';
+const motherSparshLipBalm = '/images/products/mother-sparsh-baby-lip-balm.png';
+const cetaphilBabyDiaperCream = '/images/products/cetaphil-baby-diaper-cream.png';
+const simpleFaceWash = '/images/products/simple-face-wash.png';
+const cetaphilMoisturisingCream = '/images/products/cetaphil-moisturising-cream.png';
+const cetaphilOptimalHydration = '/images/products/cetaphil-optimal-hydration.png';
+const mamaEarthVitaminCSunscreen = '/images/products/mamaearth-vitamin-c-daily-glow-sunscreen.png';
+const bioLaser = '/images/products/bio-laser.png';
+const laserDevice = '/images/products/laser-device-unnamed.png';
+const beforeAfter = '/images/products/laser-before-after.png';
 
 const placeholderImage = '/placeholder.svg';
 

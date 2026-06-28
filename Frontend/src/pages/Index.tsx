@@ -18,16 +18,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Layout from "@/components/layout/Layout";
-import heroBg from "@/assets/hero-background.png";
-import skinOily from "@/assets/skin-oily.png";
-import skinDry from "@/assets/skin-dry.png";
-import skinCombination from "@/assets/skin-combination.png";
-import skinSensitive from "@/assets/skin-sensitive.png";
-import skinNormal from "@/assets/skin-normal.png";
-import skincareProducts from "@/assets/skincare-products.png";
-import skincareLifestyle from "@/assets/skincare-lifestyle.png";
-import skinAnalysisTech from "@/assets/skin-analysis-tech.png";
-import skincareDroplet from "@/assets/skincare_droplet.jpg";
+const heroBg = "/images/hero-background.png";
+const skinOily = "/images/skin-oily.png";
+const skinDry = "/images/skin-dry.png";
+const skinCombination = "/images/skin-combination.png";
+const skinSensitive = "/images/skin-sensitive.png";
+const skinNormal = "/images/skin-normal.png";
+const skincareProducts = "/images/skincare-products.png";
+const skincareLifestyle = "/images/skincare-lifestyle.png";
+const skinAnalysisTech = "/images/skin-analysis-tech.png";
+const skincareDroplet = "/images/skincare-droplet.jpg";
 
 const benefits = [
   {

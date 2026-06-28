@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { User } from "lucide-react";
 import type { ChatMessage as ChatMessageType } from "@/store/useChatbotStore";
 import { cn } from "@/lib/utils";
-import skincareChemist from "@/assets/skincare_chemist.jpg";
+const skincareChemist = "/images/skincare-chemist.jpg";
 
 interface ChatMessageProps {
   message: ChatMessageType;

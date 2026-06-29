@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 
+
 // ─── Lazy loaded (heavy or rarely visited on first load) ─────────────────────
 const SkinTypesOverview   = lazy(() => import("./pages/SkinTypesOverview"));
 const SkinTypeDetail      = lazy(() => import("./pages/SkinTypeDetail"));

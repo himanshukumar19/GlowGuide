@@ -60,3 +60,12 @@ Specific dermatological conditions (acne, hyperpigmentation, aging, dryness, sen
 **Order**:
 A Customer's purchase transaction in the Shop. Tracked in the Dashboard under "My Routine" as auto-tracked products. Managed by Admins in the Order management panel.
 _Avoid_: Purchase
+
+**Auth Provider**:
+The method a Customer uses to sign in — Email/Password or Google. Both can be linked to the same Customer account via Firebase account linking.
+
+**Complete Your Profile**:
+The post-registration flow shown to a Customer after their first sign-in (regardless of Auth Provider) to collect phone, address, and skin profile before accessing the Dashboard. Skippable but re-prompted on next visit.
+
+**Analysis Count**:
+The total number of completed Skin Analyses a Customer has performed. Incremented by the backend after each successful analysis. Used to enforce free-tier limit (max 3). Stored in the Customer's Firestore document.

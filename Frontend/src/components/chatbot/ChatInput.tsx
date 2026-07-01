@@ -10,7 +10,7 @@ export const ChatInput = () => {
   const { sendQuery, queryCount, maxQueries } = useChatbotStore();
   const { customer } = useAuth();
 
-  const isPaid = customer?.subscriptionTier === "paid";
+  const isPaid = customer?.subscriptionTier === "PAID";
   const isAtLimit = !isPaid && queryCount >= maxQueries;
   const remaining = maxQueries - queryCount;
   const trimmed = text.trim();

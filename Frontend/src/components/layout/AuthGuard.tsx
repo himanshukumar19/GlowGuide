@@ -9,14 +9,10 @@ interface AuthGuardProps {
 }
 
 export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
-  const { customer, isLoading } = useAuth();
+  const { customer, isLoading, initialized } = useAuth();
   const location = useLocation();
 
-  // Check localStorage as a backup to prevent asynchronous React state timing gaps
-  const savedCustomer = localStorage.getItem("glowguide-customer");
-  const hasSavedCustomer = !!savedCustomer;
-
-  if (isLoading) {
+  if (!initialized || isLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
@@ -27,14 +23,11 @@ export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
     );
   }
 
-  if (!customer && !hasSavedCustomer) {
-    // Redirect to login page and save the state of where they were trying to go
+  if (!customer) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requireAdmin && (!customer || customer.email !== "admin@glowguide.com")) {
-    // Basic admin check (based on mock emails or role)
-    // Redirect to dashboard or home
+  if (requireAdmin && customer.role !== "ADMIN") {
     return <Navigate to="/dashboard" replace />;
   }
 

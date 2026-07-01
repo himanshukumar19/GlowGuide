@@ -1,12 +1,22 @@
+export interface SkinProfile {
+  skinType?: string;
+  concerns?: string[];
+}
+
 export interface Customer {
-  id: string;
+  uid: string;
   email: string;
-  name: string;
+  displayName: string;
+  photoURL?: string;
   phone?: string;
-  avatar?: string;
-  subscriptionTier: 'free' | 'paid';
-  subscriptionEndsAt?: string;
+  role: 'CUSTOMER' | 'ADMIN';
+  subscriptionTier: 'FREE' | 'PAID';
+  subscriptionExpiresAt?: string;
+  analysisCount: number;
+  skinProfile?: SkinProfile;
+  profileCompleted: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface SubscriptionPlan {

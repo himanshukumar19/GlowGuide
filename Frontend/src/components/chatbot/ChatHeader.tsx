@@ -6,7 +6,7 @@ const skincareChemist = "/images/skincare-chemist.jpg";
 export const ChatHeader = () => {
   const { close, queryCount, maxQueries } = useChatbotStore();
   const { customer } = useAuth();
-  const isPaid = customer?.subscriptionTier === "paid";
+  const isPaid = customer?.subscriptionTier === "PAID";
 
   return (
     <div className="gradient-primary px-5 py-4">

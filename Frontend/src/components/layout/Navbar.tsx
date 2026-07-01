@@ -139,17 +139,17 @@ const Navbar = () => {
               <div className="relative group ml-1">
                 <Link to="/dashboard" className="flex items-center gap-1.5 p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-all">
                   <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold relative">
-                    {customer?.name?.split(" ").map(n => n[0]).join("") || "GG"}
-                    {customer?.subscriptionTier === "paid" && (
+                    {customer?.displayName?.split(" ").map(n => n[0]).join("") || "GG"}
+                    {customer?.subscriptionTier === "PAID" && (
                       <Crown className="h-2.5 w-2.5 text-secondary absolute -top-1 -right-1 fill-secondary" />
                     )}
                   </div>
                 </Link>
                 <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-lg shadow-card py-1.5 hidden group-hover:block animate-fade-in z-50 before:content-[''] before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
                   <div className="px-4 py-2 border-b border-border/40 mb-1">
-                    <span className="font-semibold text-xs text-foreground block truncate">{customer?.name}</span>
+                    <span className="font-semibold text-xs text-foreground block truncate">{customer?.displayName}</span>
                     <span className="text-[10px] text-muted-foreground block uppercase font-bold mt-0.5">
-                      {customer?.subscriptionTier === "paid" ? "★ Pro Tier" : "Free Tier"}
+                      {customer?.subscriptionTier === "PAID" ? "★ Pro Tier" : "Free Tier"}
                     </span>
                   </div>
                   <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 text-xs text-foreground hover:bg-muted transition-colors font-medium">

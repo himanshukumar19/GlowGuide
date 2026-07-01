@@ -7,10 +7,10 @@ import Layout from "@/components/layout/Layout";
 import { toast } from "sonner";
 
 const Pricing = () => {
-  const { customer, isAuthenticated, toggleSubscriptionTier } = useAuth();
+  const { customer, isAuthenticated, updateCustomer } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubscribe = () => {
+  const handleSubscribe = async () => {
     if (!isAuthenticated) {
       toast.info("Please sign in first to subscribe.", {
         action: {
@@ -22,16 +22,17 @@ const Pricing = () => {
       return;
     }
 
-    toggleSubscriptionTier();
+    const newTier = customer?.subscriptionTier === "FREE" ? "PAID" : "FREE";
+    await updateCustomer({ subscriptionTier: newTier });
     
-    if (customer?.subscriptionTier === "free") {
+    if (newTier === "PAID") {
       toast.success("Successfully upgraded to Pro Tier! Welcome aboard.");
     } else {
       toast.info("Subscription reverted to Free Tier for testing.");
     }
   };
 
-  const isPro = customer?.subscriptionTier === "paid";
+  const isPro = customer?.subscriptionTier === "PAID";
 
   const freeFeatures = [
     { text: "Skin type classification", included: true },

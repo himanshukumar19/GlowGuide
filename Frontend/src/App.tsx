@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import CompleteProfile from "./pages/CompleteProfile";
 
 
 // ─── Lazy loaded (heavy or rarely visited on first load) ─────────────────────
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/analysis" element={<AuthGuard><SkinQuiz /></AuthGuard>} />
             <Route path="/analysis/results/:id" element={<AuthGuard><AnalysisResultsPage /></AuthGuard>} />
             <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+            <Route path="/complete-profile" element={<AuthGuard><CompleteProfile /></AuthGuard>} />
             <Route path="/cart" element={<AuthGuard><CartPage /></AuthGuard>} />
             <Route path="/wishlist" element={<AuthGuard><WishlistPage /></AuthGuard>} />
             <Route path="/checkout" element={<AuthGuard><CheckoutPage /></AuthGuard>} />

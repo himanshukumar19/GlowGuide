@@ -22,31 +22,31 @@ import { DashboardErrorBoundary } from "@/components/analysis/DashboardErrorBoun
 import { products } from "@/data/products";
 
 const Dashboard = () => {
-  const { customer, logout, toggleSubscriptionTier, updateProfile } = useAuth();
+  const { customer, logout, updateCustomer } = useAuth();
   const navigate = useNavigate();
 
   // Settings states
-  const [profileName, setProfileName] = useState(customer?.name || "");
+  const [profileName, setProfileName] = useState(customer?.displayName || "");
   const [profilePhone, setProfilePhone] = useState(customer?.phone || "");
   const [settingsLoading, setSettingsLoading] = useState(false);
 
   // Sync profile values once customer loads asynchronously
   useEffect(() => {
     if (customer) {
-      setProfileName(customer.name || "");
+      setProfileName(customer.displayName || "");
       setProfilePhone(customer.phone || "");
     }
   }, [customer]);
 
   // Filter history based on subscription tier
-  const isPro = customer?.subscriptionTier === "paid";
+  const isPro = customer?.subscriptionTier === "PAID";
   
   // Free users only get last 3 analyses, Paid users get the full history
   const visibleHistory = isPro ? MOCK_HISTORY : MOCK_HISTORY.slice(-3);
   const latestAnalysis = visibleHistory[visibleHistory.length - 1];
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     toast.success("Logged out successfully.");
     navigate("/");
   };
@@ -54,19 +54,20 @@ const Dashboard = () => {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSettingsLoading(true);
-    const success = await updateProfile({ name: profileName, phone: profilePhone });
-    setSettingsLoading(false);
-    if (success) {
+    try {
+      await updateCustomer({ displayName: profileName, phone: profilePhone });
       toast.success("Profile updated successfully!");
-    } else {
+    } catch {
       toast.error("Failed to update profile.");
     }
+    setSettingsLoading(false);
   };
 
-  const handleSubscribeToggle = () => {
-    toggleSubscriptionTier();
+  const handleSubscribeToggle = async () => {
+    const newTier = customer?.subscriptionTier === "FREE" ? "PAID" : "FREE";
+    await updateCustomer({ subscriptionTier: newTier });
     toast.success(
-      `Subscription changed to ${customer?.subscriptionTier === "free" ? "Pro" : "Free"} tier.`
+      `Subscription changed to ${newTier === "PAID" ? "Pro" : "Free"} tier.`
     );
   };
 
@@ -142,7 +143,7 @@ const Dashboard = () => {
                 Skincare Diagnostic Center
               </span>
               <h1 className="font-heading text-3xl md:text-4xl font-extrabold text-foreground">
-                Welcome back, {customer?.name}
+                Welcome back, {customer?.displayName}
               </h1>
               <p className="text-muted-foreground text-xs">
                 Your skin diagnostic report was last compiled on{" "}
@@ -595,7 +596,7 @@ const Dashboard = () => {
                         Billing Plan Tier
                       </span>
                       <span className="text-base font-bold text-foreground capitalize block">
-                        Glow {customer?.subscriptionTier === "paid" ? "Premium" : "Starter"}
+                        Glow {customer?.subscriptionTier === "PAID" ? "Premium" : "Starter"}
                       </span>
                     </div>
 
@@ -604,8 +605,8 @@ const Dashboard = () => {
                         Renews / Expire Date
                       </span>
                       <span className="text-xs text-foreground font-medium block">
-                        {customer?.subscriptionEndsAt 
-                          ? new Date(customer.subscriptionEndsAt).toLocaleDateString()
+                        {customer?.subscriptionExpiresAt 
+                          ? new Date(customer.subscriptionExpiresAt).toLocaleDateString()
                           : "N/A (Free Account)"}
                       </span>
                     </div>

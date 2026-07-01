@@ -12,7 +12,7 @@ import {
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
-import type { Customer } from "@/types/customer";
+import type { Customer } from "@/models";
 
 interface AuthState {
   customer: Customer | null;

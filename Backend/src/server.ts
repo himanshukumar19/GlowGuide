@@ -2,8 +2,7 @@ import express from "express";
 import cors from "cors";
 import axios from "axios";
 import dotenv from "dotenv";
-import authRoutes from "./routes/auth";
-import subscriptionRoutes from "./routes/subscriptions";
+import routes from "./routes";
 
 dotenv.config();
 
@@ -39,8 +38,7 @@ const app = express();
 
 app.use(cors({ origin: process.env.FRONTEND_URL || "*"}));
 app.use(express.json());
-app.use("/api/auth", authRoutes);
-app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api", routes);
 
 app.get("/api/health", (_req, res)=>{
     return res.json({ status: "ok", service: "GlowGuide Backend" });

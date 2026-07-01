@@ -1,16 +1,38 @@
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Sparkles, X, ArrowRight, ShieldCheck } from "lucide-react";
+import { Check, Sparkles, X, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { toast } from "sonner";
+import { subscriptionApi } from "@/api/subscription.api";
+
+declare global {
+  interface Window {
+    Razorpay: new (options: Record<string, unknown>) => { open(): void };
+  }
+}
+
+function loadRazorpayScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (document.getElementById("razorpay-script")) return resolve();
+    const script = document.createElement("script");
+    script.id = "razorpay-script";
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Razorpay SDK"));
+    document.body.appendChild(script);
+  });
+}
 
 const Pricing = () => {
-  const { customer, isAuthenticated, updateCustomer } = useAuth();
+  const { customer, isAuthenticated, refreshCustomer } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubscribe = async () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubscribe = useCallback(async () => {
     if (!isAuthenticated) {
       toast.info("Please sign in first to subscribe.", {
         action: {
@@ -22,15 +44,56 @@ const Pricing = () => {
       return;
     }
 
-    const newTier = customer?.subscriptionTier === "FREE" ? "PAID" : "FREE";
-    await updateCustomer({ subscriptionTier: newTier });
-    
-    if (newTier === "PAID") {
-      toast.success("Successfully upgraded to Pro Tier! Welcome aboard.");
-    } else {
-      toast.info("Subscription reverted to Free Tier for testing.");
+    setIsLoading(true);
+    try {
+      await loadRazorpayScript();
+
+      const order = await subscriptionApi.createOrder();
+
+      const options = {
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: "GlowGuide",
+        description: order.description,
+        order_id: order.orderId,
+        prefill: {
+          name: customer?.displayName || "",
+          email: customer?.email || "",
+        },
+        theme: { color: "#6366f1" },
+        handler: async function (response: {
+          razorpay_payment_id: string;
+          razorpay_order_id: string;
+          razorpay_signature: string;
+        }) {
+          try {
+            await subscriptionApi.verifyPayment({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+            await refreshCustomer();
+            toast.success("Successfully upgraded to Premium!");
+          } catch {
+            toast.error("Payment verification failed. Please contact support.");
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            toast.info("Payment cancelled.");
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to initiate payment.");
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, navigate, customer, refreshCustomer]);
 
   const isPro = customer?.subscriptionTier === "PAID";
 
@@ -108,7 +171,7 @@ const Pricing = () => {
                   variant="outline"
                   className="w-full py-6 border-border rounded-gg-sm text-foreground hover:bg-muted font-semibold transition-all"
                 >
-                  {!isAuthenticated ? "Get Started" : isPro ? "Downgrade (via active toggle)" : "Your Current Plan"}
+                  {!isAuthenticated ? "Get Started" : "Go to Dashboard"}
                 </Button>
               </CardFooter>
             </Card>
@@ -149,9 +212,15 @@ const Pricing = () => {
               <CardFooter className="p-8 pt-0 mt-auto">
                 <Button
                   onClick={handleSubscribe}
+                  disabled={isLoading}
                   className="w-full py-6 bg-primary hover:bg-primary-hover active:scale-95 transition-all text-primary-foreground font-semibold shadow-primary rounded-gg-sm flex items-center justify-center"
                 >
-                  {isPro ? (
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : isPro ? (
                     <>
                       <ShieldCheck className="mr-2 h-4 w-4" />
                       Active — Cancel subscription

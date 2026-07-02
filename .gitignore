@@ -6,12 +6,14 @@ node_modules/
 # Build outputs
 dist/
 build/
+.next/
+out/
 *.js.map
 
 # Environment variables (NEVER commit these)
 .env
 .env.local
-# .env.production is intentionally tracked — contains only public VITE_ URLs (no secrets)
+.env.production
 .env.*.local
 
 # Python
@@ -33,3 +35,7 @@ Thumbs.db
 # Editor
 .vscode/settings.json
 .idea/
+
+# Next.js
+.next/
+out/

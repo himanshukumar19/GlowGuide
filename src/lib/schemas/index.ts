@@ -9,3 +9,21 @@ export type { Subscription, SubscriptionStatus } from "./subscription";
 
 export { planSchema } from "./plan";
 export type { SubscriptionPlan } from "./plan";
+
+export {
+  analysisSchema,
+  analysisResultSchema,
+  detectedConcernSchema,
+  routineRecommendationSchema,
+  skinTypeEnum,
+  analysisSourceEnum,
+} from "./analysis";
+export type {
+  Analysis,
+  AnalysisResult,
+  DetectedConcern,
+  RoutineRecommendation,
+  RoutineStep,
+  SkinType,
+  AnalysisSource,
+} from "./analysis";

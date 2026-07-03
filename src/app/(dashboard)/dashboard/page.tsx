@@ -17,7 +17,7 @@ import {
   Lock, BookOpen, Clock, PlayCircle, Loader2, Sun, Moon
 } from "lucide-react";
 import { toast } from "sonner";
-import { MOCK_HISTORY } from "@/data/analysisHistory";
+import { analysisApi, type AnalysisHistoryItem } from "@/api/analysis.api";
 import { HealthTrendCharts } from "@/components/analysis/HealthTrendCharts";
 import { AnalysisComparison } from "@/components/analysis/AnalysisComparison";
 import { DashboardErrorBoundary } from "@/components/analysis/DashboardErrorBoundary";
@@ -32,6 +32,10 @@ const Dashboard = () => {
   const [profilePhone, setProfilePhone] = useState(customer?.phone || "");
   const [settingsLoading, setSettingsLoading] = useState(false);
 
+  // Analysis history
+  const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
   // Sync profile values once customer loads asynchronously
   useEffect(() => {
     if (customer) {
@@ -40,11 +44,35 @@ const Dashboard = () => {
     }
   }, [customer]);
 
+  // Fetch real analysis history
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchHistory() {
+      try {
+        setHistoryLoading(true);
+        const data = await analysisApi.getHistory(20);
+        if (!cancelled) setHistory(data.items);
+      } catch (err) {
+        console.error("Failed to load analysis history:", err);
+        if (!cancelled) toast.error("Failed to load analysis history.");
+      } finally {
+        if (!cancelled) setHistoryLoading(false);
+      }
+    }
+
+    fetchHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Filter history based on subscription tier
   const isPro = customer?.subscriptionTier === "PAID";
-  
-  // Free users only get last 3 analyses, Paid users get the full history
-  const visibleHistory = isPro ? MOCK_HISTORY : MOCK_HISTORY.slice(-3);
+
+  // History is already tier-gated by the backend; free users see last 3, paid users see 12 months
+  const visibleHistory = history;
   const latestAnalysis = visibleHistory[visibleHistory.length - 1];
 
   const handleLogout = async () => {
@@ -269,7 +297,7 @@ const Dashboard = () => {
                       Joined: <span className="text-foreground">{customer?.createdAt ? new Date(customer.createdAt).toLocaleDateString() : "Today"}</span>
                     </div>
                     <div>
-                      Total Scans: <span className="text-foreground">{visibleHistory.length}</span>
+                      Total Scans: <span className="text-foreground">{customer?.analysisCount ?? visibleHistory.length}</span>
                     </div>
                   </div>
                 </Card>
@@ -305,7 +333,7 @@ const Dashboard = () => {
                 <div className="p-3.5 bg-secondary/10 border border-secondary/20 rounded-gg-sm flex items-center justify-between text-xs text-secondary font-bold">
                   <span className="flex items-center gap-2">
                     <Lock className="h-4 w-4" />
-                    Pro Gating Active: Displaying last 3 entries. 3 older analyses are hidden.
+                    Pro Gating Active: Displaying last 3 entries. Upgrade for 12 months of history.
                   </span>
                   <Link href="/pricing" className="hover:underline">
                     Upgrade Now ➔
@@ -370,7 +398,7 @@ const Dashboard = () => {
             {/* TAB CONTENT: RECOMMENDED ROUTINE */}
             <TabsContent value="routine" className="space-y-6 animate-fade-in outline-none">
               <div className="grid md:grid-cols-3 gap-6">
-                
+
                 {/* Routine morning/night */}
                 <div className="md:col-span-2 space-y-6">
                   {/* Morning */}
@@ -383,44 +411,23 @@ const Dashboard = () => {
                         Morning Routine (Tracked)
                       </h3>
                     </div>
-                    <ol className="space-y-3.5">
-                      <li className="flex items-start gap-3 text-xs">
-                        <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-bold mt-0.5">
-                          1
-                        </span>
-                        <div>
-                          <span className="font-bold text-foreground block">Cleanser</span>
-                          <span className="text-muted-foreground block mt-0.5">Gentle foaming face wash (e.g. Simple cleanser)</span>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-3 text-xs">
-                        <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-bold mt-0.5">
-                          2
-                        </span>
-                        <div>
-                          <span className="font-bold text-foreground block">Active Treatment</span>
-                          <span className="text-muted-foreground block mt-0.5">Hydrating Niacinamide or Vitamin C serum</span>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-3 text-xs">
-                        <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-bold mt-0.5">
-                          3
-                        </span>
-                        <div>
-                          <span className="font-bold text-foreground block">Moisturizer</span>
-                          <span className="text-muted-foreground block mt-0.5">Light moisturizing lotion (e.g. Cetaphil lotion)</span>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-3 text-xs">
-                        <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-bold mt-0.5">
-                          4
-                        </span>
-                        <div>
-                          <span className="font-bold text-foreground block">UV Protection</span>
-                          <span className="text-muted-foreground block mt-0.5">Broad-spectrum mineral SPF 30+</span>
-                        </div>
-                      </li>
-                    </ol>
+                    {latestAnalysis?.routine?.morning && latestAnalysis.routine.morning.length > 0 ? (
+                      <ol className="space-y-3.5">
+                        {latestAnalysis.routine.morning.map((step, index) => (
+                          <li key={index} className="flex items-start gap-3 text-xs">
+                            <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-bold mt-0.5">
+                              {index + 1}
+                            </span>
+                            <div>
+                              <span className="font-bold text-foreground block">{step.productType}</span>
+                              <span className="text-muted-foreground block mt-0.5">{step.description}</span>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">Complete a skin analysis to get a personalized morning routine.</p>
+                    )}
                   </Card>
 
                   {/* Night */}
@@ -433,35 +440,23 @@ const Dashboard = () => {
                         Night Routine (Tracked)
                       </h3>
                     </div>
-                    <ol className="space-y-3.5">
-                      <li className="flex items-start gap-3 text-xs">
-                        <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold mt-0.5">
-                          1
-                        </span>
-                        <div>
-                          <span className="font-bold text-foreground block">Double Cleanse</span>
-                          <span className="text-muted-foreground block mt-0.5">Oil cleanser followed by foaming wash to clear pores</span>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-3 text-xs">
-                        <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold mt-0.5">
-                          2
-                        </span>
-                        <div>
-                          <span className="font-bold text-foreground block">Hydration Layer</span>
-                          <span className="text-muted-foreground block mt-0.5">Soothing toner containing Hyaluronic Acid or Cica</span>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-3 text-xs">
-                        <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold mt-0.5">
-                          3
-                        </span>
-                        <div>
-                          <span className="font-bold text-foreground block">Barrier Cream</span>
-                          <span className="text-muted-foreground block mt-0.5">Thicker Ceramide moisturizer to lock in moisture overnight</span>
-                        </div>
-                      </li>
-                    </ol>
+                    {latestAnalysis?.routine?.night && latestAnalysis.routine.night.length > 0 ? (
+                      <ol className="space-y-3.5">
+                        {latestAnalysis.routine.night.map((step, index) => (
+                          <li key={index} className="flex items-start gap-3 text-xs">
+                            <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold mt-0.5">
+                              {index + 1}
+                            </span>
+                            <div>
+                              <span className="font-bold text-foreground block">{step.productType}</span>
+                              <span className="text-muted-foreground block mt-0.5">{step.description}</span>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">Complete a skin analysis to get a personalized night routine.</p>
+                    )}
                   </Card>
                 </div>
 

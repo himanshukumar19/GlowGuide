@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ArrowRight, ArrowLeft, CheckCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,11 +10,10 @@ import { Progress } from "@/components/ui/progress";
 import { quizQuestions } from "@/data/quizData";
 import { LivePhotoCapture } from "@/components/analysis/LivePhotoCapture";
 import { AnalysisProcessing } from "@/components/analysis/AnalysisProcessing";
-import { AnalysisResults } from "@/components/analysis/AnalysisResults";
-import { api } from "@/api/client";
+import { analysisApi } from "@/api/analysis.api";
 import { toast } from "sonner";
 
-type DiagnosisStep = "intro" | "quiz" | "camera" | "processing" | "results";
+type DiagnosisStep = "intro" | "quiz" | "camera" | "processing";
 
 const SkinQuiz = () => {
   const [step, setStep] = useState<DiagnosisStep>("intro");
@@ -28,13 +28,7 @@ const SkinQuiz = () => {
   // Scans captured
   const [photos, setPhotos] = useState<string[]>([]);
   
-  // Results returned from API
-  const [apiResult, setApiResult] = useState<{
-    skinType: string;
-    confidence: number;
-    probabilities: Record<string, number>;
-    concernsDetected: string[];
-  } | null>(null);
+  const router = useRouter();
 
   // Ping backend on mount to wake up free tiers
   useEffect(() => {
@@ -53,7 +47,6 @@ const SkinQuiz = () => {
     setAnswers({});
     setSelectedOption(null);
     setPhotos([]);
-    setApiResult(null);
     setFreeText("");
     setShowFreeText(false);
   };
@@ -93,55 +86,32 @@ const SkinQuiz = () => {
     setPhotos(capturedPhotos);
     setStep("processing");
 
-    // Simulate ML processing buffer time to let loader play, then fetch
     try {
-      const data = await api.post<{
-        skin_type: string;
-        confidence: number;
-        probabilities: Record<string, number>;
-        concerns_detected?: string[];
-      }>("/api/skin-analysis", {
+      const data = await analysisApi.create({
         answers: answers,
-        skinNotes: freeText || null
+        skinNotes: freeText || null,
       });
-      
-      // Delay transition to make visual helix animation smooth
-      setTimeout(() => {
-        setApiResult({
-          skinType: data.skin_type,
-          confidence: data.confidence || 0.85,
-          probabilities: data.probabilities || { [data.skin_type]: 0.85 },
-          concernsDetected: data.concerns_detected || []
-        });
-        setStep("results");
-      }, 1500);
 
+      // Allow the processing animation to play briefly, then redirect
+      setTimeout(() => {
+        router.push(`/analysis/results/${data.analysisId}`);
+      }, 1500);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      console.error("API Diagnostic failed, calculating offline score:", message);
-      
-      // Offline fallback: Use the same fallback rules as the backend inside server.ts
+      console.error("API Diagnostic failed:", message);
+
+      const isLimitReached =
+        err instanceof Error && "code" in err && (err as { code: string }).code === "ANALYSIS_LIMIT_REACHED";
+
+      toast.error(
+        isLimitReached
+          ? "Free tier analysis limit reached. Upgrade to continue."
+          : "Failed to generate analysis. Please try again."
+      );
+
       setTimeout(() => {
-        const s = answers.sebum_level ?? 50;
-        const h = answers.hydration_level ?? 50;
-        const sn = answers.sensitivity_score ?? 30;
-        const t = answers.tightness_score ?? 30;
-
-        let detectedType = "normal";
-        if (sn >= 68) detectedType = "sensitive";
-        else if (s >= 65 && h >= 45 && t <= 30) detectedType = "oily";
-        else if (s >= 55) detectedType = "combination";
-        else if (h <= 36 || t >= 70) detectedType = "dry";
-
-        setApiResult({
-          skinType: detectedType,
-          confidence: 0.90,
-          probabilities: { [detectedType]: 0.90 },
-          concernsDetected: freeText ? [freeText.substring(0, 15)] : []
-        });
-        setStep("results");
-        toast.info("Offline Diagnostic Report generated successfully via Fallback classifier.");
-      }, 2000);
+        setStep("camera");
+      }, 500);
     }
   };
 
@@ -388,19 +358,6 @@ const SkinQuiz = () => {
               </motion.div>
             )}
 
-            {/* Step 5: Diagnosis Report dashboard */}
-            {step === "results" && apiResult && (
-              <motion.div key="results" className="w-full">
-                <AnalysisResults
-                  skinType={apiResult.skinType}
-                  confidence={apiResult.confidence}
-                  probabilities={apiResult.probabilities}
-                  concernsDetected={apiResult.concernsDetected}
-                  answers={answers}
-                  onRestart={handleStart}
-                />
-              </motion.div>
-            )}
           </AnimatePresence>
         </div>
       </div>

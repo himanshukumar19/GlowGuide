@@ -12,3 +12,9 @@ export {
   setSubscription,
   getSubscriptionByCustomerId,
 } from "./subscription";
+export {
+  createAnalysis,
+  getAnalysisById,
+  listAnalysesByCustomer,
+  countAnalysesByCustomer,
+} from "./analysis";

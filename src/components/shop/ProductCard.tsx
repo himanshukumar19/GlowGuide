@@ -82,6 +82,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       {/* Wishlist Button */}
       <button
         onClick={handleWishlistToggle}
+        aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
         className={`absolute top-3 right-3 z-10 p-2 rounded-full transition-all ${
           inWishlist 
             ? 'bg-red-500 text-white' 

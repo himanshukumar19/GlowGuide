@@ -1,272 +1,318 @@
-'use client';
+"use client";
 
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  CheckCircle,
-  Sun,
-  Moon,
-  Droplets,
-  Shield,
   Sparkles,
-  BookOpen,
+  Droplets,
+  Sun,
+  Shield,
+  Heart,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { getAllSkinTypes } from "@/data/skinTypes";
 
-const skinTypes = [
-  {
-    type: "Oily",
-    emoji: "💧",
-    path: "/skin-types/oily",
-    description: "Excess sebum production with shine and visible pores",
-    characteristics: ["Shiny appearance", "Large pores", "Prone to acne"],
-    color: "from-blue-50 to-blue-100",
-    iconBg: "bg-blue-100",
-    iconColor: "text-blue-600",
-  },
-  {
-    type: "Dry",
-    emoji: "🏜️",
-    path: "/skin-types/dry",
-    description: "Lacks moisture, may feel tight or flaky",
-    characteristics: ["Tight feeling", "Flaky patches", "Dull complexion"],
-    color: "from-amber-50 to-amber-100",
-    iconBg: "bg-amber-100",
-    iconColor: "text-amber-600",
-  },
-  {
-    type: "Combination",
-    emoji: "⚖️",
-    path: "/skin-types/combination",
-    description: "Oily T-zone with normal or dry cheeks",
-    characteristics: ["Oily T-zone", "Dry cheeks", "Mixed concerns"],
-    color: "from-green-50 to-green-100",
-    iconBg: "bg-green-100",
-    iconColor: "text-green-600",
-  },
-  {
-    type: "Sensitive",
-    emoji: "🌸",
-    path: "/skin-types/sensitive",
-    description: "Reacts easily to products and environment",
-    characteristics: ["Easily irritated", "Prone to redness", "Reactive"],
-    color: "from-pink-50 to-pink-100",
-    iconBg: "bg-pink-100",
-    iconColor: "text-pink-600",
-  },
-  {
-    type: "Normal",
-    emoji: "✨",
-    path: "/skin-types/normal",
-    description: "Well-balanced with minimal issues",
-    characteristics: ["Balanced moisture", "Small pores", "Even texture"],
-    color: "from-purple-50 to-purple-100",
-    iconBg: "bg-purple-100",
-    iconColor: "text-purple-600",
-  },
-];
+const skinTypes = getAllSkinTypes();
 
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 },
+    transition: { staggerChildren: 0.08 },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
 const SkinTypesOverview = () => {
   return (
     <>
-    {/* Hero */}
-      <section className="py-16 gradient-hero">
-        <div className="container mx-auto px-4">
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-[#F7F9F8] py-20 md:py-28">
+        <div className="absolute inset-0 opacity-50">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `radial-gradient(circle at 1px 1px, rgba(83, 134, 112, 0.08) 1px, transparent 0)`,
+              backgroundSize: "32px 32px",
+            }}
+          />
+        </div>
+        <div className="container relative mx-auto px-4">
           <motion.div
-            className="max-w-3xl mx-auto text-center"
-            initial={{ opacity: 0, y: 20 }}
+            className="mx-auto max-w-3xl text-center"
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-              <Droplets className="h-4 w-4" />
+            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#D8E2DC] bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#355245] backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5" />
               Understanding Your Skin
             </span>
-            <h1 className="font-heading text-4xl md:text-5xl font-bold mb-4">
-              Know Your <span className="text-gradient">Skin Type</span>
+            <h1 className="font-heading text-4xl font-bold leading-tight text-[#262626] md:text-5xl lg:text-6xl">
+              Know Your <span className="text-[#538670]">Skin Type</span>
             </h1>
-            <p className="text-muted-foreground text-lg">
-              Identifying your skin type is the foundation of an effective skincare routine. 
-              Learn about each type and find the perfect products for your unique needs.
+            <p className="mt-5 text-lg leading-relaxed text-[#737373] md:text-xl">
+              Every effective routine starts here. Learn the five core skin types,
+              spot your own, and build a regimen that actually works for you.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Quiz CTA */}
-      <section className="py-8 bg-muted/30">
+      {/* Diagnostic CTA */}
+      <section className="border-b border-[#E2E8E4] bg-white py-8">
         <div className="container mx-auto px-4">
-          <Card className="border-0 shadow-card gradient-card">
-            <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center">
-                  <Sparkles className="h-7 w-7 text-primary-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-heading font-semibold">Not sure about your skin type?</h3>
-                  <p className="text-muted-foreground text-sm">Take our quick quiz to find out!</p>
-                </div>
+          <motion.div
+            className="flex flex-col items-center justify-between gap-5 rounded-2xl border border-[#D8E2DC] bg-[#F7F9F8] p-6 md:flex-row md:p-8"
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex items-center gap-5">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#355245] to-[#538670] shadow-md">
+                <Sparkles className="h-7 w-7 text-white" />
               </div>
-              <Link href="/analysis">
-                <Button className="gradient-primary border-0 text-primary-foreground">
-                  Take the Quiz
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+              <div>
+                <h2 className="font-heading text-lg font-semibold text-[#262626]">
+                  Not sure where you fit?
+                </h2>
+                <p className="text-sm text-[#737373]">
+                  Take our quick, dermatologist-informed quiz and get a clear read.
+                </p>
+              </div>
+            </div>
+            <Link href="/analysis">
+              <Button className="gap-2 rounded-xl bg-[#355245] px-6 py-5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#2A4136]">
+                Take the Quiz
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </motion.div>
         </div>
       </section>
 
       {/* Skin Types Grid */}
-      <section className="py-16">
+      <section className="bg-white py-16 md:py-24">
         <div className="container mx-auto px-4">
           <motion.div
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {skinTypes.map((skin, index) => (
-              <motion.div key={index} variants={itemVariants}>
-                <Link href={skin.path}>
-                  <Card className="border-0 shadow-card hover-lift h-full overflow-hidden group">
-                    <CardContent className={`p-0`}>
-                      <div className={`p-6 bg-gradient-to-br ${skin.color}`}>
-                        <div className="flex items-center gap-3 mb-4">
-                          <span className="text-4xl">{skin.emoji}</span>
-                          <h2 className="font-heading text-2xl font-bold">{skin.type} Skin</h2>
-                        </div>
-                        <p className="text-muted-foreground mb-4">{skin.description}</p>
-                        <ul className="space-y-2">
-                          {skin.characteristics.map((char, i) => (
-                            <li key={i} className="flex items-center gap-2 text-sm">
-                              <CheckCircle className={`h-4 w-4 ${skin.iconColor}`} />
-                              <span>{char}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="p-4 flex items-center justify-between border-t border-border">
-                        <span className="text-sm font-medium text-primary">Learn more</span>
-                        <ArrowRight className="h-4 w-4 text-primary group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Comparison Table Preview */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <motion.div
-            className="max-w-4xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
+            className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+            initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="text-center mb-8">
-              <h2 className="font-heading text-3xl font-bold mb-4">Quick Comparison</h2>
-              <p className="text-muted-foreground">At-a-glance differences between skin types</p>
+            <div>
+              <h2 className="font-heading text-3xl font-bold text-[#262626] md:text-4xl">
+                The five skin types
+              </h2>
+              <p className="mt-2 text-[#737373]">
+                Each one has its own strengths, challenges, and ideal routine.
+              </p>
             </div>
+            <span className="hidden text-xs font-semibold uppercase tracking-wider text-[#538670] md:block">
+              Click a card to explore
+            </span>
+          </motion.div>
 
-            <Card className="border-0 shadow-card overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-muted">
-                    <tr>
-                      <th className="text-left p-4 font-heading font-semibold">Skin Type</th>
-                      <th className="text-left p-4 font-heading font-semibold">Pore Size</th>
-                      <th className="text-left p-4 font-heading font-semibold">Main Concern</th>
-                      <th className="text-left p-4 font-heading font-semibold">Key Products</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-t border-border">
-                      <td className="p-4 font-medium">💧 Oily</td>
-                      <td className="p-4 text-sm">Large, visible</td>
-                      <td className="p-4 text-sm">Shine, acne</td>
-                      <td className="p-4 text-sm">Oil-free, BHA</td>
-                    </tr>
-                    <tr className="border-t border-border bg-muted/30">
-                      <td className="p-4 font-medium">🏜️ Dry</td>
-                      <td className="p-4 text-sm">Very small</td>
-                      <td className="p-4 text-sm">Flakiness, tightness</td>
-                      <td className="p-4 text-sm">Rich creams, oils</td>
-                    </tr>
-                    <tr className="border-t border-border">
-                      <td className="p-4 font-medium">⚖️ Combination</td>
-                      <td className="p-4 text-sm">Varies by zone</td>
-                      <td className="p-4 text-sm">Balance</td>
-                      <td className="p-4 text-sm">Zone treatments</td>
-                    </tr>
-                    <tr className="border-t border-border bg-muted/30">
-                      <td className="p-4 font-medium">🌸 Sensitive</td>
-                      <td className="p-4 text-sm">Small</td>
-                      <td className="p-4 text-sm">Irritation, redness</td>
-                      <td className="p-4 text-sm">Gentle, fragrance-free</td>
-                    </tr>
-                    <tr className="border-t border-border">
-                      <td className="p-4 font-medium">✨ Normal</td>
-                      <td className="p-4 text-sm">Small, even</td>
-                      <td className="p-4 text-sm">Maintenance</td>
-                      <td className="p-4 text-sm">Balanced care</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </Card>
+          <motion.div
+            className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {skinTypes.map((skin) => {
+              const Icon = skin.icon;
+              return (
+                <motion.div key={skin.slug} variants={itemVariants}>
+                  <Link href={`/skin-types/${skin.slug}`}>
+                    <article
+                      className="group relative h-full overflow-hidden rounded-2xl border border-[#E2E8E4] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#355245]/20 hover:shadow-lg"
+                    >
+                      <div
+                        className="absolute left-0 top-0 h-1 w-full"
+                        style={{ backgroundColor: skin.tokens.accent }}
+                      />
+                      <div
+                        className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
+                        style={{
+                          backgroundColor: skin.tokens.wash,
+                          color: skin.tokens.accent,
+                        }}
+                      >
+                        <Icon className="h-6 w-6" strokeWidth={1.8} />
+                      </div>
+                      <h3 className="font-heading text-2xl font-bold text-[#262626]">
+                        {skin.label}
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-[#737373]">
+                        {skin.tagline}
+                      </p>
+
+                      <ul className="mt-5 space-y-2">
+                        {skin.characteristics.slice(0, 3).map((char, i) => (
+                          <li
+                            key={i}
+                            className="flex items-start gap-2 text-sm text-[#525252]"
+                          >
+                            <span
+                              className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: skin.tokens.accent }}
+                            />
+                            <span>{char}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="mt-6 flex items-center gap-2 text-sm font-semibold" style={{ color: skin.tokens.accent }}>
+                        <span>Explore {skin.type}</span>
+                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      </div>
+                    </article>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
       </section>
 
-      {/* General Tips */}
-      <section className="py-16">
+      {/* Comparison Snapshot */}
+      <section className="bg-[#F7F9F8] py-16 md:py-24">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
+          <motion.div
+            className="mb-10 text-center"
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="font-heading text-3xl font-bold text-[#262626] md:text-4xl">
+              At a glance
+            </h2>
+            <p className="mt-2 text-[#737373]">
+              How the five types differ across the things that matter most.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="overflow-hidden rounded-2xl border border-[#E2E8E4] bg-white shadow-sm"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[700px]">
+                <thead>
+                  <tr className="border-b border-[#E2E8E4] bg-[#FAFBFA]">
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#538670]">
+                      Skin Type
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#538670]">
+                      Pores
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#538670]">
+                      Main Concern
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#538670]">
+                      Hero Ingredient
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {skinTypes.map((skin, idx) => (
+                    <tr
+                      key={skin.slug}
+                      className={`border-b border-[#E2E8E4] transition-colors hover:bg-[#F7F9F8] ${
+                        idx % 2 === 1 ? "bg-[#FAFBFA]/50" : "bg-white"
+                      }`}
+                    >
+                      <td className="px-6 py-4">
+                        <Link
+                          href={`/skin-types/${skin.slug}`}
+                          className="group inline-flex items-center gap-3"
+                        >
+                          <span
+                            className="flex h-8 w-8 items-center justify-center rounded-lg"
+                            style={{
+                              backgroundColor: skin.tokens.wash,
+                              color: skin.tokens.accent,
+                            }}
+                          >
+                            <skin.icon className="h-4 w-4" strokeWidth={1.8} />
+                          </span>
+                          <span className="font-semibold text-[#262626] transition-colors group-hover:text-[#538670]">
+                            {skin.label}
+                          </span>
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-[#525252]">
+                        {skin.slug === "oily" && "Large, visible"}
+                        {skin.slug === "dry" && "Very small"}
+                        {skin.slug === "combination" && "Varies by zone"}
+                        {skin.slug === "sensitive" && "Small"}
+                        {skin.slug === "normal" && "Small, even"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-[#525252]">
+                        {skin.slug === "oily" && "Shine, congestion"}
+                        {skin.slug === "dry" && "Tightness, flakiness"}
+                        {skin.slug === "combination" && "Balancing zones"}
+                        {skin.slug === "sensitive" && "Irritation, redness"}
+                        {skin.slug === "normal" && "Maintenance"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-[#525252]">
+                        {skin.slug === "oily" && "Niacinamide"}
+                        {skin.slug === "dry" && "Ceramides"}
+                        {skin.slug === "combination" && "Hyaluronic Acid"}
+                        {skin.slug === "sensitive" && "Centella Asiatica"}
+                        {skin.slug === "normal" && "Vitamin C"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Universal Tips */}
+      <section className="bg-white py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="font-heading text-3xl font-bold mb-6">
-                Universal Skincare Tips
+              <span className="mb-3 inline-block text-xs font-semibold uppercase tracking-wider text-[#538670]">
+                Universal habits
+              </span>
+              <h2 className="font-heading text-3xl font-bold text-[#262626] md:text-4xl">
+                Foundations that work for every skin type
               </h2>
-              <p className="text-muted-foreground mb-6">
-                Regardless of your skin type, these fundamental practices will help 
-                maintain healthy, glowing skin.
+              <p className="mt-4 text-[#737373]">
+                No matter your skin type, these habits protect your barrier, prevent
+                premature aging, and keep your complexion healthy.
               </p>
-              <ul className="space-y-4">
+              <ul className="mt-8 space-y-4">
                 {[
-                  "Always wear SPF 30+ sunscreen daily",
-                  "Stay hydrated - drink plenty of water",
+                  "Wear SPF 30+ every single day",
                   "Remove makeup before bed",
-                  "Be consistent with your routine",
-                  "Patch test new products",
-                  "Don't touch your face unnecessarily",
+                  "Patch test new products for 48 hours",
+                  "Avoid very hot water on your face",
+                  "Stay consistent — results take time",
                 ].map((tip, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{tip}</span>
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E8F0EC]">
+                      <CheckCircle className="h-3 w-3 text-[#355245]" />
+                    </span>
+                    <span className="text-[#525252]">{tip}</span>
                   </li>
                 ))}
               </ul>
@@ -278,42 +324,47 @@ const SkinTypesOverview = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <Card className="border-0 shadow-card">
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-amber-100 flex items-center justify-center">
-                    <Sun className="h-6 w-6 text-amber-600" />
-                  </div>
-                  <h3 className="font-heading font-semibold mb-1">Morning</h3>
-                  <p className="text-xs text-muted-foreground">Cleanse, treat, protect</p>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-card">
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-indigo-100 flex items-center justify-center">
-                    <Moon className="h-6 w-6 text-indigo-600" />
-                  </div>
-                  <h3 className="font-heading font-semibold mb-1">Night</h3>
-                  <p className="text-xs text-muted-foreground">Cleanse, repair, nourish</p>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-card">
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-green-100 flex items-center justify-center">
-                    <Shield className="h-6 w-6 text-green-600" />
-                  </div>
-                  <h3 className="font-heading font-semibold mb-1">Protect</h3>
-                  <p className="text-xs text-muted-foreground">SPF is non-negotiable</p>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-card">
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-pink-100 flex items-center justify-center">
-                    <BookOpen className="h-6 w-6 text-pink-600" />
-                  </div>
-                  <h3 className="font-heading font-semibold mb-1">Learn</h3>
-                  <p className="text-xs text-muted-foreground">Know your ingredients</p>
-                </CardContent>
-              </Card>
+              {[
+                {
+                  icon: Droplets,
+                  title: "Hydrate",
+                  desc: "Inside and out",
+                  bg: "bg-[#EEF5F3]",
+                  color: "text-[#4A7C6F]",
+                },
+                {
+                  icon: Sun,
+                  title: "Protect",
+                  desc: "SPF is non-negotiable",
+                  bg: "bg-[#FAF6F2]",
+                  color: "text-[#C8A48A]",
+                },
+                {
+                  icon: Shield,
+                  title: "Strengthen",
+                  desc: "Barrier-first skincare",
+                  bg: "bg-[#F0F4F0]",
+                  color: "text-[#7A9B76]",
+                },
+                {
+                  icon: Heart,
+                  title: "Soothe",
+                  desc: "Less is often more",
+                  bg: "bg-[#FCF6F5]",
+                  color: "text-[#C58A7F]",
+                },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className={`rounded-2xl ${item.bg} p-6 transition-transform duration-300 hover:-translate-y-1`}
+                >
+                  <item.icon className={`h-8 w-8 ${item.color}`} strokeWidth={1.8} />
+                  <h3 className="mt-4 font-heading text-lg font-semibold text-[#262626]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1 text-sm text-[#737373]">{item.desc}</p>
+                </div>
+              ))}
             </motion.div>
           </div>
         </div>

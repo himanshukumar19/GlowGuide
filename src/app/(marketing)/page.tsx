@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getAllSkinTypes } from "@/data/skinTypes";
 const heroBg = "/images/hero-background.png";
 const skinOily = "/images/skin-oily.png";
 const skinDry = "/images/skin-dry.png";
@@ -81,13 +82,15 @@ const features = [
   },
 ];
 
-const skinTypes = [
-  { type: "Oily", image: skinOily },
-  { type: "Dry", image: skinDry },
-  { type: "Combination", image: skinCombination },
-  { type: "Sensitive", image: skinSensitive },
-  { type: "Normal", image: skinNormal },
-];
+const skinTypes = getAllSkinTypes();
+
+const skinTypeImages: Record<string, string> = {
+  oily: skinOily,
+  dry: skinDry,
+  combination: skinCombination,
+  sensitive: skinSensitive,
+  normal: skinNormal,
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -542,55 +545,86 @@ const Index = () => {
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <motion.div
-            className="text-center mb-12"
+            className="mb-12 flex flex-col items-center text-center"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="font-heading text-3xl md:text-4xl font-bold mb-4">
+            <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#D8E2DC] bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#355245] backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5" />
+              Start Here
+            </span>
+            <h2 className="font-heading text-3xl font-bold text-[#262626] md:text-4xl">
               Know Your Skin Type
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Understanding your skin type is the first step to building an effective skincare routine. 
+            <p className="mt-3 max-w-2xl text-[#737373]">
+              Understanding your skin type is the first step to building an effective skincare routine.
               Explore our comprehensive guides for each type.
             </p>
           </motion.div>
 
           <motion.div
-            className="grid grid-cols-2 md:grid-cols-5 gap-4"
+            className="grid grid-cols-2 gap-4 md:grid-cols-5"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
           >
-            {skinTypes.map((skin, index) => (
-              <motion.div key={index} variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }}>
-                <Link href={`/skin-types/${skin.type.toLowerCase()}`}>
-                  <Card className="border-0 shadow-card cursor-pointer overflow-hidden group">
-                    <div className="relative aspect-[3/4] overflow-hidden">
-                      <img
-                        src={skin.image}
-                        alt={skin.type}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12">
-                        <h3 className="font-heading font-semibold text-white text-lg">{skin.type}</h3>
+            {skinTypes.map((skin, index) => {
+              const Icon = skin.icon;
+              return (
+                <motion.div key={index} variants={itemVariants} whileHover={{ y: -6 }}>
+                  <Link href={`/skin-types/${skin.slug}`}>
+                    <Card className="group cursor-pointer overflow-hidden border-0 shadow-card transition-all duration-300 hover:shadow-lg">
+                      <div className="relative aspect-[3/4] overflow-hidden">
+                        <img
+                          src={skinTypeImages[skin.slug]}
+                          alt={skin.type}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+                        {/* Top badge */}
+                        <div className="absolute left-3 top-3">
+                          <div
+                            className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm"
+                            style={{ backgroundColor: skin.tokens.accent }}
+                          >
+                            <Icon className="h-3 w-3" strokeWidth={2} />
+                            {skin.type}
+                          </div>
+                        </div>
+
+                        {/* Bottom label */}
+                        <div className="absolute inset-x-0 bottom-0 p-4">
+                          <p className="text-sm font-medium text-white/90">
+                            {skin.tagline}
+                          </p>
+                          <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-white/80 transition-colors group-hover:text-white">
+                            <span>Explore</span>
+                            <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
+                    </Card>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </motion.div>
 
           <motion.div
-            className="text-center mt-8"
+            className="mt-10 text-center"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
           >
             <Link href="/skin-types">
-              <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300">
+              <Button
+                variant="outline"
+                size="lg"
+                className="rounded-xl border-[#355245] text-[#355245] transition-all duration-300 hover:bg-[#355245] hover:text-white"
+              >
                 Explore All Skin Types
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

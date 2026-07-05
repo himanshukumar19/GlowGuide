@@ -30,8 +30,9 @@ export const AnalysisProcessing = ({ statusText }: AnalysisProcessingProps) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] p-4 text-center animate-fade-in">
-      <Card className="w-full max-w-md border border-border shadow-card bg-card p-8 rounded-gg-lg">
-        <CardContent className="space-y-8 flex flex-col items-center pt-6">
+      <Card className="w-full max-w-md border border-border shadow-card p-8 rounded-gg-lg relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }}>
+        <div className="absolute inset-0 bg-black/55 pointer-events-none rounded-gg-lg" />
+        <CardContent className="space-y-8 flex flex-col items-center pt-6 relative z-10">
           {/* DNA Helix Loader */}
           <div className="dna-loader relative w-48 h-16 flex items-center justify-between">
             {Array.from({ length: 14 }).map((_, i) => {
@@ -44,7 +45,7 @@ export const AnalysisProcessing = ({ statusText }: AnalysisProcessingProps) => {
                     style={{ animationDelay: delay }}
                   />
                   <div
-                    className="dna-bar w-0.5 h-10 bg-border/40"
+                    className="dna-bar w-0.5 h-10 bg-white/20"
                     style={{ animationDelay: delay }}
                   />
                   <div
@@ -65,11 +66,11 @@ export const AnalysisProcessing = ({ statusText }: AnalysisProcessingProps) => {
               </span>
             </div>
             
-            <h3 className="font-heading text-lg font-bold text-foreground h-7 overflow-hidden">
+            <h3 className="font-heading text-lg font-bold text-white h-7 overflow-hidden">
               {statusText || STEPS[currentStep]}
             </h3>
             
-            <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
+            <p className="text-xs text-white/70 max-w-xs mx-auto leading-relaxed">
               This process combines random forest scores and NLP evaluations to output a unified report.
             </p>
           </div>

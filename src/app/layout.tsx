@@ -26,18 +26,15 @@ export const metadata: Metadata = {
     description:
       "Expert skincare education for every skin type, age, and concern. Take our quiz and start your journey to healthy skin.",
     type: "website",
-    images: ["/og-image.svg"],
+    images: ["/og-image.png"],
   },
   twitter: {
     card: "summary_large_image",
-    images: ["/og-image.svg"],
+    images: ["/og-image.png"],
   },
   icons: {
-    icon: [
-      { type: "image/svg+xml", url: "/favicon.svg" },
-      { url: "/favicon.ico" },
-    ],
-    apple: "/apple-touch-icon.svg",
+    icon: { type: "image/png", url: "/favicon.png" },
+    apple: "/apple-touch-icon.png",
   },
 };
 

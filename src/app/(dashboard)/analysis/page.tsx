@@ -67,14 +67,16 @@ const SkinQuiz = () => {
   };
 
   const handlePrevious = () => {
-    if (currentQuestion > 0) {
-      const prevQuestionId = quizQuestions[currentQuestion - 1].id;
-      const newAnswers = { ...answers };
-      delete newAnswers[prevQuestionId];
-      setAnswers(newAnswers);
-      setCurrentQuestion(currentQuestion - 1);
-      setSelectedOption(null);
+    if (currentQuestion === 0) {
+      setStep("intro");
+      return;
     }
+    const prevQuestionId = quizQuestions[currentQuestion - 1].id;
+    const newAnswers = { ...answers };
+    delete newAnswers[prevQuestionId];
+    setAnswers(newAnswers);
+    setCurrentQuestion(currentQuestion - 1);
+    setSelectedOption(null);
   };
 
   const handleQuizSubmit = () => {
@@ -116,8 +118,9 @@ const SkinQuiz = () => {
   };
 
   return (
-    <div className="min-h-[85vh] py-12 gradient-hero flex items-center justify-center">
-        <div className="container mx-auto px-4 w-full">
+    <div className="min-h-screen py-12 flex items-center justify-center relative bg-contain bg-center bg-no-repeat" style={{ backgroundImage: 'url(/analysis-bg.jpg)', backgroundColor: '#f5f0eb' }}>
+      <div className="absolute inset-0 bg-black/50 pointer-events-none" />
+      <div className="container mx-auto px-4 w-full relative z-10">
           <AnimatePresence mode="wait">
             {/* Step 1: Intro Panel */}
             {step === "intro" && (
@@ -129,47 +132,47 @@ const SkinQuiz = () => {
                 className="max-w-2xl mx-auto text-center"
               >
                 <div className="mb-8">
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-3xl gradient-primary flex items-center justify-center shadow-card">
-                    <Sparkles className="h-10 w-10 text-primary-foreground animate-float" />
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-card border border-white/20">
+                    <Sparkles className="h-10 w-10 text-primary animate-float" />
                   </div>
-                  <h1 className="font-heading text-3xl md:text-4xl font-bold mb-4 text-foreground">
+                  <h1 className="font-heading text-3xl md:text-4xl font-bold mb-4 text-white drop-shadow-lg">
                     Unified Skin Analysis
                   </h1>
-                  <p className="text-muted-foreground text-base max-w-lg mx-auto leading-relaxed">
+                  <p className="text-white/80 text-base max-w-lg mx-auto leading-relaxed drop-shadow">
                     Identify your clinical skin type and get a personalized routine. This unified 2-step flow combines a lifestyle quiz with live multi-angle facial camera scans.
                   </p>
                 </div>
 
-                <Card className="border border-border shadow-soft bg-card mb-8 rounded-gg">
-                  <CardContent className="p-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-sm text-foreground/80">
-                      <div>
-                        <div className="text-xl mb-1">⏱️</div>
-                        <span className="font-semibold block">Quiz Flow</span>
-                        <span className="text-[10px] text-muted-foreground block uppercase">Step 1 — 7 Questions</span>
+                <Card className="border border-border shadow-soft mb-8 rounded-gg relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }}>
+                  <div className="absolute inset-0 bg-black/55 pointer-events-none rounded-gg" />
+                  <CardContent className="p-6 relative z-10">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-sm text-white/90">
+                      <div className="relative">
+                        <div className="text-2xl mb-2">⏱️</div>
+                        <span className="font-bold block text-white text-base">Quiz Flow</span>
+                        <span className="text-[10px] text-white/80 font-semibold block uppercase tracking-wider mt-1">Step 1 — 7 Questions</span>
                       </div>
-                      <div>
-                        <div className="text-xl mb-1">📷</div>
-                        <span className="font-semibold block">Photo Scan</span>
-                        <span className="text-[10px] text-muted-foreground block uppercase">Step 2 — 5 Angles</span>
+                      <div className="relative sm:border-x sm:border-white/15 sm:px-4">
+                        <div className="text-2xl mb-2">📷</div>
+                        <span className="font-bold block text-white text-base">Photo Scan</span>
+                        <span className="text-[10px] text-white/80 font-semibold block uppercase tracking-wider mt-1">Step 2 — 5 Angles</span>
                       </div>
-                      <div>
-                        <div className="text-xl mb-1">🧬</div>
-                        <span className="font-semibold block">AI Diagnostic</span>
-                        <span className="text-[10px] text-muted-foreground block uppercase">Random Forest + NLP</span>
+                      <div className="relative">
+                        <div className="text-2xl mb-2">🧬</div>
+                        <span className="font-bold block text-white text-base">AI Diagnostic</span>
+                        <span className="text-[10px] text-white/80 font-semibold block uppercase tracking-wider mt-1">Random Forest + NLP</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Button
-                  size="lg"
+                <button
                   onClick={handleStart}
-                  className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground font-semibold px-8 shadow-primary rounded-gg-sm transition-all"
+                  className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full border border-white/30 bg-transparent text-white text-base font-bold tracking-wide hover:bg-white/10 active:scale-95 transition-all cursor-pointer group"
                 >
                   Begin Diagnostic Flow
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </button>
               </motion.div>
             )}
 
@@ -184,16 +187,17 @@ const SkinQuiz = () => {
               >
                 {/* Progress Bar */}
                 <div className="mb-4">
-                  <div className="flex justify-between text-xs font-semibold text-muted-foreground uppercase mb-1.5">
+                  <div className="flex justify-between text-xs font-semibold text-white/80 uppercase mb-1.5">
                     <span>Question {currentQuestion + 1} of {quizQuestions.length}</span>
                     <span>{Math.round(progress)}% Complete</span>
                   </div>
-                  <Progress value={progress} className="h-1.5" />
+                  <Progress value={progress} className="h-1.5 bg-white/20" />
                 </div>
 
                 {/* Question Card */}
-                <Card className="border border-border shadow-card bg-card rounded-gg-lg overflow-hidden">
-                  <CardContent className="p-8">
+                <Card className="border border-border shadow-card rounded-gg-lg overflow-hidden relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }}>
+                  <div className="absolute inset-0 bg-black/55 pointer-events-none rounded-gg-lg" />
+                  <CardContent className="p-8 relative z-10">
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={currentQuestion}
@@ -206,18 +210,18 @@ const SkinQuiz = () => {
                         <div className="flex items-center justify-center gap-2 mb-3">
                           <span className="text-3xl">{quizQuestions[currentQuestion].emoji}</span>
                           {quizQuestions[currentQuestion].importance === "critical" && (
-                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary uppercase tracking-wider">
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/20 text-primary uppercase tracking-wider">
                               ⭐ Key Question
                             </span>
                           )}
                         </div>
 
-                        <h2 className="font-heading text-2xl font-bold text-foreground text-center mb-2">
+                        <h2 className="font-heading text-2xl font-bold text-white text-center mb-2">
                           {quizQuestions[currentQuestion].question}
                         </h2>
 
                         {quizQuestions[currentQuestion].helpText && (
-                          <p className="text-xs text-muted-foreground text-center mb-6 max-w-md mx-auto">
+                          <p className="text-xs text-white/80 font-semibold text-center mb-6 max-w-md mx-auto">
                             {quizQuestions[currentQuestion].helpText}
                           </p>
                         )}
@@ -238,8 +242,8 @@ const SkinQuiz = () => {
                               }
                               className={`w-full p-4 rounded-gg border-2 text-left transition-all ${
                                 selectedOption === index
-                                  ? "border-primary bg-primary/5"
-                                  : "border-border hover:border-primary/40 hover:bg-muted/30"
+                                  ? "border-primary bg-primary/20"
+                                  : "border-white/20 hover:border-primary/40 hover:bg-white/10"
                               }`}
                               whileHover={{ scale: 1.005 }}
                               whileTap={{ scale: 0.995 }}
@@ -249,7 +253,7 @@ const SkinQuiz = () => {
                                   className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
                                     selectedOption === index
                                       ? "border-primary bg-primary"
-                                      : "border-muted-foreground/60"
+                                      : "border-white/40"
                                   }`}
                                 >
                                   {selectedOption === index && (
@@ -257,8 +261,8 @@ const SkinQuiz = () => {
                                   )}
                                 </div>
                                 <div className="space-y-0.5">
-                                  <span className="text-foreground text-sm font-semibold block">{option.label}</span>
-                                  <p className="text-xs text-muted-foreground">{option.sublabel}</p>
+                                  <span className="text-white text-sm font-semibold block">{option.label}</span>
+                                  <p className="text-xs text-white/80 font-semibold">{option.sublabel}</p>
                                 </div>
                               </div>
                             </motion.button>
@@ -270,20 +274,20 @@ const SkinQuiz = () => {
                           <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="mt-6 pt-5 border-t border-border space-y-3"
+                            className="mt-6 pt-5 border-t border-white/20 space-y-3"
                           >
-                            <Button
-                              onClick={handleQuizSubmit}
-                              className="w-full bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground font-semibold py-6 rounded-gg-sm shadow-primary flex items-center justify-center"
-                            >
-                              Proceed to Face Camera Scans
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
+                              <button
+                                onClick={handleQuizSubmit}
+                                className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full border border-white/30 bg-transparent text-white text-sm font-bold tracking-wide hover:bg-white/10 active:scale-95 transition-all cursor-pointer group"
+                              >
+                                Proceed to Face Camera Scans
+                                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                              </button>
 
                             <button
                               type="button"
                               onClick={() => setShowFreeText(!showFreeText)}
-                              className="w-full text-[11px] text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 py-1 transition-colors"
+                              className="w-full text-[11px] text-white/80 hover:text-white font-semibold flex items-center justify-center gap-1 py-1 transition-colors"
                             >
                               <span>{showFreeText ? "▲" : "▼"}</span>
                               {showFreeText ? "Hide optional notes" : "Add skin notes (optional)"}
@@ -300,9 +304,9 @@ const SkinQuiz = () => {
                                   onChange={(e) => setFreeText(e.target.value.slice(0, 200))}
                                   placeholder="Type notes e.g., 'red patches near chin', 'flaky near nose in winter'..."
                                   rows={3}
-                                  className="w-full rounded-gg border border-border bg-muted/20 px-4 py-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+                                  className="w-full rounded-gg border border-white/20 bg-white/10 px-4 py-3 text-xs text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
                                 />
-                                <div className="text-[10px] text-muted-foreground text-right">{freeText.length}/200</div>
+                                <div className="text-[10px] text-white/80 font-semibold text-right">{freeText.length}/200</div>
                               </motion.div>
                             )}
                           </motion.div>
@@ -314,23 +318,20 @@ const SkinQuiz = () => {
 
                 {/* Footer Controls */}
                 <div className="flex justify-between items-center">
-                  <Button
-                    variant="outline"
+                  <button
                     onClick={handlePrevious}
-                    disabled={currentQuestion === 0}
-                    className="border-border text-xs font-semibold uppercase tracking-wider py-5"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md border border-white/30 bg-transparent text-white text-xs font-semibold uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer"
                   >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    <ArrowLeft className="h-4 w-4" />
                     Previous
-                  </Button>
-                  <Button
-                    variant="ghost"
+                  </button>
+                  <button
                     onClick={handleStart}
-                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md border border-white/30 bg-transparent text-white text-xs font-semibold uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer"
                   >
-                    <RotateCcw className="mr-2 h-4 w-4" />
+                    <RotateCcw className="h-4 w-4" />
                     Restart
-                  </Button>
+                  </button>
                 </div>
               </motion.div>
             )}

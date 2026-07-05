@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles, Heart, Instagram, Twitter, Youtube, Mail } from "lucide-react";
+import { Heart, Instagram, X, Youtube, Mail } from "lucide-react";
 
 const footerLinks = {
   explore: [
@@ -29,9 +29,12 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-7 w-7 text-primary" />
-              <span className="font-heading text-xl font-bold">GlowGuide</span>
+            <Link href="/" className="flex items-center mb-4">
+              <img
+                src="/images/icons/glowguide-logo-full.png"
+                alt="GlowGuide"
+                className="h-12 w-auto"
+              />
             </Link>
             <p className="text-muted-foreground text-sm mb-4 max-w-sm">
               Your complete guide to healthy, glowing skin. Expert advice, personalized routines,
@@ -42,7 +45,7 @@ const Footer = () => {
                 <Instagram className="h-5 w-5" />
               </a>
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                <Twitter className="h-5 w-5" />
+                <X className="h-5 w-5" />
               </a>
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
                 <Youtube className="h-5 w-5" />

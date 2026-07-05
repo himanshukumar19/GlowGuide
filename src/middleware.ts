@@ -19,8 +19,10 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
-    pathname === "/favicon.ico" ||
-    pathname === "/favicon.svg"
+    pathname === "/favicon.svg" ||
+    pathname === "/favicon.png" ||
+    pathname === "/apple-touch-icon.png" ||
+    pathname === "/og-image.png"
   ) {
     return NextResponse.next();
   }
@@ -47,5 +49,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|favicon.svg).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.svg|favicon.png|apple-touch-icon.png|og-image.png).*)"],
 };

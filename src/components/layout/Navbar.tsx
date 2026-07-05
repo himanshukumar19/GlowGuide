@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sparkles, ChevronDown, ShoppingCart, Heart, User, LogOut, Crown } from "lucide-react";
+import { Menu, X, ChevronDown, ShoppingCart, Heart, User, LogOut, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/useCartStore";
 import { useWishlist } from "@/store/useWishlistStore";
@@ -45,16 +45,12 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <motion.div
-              whileHover={{ rotate: 15 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <Sparkles className="h-7 w-7 text-primary" />
-            </motion.div>
-            <span className="font-heading text-xl font-bold text-foreground">
-              GlowGuide
-            </span>
+          <Link href="/" className="flex items-center">
+            <img
+              src="/images/icons/glowguide-logo-full.png"
+              alt="GlowGuide"
+              className="h-12 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}

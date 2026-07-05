@@ -354,100 +354,103 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
       <div className="max-w-2xl mx-auto">
         {!reviewMode ? (
           /* Capture Mode */
-          <Card className="border border-border shadow-card bg-card rounded-gg-lg overflow-hidden relative">
-            <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
-              {/* Video elements */}
-              {isCameraActive ? (
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-cover scale-x-[-1]"
-                />
-              ) : (
-                <div className="p-8 text-center max-w-sm animate-pulse">
-                  <AlertTriangle className="h-10 w-10 text-warning mx-auto mb-3" />
-                  <p className="text-foreground font-semibold text-sm mb-1">
-                    Camera Simulator Active
-                  </p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {cameraError || "Capturing placeholder profile scans to evaluate skin parameters."}
-                  </p>
-                </div>
-              )}
-
-              {/* Horizontal scanning bar overlay */}
-              {isCameraActive && alignmentState === "scanning" && (
-                <div className="absolute inset-x-0 h-0.5 bg-amber-400/50 animate-bounce top-1/3 shadow-[0_0_8px_rgba(245,176,65,0.8)] pointer-events-none" />
-              )}
-
-              {/* Head Silhouette Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <svg
-                  viewBox="0 0 24 24"
-                  className={`w-40 h-40 transition-all duration-500 ${
-                    alignmentState === "scanning"
-                      ? "text-amber-400/20 stroke-amber-400 animate-pulse scale-100"
-                      : "text-success/20 stroke-success scale-105 drop-shadow-[0_0_10px_rgba(126,200,160,0.6)]"
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={alignmentState === "scanning" ? "0.8" : "1.2"}
-                >
-                  <path d={currentAngle.guidePath} fill="currentColor" fillOpacity="0.08" />
-                </svg>
-              </div>
-
-              {/* Position Guide Alert Banner */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full text-[10px] font-bold shadow-soft flex items-center gap-2 transition-all bg-card/95 backdrop-blur-sm border border-border pointer-events-none select-none">
-                {alignmentState === "scanning" ? (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                    <span className="text-amber-600 uppercase tracking-wider">Aligning face... Keep steady</span>
-                  </>
+          <Card className="border border-border shadow-card rounded-gg-lg overflow-hidden relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }}>
+            <div className="absolute inset-0 bg-black/55 pointer-events-none rounded-gg-lg" />
+            <div className="relative z-10">
+              <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
+                {/* Video elements */}
+                {isCameraActive ? (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover scale-x-[-1]"
+                  />
                 ) : (
-                  <>
-                    <CheckCircle className="h-3.5 w-3.5 text-success fill-success/20" />
-                    <span className="text-primary uppercase tracking-wider">Position correct: Ready!</span>
-                  </>
+                  <div className="p-8 text-center max-w-sm animate-pulse">
+                    <AlertTriangle className="h-10 w-10 text-warning mx-auto mb-3" />
+                    <p className="text-white font-semibold text-sm mb-1">
+                      Camera Simulator Active
+                    </p>
+                    <p className="text-xs text-white/70 leading-relaxed">
+                      {cameraError || "Capturing placeholder profile scans to evaluate skin parameters."}
+                    </p>
+                  </div>
                 )}
+
+                {/* Horizontal scanning bar overlay */}
+                {isCameraActive && alignmentState === "scanning" && (
+                  <div className="absolute inset-x-0 h-0.5 bg-amber-400/50 animate-bounce top-1/3 shadow-[0_0_8px_rgba(245,176,65,0.8)] pointer-events-none" />
+                )}
+
+                {/* Head Silhouette Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className={`w-40 h-40 transition-all duration-500 ${
+                      alignmentState === "scanning"
+                        ? "text-amber-400/20 stroke-amber-400 animate-pulse scale-100"
+                        : "text-success/20 stroke-success scale-105 drop-shadow-[0_0_10px_rgba(126,200,160,0.6)]"
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={alignmentState === "scanning" ? "0.8" : "1.2"}
+                  >
+                    <path d={currentAngle.guidePath} fill="currentColor" fillOpacity="0.08" />
+                  </svg>
+                </div>
+
+                {/* Position Guide Alert Banner */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full text-[10px] font-bold shadow-soft flex items-center gap-2 transition-all bg-card/95 backdrop-blur-sm border border-border pointer-events-none select-none">
+                  {alignmentState === "scanning" ? (
+                    <>
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                      <span className="text-amber-600 uppercase tracking-wider">Aligning face... Keep steady</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-3.5 w-3.5 text-success fill-success/20" />
+                      <span className="text-primary uppercase tracking-wider">Position correct: Ready!</span>
+                    </>
+                  )}
+                </div>
+
+                {/* Step indicator badge */}
+                <div className="absolute top-4 left-4 bg-foreground/75 text-background px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                  Step {currentStep + 1} of 5
+                </div>
               </div>
 
-              {/* Step indicator badge */}
-              <div className="absolute top-4 left-4 bg-foreground/75 text-background px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                Step {currentStep + 1} of 5
-              </div>
+              {/* Video Action Bar */}
+              <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20">
+                <span className="text-xs text-white/70 font-medium text-center sm:text-left">
+                  Ensure good overhead lighting and avoid heavy shadows.
+                </span>
+                <div className="flex gap-3">
+                  <button onClick={onBack} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-white/30 bg-transparent text-white text-sm font-medium hover:bg-white/10 transition-colors cursor-pointer">
+                    Back
+                  </button>
+                  {cameraError && (
+                    <button onClick={startCamera} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-white/30 bg-transparent text-white text-sm font-medium hover:bg-white/10 transition-colors cursor-pointer">
+                      <RefreshCw className="h-4 w-4" />
+                      Retry Camera
+                    </button>
+                  )}
+                  <button
+                    onClick={capturePhoto}
+                    className={`inline-flex items-center justify-center gap-2 font-semibold px-6 rounded-full transition-all duration-300 ${
+                      alignmentState === "scanning"
+                        ? "bg-white/20 text-white/60 cursor-not-allowed border border-white/20"
+                        : "bg-white hover:bg-white/90 active:scale-95 text-foreground shadow-2xl"
+                    }`}
+                    disabled={alignmentState === "scanning"}
+                  >
+                    <Camera className="h-4 w-4" />
+                    {alignmentState === "scanning" ? "Aligning..." : "Snap Photo"}
+                  </button>
+                </div>
+              </CardContent>
             </div>
-
-            {/* Video Action Bar */}
-            <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20">
-              <span className="text-xs text-muted-foreground font-medium text-center sm:text-left">
-                Ensure good overhead lighting and avoid heavy shadows.
-              </span>
-              <div className="flex gap-3">
-                <Button variant="ghost" onClick={onBack} size="sm">
-                  Back
-                </Button>
-                {cameraError && (
-                  <Button variant="outline" size="sm" onClick={startCamera} className="border-border">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Retry Camera
-                  </Button>
-                )}
-                <Button
-                  onClick={capturePhoto}
-                  className={`font-semibold px-6 rounded-gg-sm transition-all duration-300 ${
-                    alignmentState === "scanning"
-                      ? "bg-muted text-muted-foreground cursor-not-allowed border border-border"
-                      : "bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground shadow-primary"
-                  }`}
-                  disabled={alignmentState === "scanning"}
-                >
-                  <Camera className="h-4 w-4 mr-2" />
-                  {alignmentState === "scanning" ? "Aligning..." : "Snap Photo"}
-                </Button>
-              </div>
-            </CardContent>
           </Card>
         ) : (
           /* Review Mode Grid */

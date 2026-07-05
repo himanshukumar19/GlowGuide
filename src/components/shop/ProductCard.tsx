@@ -25,6 +25,14 @@ const badgeColors: Record<string, string> = {
   'korean-formula': 'bg-purple-500 text-white'
 };
 
+const skinTypeLabels: Record<string, { emoji: string; color: string }> = {
+  oily:      { emoji: '💧', color: 'bg-blue-50 text-blue-600' },
+  dry:       { emoji: '🌿', color: 'bg-amber-50 text-amber-700' },
+  combination: { emoji: '☯️', color: 'bg-purple-50 text-purple-600' },
+  sensitive: { emoji: '🌸', color: 'bg-pink-50 text-pink-600' },
+  normal:    { emoji: '✨', color: 'bg-emerald-50 text-emerald-600' },
+};
+
 const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -58,123 +66,169 @@ const ProductCard = ({ product }: ProductCardProps) => {
     }).format(price);
   };
 
+  const primaryIngredient = product.ingredients?.[0] || null;
+  const visibleSkinTypes = product.skinTypes?.slice(0, 3) || [];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -5 }}
-      className="group relative bg-card rounded-xl border border-border overflow-hidden shadow-card hover:shadow-xl transition-all duration-300"
+      whileHover={{ y: -4 }}
+      className="group relative bg-card rounded-2xl border border-border overflow-hidden shadow-card hover:shadow-hover transition-all duration-300"
     >
-      {/* Badges */}
+      {/* Top badges row */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
         {product.discount && product.discount > 0 && (
-          <Badge className="bg-red-500 text-white text-xs">
+          <Badge className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5">
             {product.discount}% OFF
           </Badge>
         )}
-        {product.badges?.slice(0, 2).map((badge) => (
-          <Badge key={badge} className={`text-xs ${badgeColors[badge] || 'bg-muted'}`}>
+        {product.badges?.slice(0, 1).map((badge) => (
+          <Badge key={badge} className={`text-[10px] font-medium px-2 py-0.5 ${badgeColors[badge] || 'bg-muted'}`}>
             {badge.replace('-', ' ')}
           </Badge>
         ))}
       </div>
 
-      {/* Wishlist Button */}
+      {/* Wishlist */}
       <button
         onClick={handleWishlistToggle}
         aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-        className={`absolute top-3 right-3 z-10 p-2 rounded-full transition-all ${
+        className={`absolute top-3 right-3 z-10 p-2 rounded-full transition-all shadow-sm ${
           inWishlist 
-            ? 'bg-red-500 text-white' 
-            : 'bg-background/80 backdrop-blur-sm text-muted-foreground hover:bg-primary hover:text-primary-foreground'
+            ? 'bg-red-500 text-white shadow-red-200' 
+            : 'bg-card/90 backdrop-blur-sm text-muted-foreground hover:bg-primary hover:text-primary-foreground opacity-0 group-hover:opacity-100'
         }`}
       >
-        <Heart className={`h-4 w-4 ${inWishlist ? 'fill-current' : ''}`} />
+        <Heart className={`h-3.5 w-3.5 ${inWishlist ? 'fill-current' : ''}`} />
       </button>
 
-      {/* Product Image */}
-        <Link href={`/shop/${product.id}`}>
+      {/* Image */}
+      <Link href={`/shop/${product.id}`}>
         <div className="relative aspect-square overflow-hidden bg-muted">
           <img
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
           />
           
-          {/* Quick View Overlay */}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <Button variant="secondary" size="sm" className="gap-2">
-              <Eye className="h-4 w-4" />
-              Quick View
+          {/* Quick View on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+            <Button variant="secondary" size="sm" className="gap-1.5 text-xs shadow-lg">
+              <Eye className="h-3.5 w-3.5" />
+              Quick view
             </Button>
           </div>
 
-          {/* Out of Stock Overlay */}
+          {/* Out of stock */}
           {!product.inStock && (
-            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-              <span className="text-white font-semibold text-lg">Out of Stock</span>
+            <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center">
+              <span className="text-foreground font-semibold text-sm bg-card px-4 py-1.5 rounded-full border border-border shadow-sm">
+                Out of stock
+              </span>
             </div>
           )}
         </div>
       </Link>
 
-      {/* Product Info */}
-      <div className="p-4 space-y-3">
-      <Link href={`/shop/${product.id}`}>
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">{product.brand}</p>
-          <h3 className="font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+      {/* Content */}
+      <div className="p-4 space-y-2">
+        {/* Brand + Key Ingredient */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">
+            {product.brand}
+          </span>
+          {primaryIngredient && (
+            <span className="text-[10px] text-primary/80 font-medium truncate max-w-[50%] text-right">
+              {primaryIngredient}
+            </span>
+          )}
+        </div>
+
+        {/* Name */}
+        <Link href={`/shop/${product.id}`}>
+          <h3 className="font-medium text-sm text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors min-h-[2.5rem]">
             {product.name}
           </h3>
         </Link>
 
         {/* Rating */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center">
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-0.5">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className={`h-3.5 w-3.5 ${
+                className={`h-3 w-3 ${
                   i < Math.floor(product.rating)
                     ? 'text-amber-400 fill-amber-400'
-                    : 'text-muted-foreground'
+                    : 'text-muted-foreground/30'
                 }`}
               />
             ))}
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground">
             {product.rating} ({product.reviewCount.toLocaleString()})
           </span>
         </div>
 
         {/* Price */}
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-primary">
+        <div className="flex items-baseline gap-2">
+          <span className="text-lg font-bold text-foreground">
             {formatPrice(product.price)}
           </span>
           {product.originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">
+            <span className="text-xs text-muted-foreground line-through">
               {formatPrice(product.originalPrice)}
+            </span>
+          )}
+          {product.discount && product.discount > 0 && (
+            <span className="text-[10px] text-success font-semibold">
+              Save {formatPrice(product.originalPrice! - product.price)}
             </span>
           )}
         </div>
 
-        {/* Stock Status */}
+        {/* Low stock warning */}
         {product.inStock && product.stockCount < 20 && (
-          <p className="text-xs text-orange-500 font-medium">
-            Only {product.stockCount} left in stock!
+          <p className="text-[11px] text-orange-500 font-medium flex items-center gap-1">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+            Only {product.stockCount} left
           </p>
         )}
 
-        {/* Add to Cart */}
-        <Button
-          onClick={handleAddToCart}
-          disabled={!product.inStock}
-          className="w-full gradient-primary text-primary-foreground gap-2"
-          size="sm"
-        >
-          <ShoppingCart className="h-4 w-4" />
-          Add to Cart
-        </Button>
+        {/* Skin type strip */}
+        {visibleSkinTypes.length > 0 && (
+          <div className="flex items-center gap-1 pt-1">
+            {visibleSkinTypes.map((st) => {
+              const info = skinTypeLabels[st];
+              return (
+                <span
+                  key={st}
+                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium ${info?.color || 'bg-muted text-muted-foreground'}`}
+                >
+                  <span className="text-[10px]">{info?.emoji}</span>
+                  {st}
+                </span>
+              );
+            })}
+            {product.skinTypes.length > 3 && (
+              <span className="text-[9px] text-muted-foreground">+{product.skinTypes.length - 3}</span>
+            )}
+          </div>
+        )}
+
+        {/* Add to cart */}
+        <div className="pt-2">
+          <Button
+            onClick={handleAddToCart}
+            disabled={!product.inStock}
+            className="w-full h-9 text-xs font-semibold gradient-primary text-primary-foreground gap-1.5 rounded-xl shadow-primary hover:shadow-lg transition-shadow"
+            size="sm"
+          >
+            <ShoppingCart className="h-3.5 w-3.5" />
+            {product.inStock ? 'Add to cart' : 'Out of stock'}
+          </Button>
+        </div>
       </div>
     </motion.div>
   );

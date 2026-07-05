@@ -112,13 +112,13 @@ const Dashboard = () => {
   // Mock auto-tracked products (e.g. purchased from app)
   const trackedProducts = [
     {
-      product: products[0] || { name: "Simple Kind to Skin Hydrating Cleanser", brand: "Simple" },
+      product: products[0] || { name: "GlowGuide Guava Glow Radiance Cleanser", brand: "GlowGuide" },
       daysUsed: 18,
       lifespan: 60, // 60 days of usage
       status: "In Use"
     },
     {
-      product: products[2] || { name: "Cetaphil Daily Moisturising Lotion", brand: "Cetaphil" },
+      product: products[2] || { name: "GlowGuide Glycolic Acid 7% Exfoliating Toner", brand: "GlowGuide" },
       daysUsed: 35,
       lifespan: 90,
       status: "Running Low"

@@ -1,0 +1,76 @@
+name: "GlowGuide Sensitive Skin Moisturizer"
+brand: "GlowGuide"
+
+category: "men-women"
+subcategory: "moisturizer"
+
+price: 1250
+originalPrice:
+discount:
+
+rating: 4.8
+reviewCount: 4532
+
+shortDescription: "Dermatologist-developed daily moisturizer with Ceramides, Hyaluronic Acid, and Niacinamide to strengthen the skin barrier, deeply hydrate, and soothe sensitive skin."
+
+description: "GlowGuide Sensitive Skin Moisturizer is a dermatologist-developed daily moisturizer specially formulated for sensitive and dry skin. Powered by three essential Ceramides, Hyaluronic Acid, Niacinamide, and advanced Moisture-Lock Technology, it helps strengthen the skin's natural protective barrier while providing long-lasting hydration. Its fragrance-free, non-comedogenic formula calms irritation, relieves tightness, reduces roughness, and restores skin comfort without clogging pores. The lightweight yet nourishing texture absorbs quickly, making it ideal for both face and body, morning and night."
+
+keyBenefits: [
+  "Strengthens the skin's protective barrier",
+  "Provides long-lasting deep hydration",
+  "Helps reduce redness and irritation",
+  "Relieves dryness and tightness",
+  "Smooths rough and flaky skin",
+  "Fragrance-free and gentle on sensitive skin",
+  "Non-comedogenic and suitable for daily use"
+]
+
+ingredients: [
+  "3 Essential Ceramides",
+  "Hyaluronic Acid",
+  "Niacinamide",
+  "Moisture-Lock Technology",
+  "Glycerin",
+  "Vitamin E"
+]
+
+howToUse: "Apply generously to clean face and body after cleansing. Massage gently until fully absorbed. Use morning and evening or whenever skin feels dry. Suitable for everyday use."
+
+skinTypes: [
+  "sensitive",
+  "dry",
+  "normal"
+]
+
+suitableFor: [
+  "men",
+  "women",
+  "teens",
+  "adults"
+]
+
+concerns: [
+  "sensitivity",
+  "dryness",
+  "irritation",
+  "barrier damage"
+]
+
+volume: "177ml"
+
+inStock: true
+stockCount: 267
+
+badges: [
+  "dermatologist-tested",
+  "fragrance-free",
+  "non-comedogenic",
+  "sensitive-skin"
+]
+
+whereToBuy: {
+  amazon: "#",
+  nykaa: "#",
+  flipkart: "#",
+  official: "https://glowguide.com"
+}

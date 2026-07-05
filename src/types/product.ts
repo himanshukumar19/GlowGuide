@@ -16,13 +16,13 @@ export interface Product {
   keyBenefits: string[];
   ingredients: string[];
   howToUse: string;
-  skinTypes: ('oily' | 'dry' | 'combination' | 'sensitive' | 'normal')[];
-  suitableFor: ('men' | 'women' | 'children' | 'teens' | 'adults' | 'seniors')[];
+  skinTypes: string[];
+  suitableFor: string[];
   concerns: string[];
   volume: string;
   inStock: boolean;
   stockCount: number;
-  badges?: ('bestseller' | 'new' | 'organic' | 'dermatologist-tested' | 'cruelty-free' | 'vegan' | 'natural' | 'korean-formula')[];
+  badges?: string[];
   whereToBuy: {
     amazon?: string;
     nykaa?: string;

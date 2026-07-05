@@ -1,0 +1,72 @@
+name: "GlowGuide Deep Hydration Moisturizing Cream"
+brand: "GlowGuide"
+
+category: "senior"
+subcategory: "moisturizer"
+
+price: 899
+originalPrice: 1099
+discount: 18
+
+rating: 4.8
+reviewCount: 5432
+
+shortDescription: "Rich moisturizing cream with Glycerin, Sweet Almond Oil, and Vitamin E providing up to 48-hour hydration while restoring the skin barrier for mature, dry, and sensitive skin."
+
+description: "GlowGuide Deep Hydration Moisturizing Cream is a dermatologist-tested moisturizer specially formulated for mature, dry, and sensitive skin. Infused with Glycerin, Sweet Almond Oil, Vitamin E, and an advanced Moisture Barrier Complex, this rich cream delivers up to 48 hours of continuous hydration while helping restore and strengthen the skin's natural protective barrier. The fast-absorbing, non-greasy formula relieves dryness, tightness, and discomfort, leaving skin soft, smooth, and deeply nourished. With consistent daily use, it improves skin resilience, enhances moisture retention, and supports a healthier, more youthful-looking complexion."
+
+keyBenefits: [
+  "Provides up to 48-hour intense hydration",
+  "Strengthens and restores the skin barrier",
+  "Prevents moisture loss throughout the day",
+  "Deeply nourishes dry and sensitive skin",
+  "Improves skin softness and elasticity",
+  "Fast-absorbing, non-greasy formula",
+  "Dermatologist-tested for everyday use"
+]
+
+ingredients: [
+  "Glycerin",
+  "Sweet Almond Oil",
+  "Vitamin E",
+  "Ceramide Complex",
+  "Shea Butter",
+  "Panthenol (Vitamin B5)"
+]
+
+howToUse: "Apply generously to clean face and neck after cleansing. Massage gently until fully absorbed. Use every morning and evening. For best results, apply to slightly damp skin and follow your complete GlowGuide skincare routine."
+
+skinTypes: [
+  "dry",
+  "sensitive"
+]
+
+suitableFor: [
+  "seniors",
+  "adults"
+]
+
+concerns: [
+  "dryness",
+  "sensitive skin",
+  "barrier damage"
+]
+
+volume: "250g"
+
+inStock: true
+stockCount: 412
+
+badges: [
+  "bestseller",
+  "dermatologist-tested",
+  "deep-hydration",
+  "non-greasy"
+]
+
+whereToBuy: {
+  amazon: "#",
+  nykaa: "#",
+  flipkart: "#",
+  official: "https://glowguide.com"
+}

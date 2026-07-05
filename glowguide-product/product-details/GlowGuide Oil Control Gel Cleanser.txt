@@ -1,0 +1,76 @@
+id: "gg-oil-control-gel-cleanser"
+
+name: "GlowGuide Oil Control Gel Cleanser"
+brand: "GlowGuide"
+
+category: "men-women"
+subcategory: "cleanser"
+
+price: 499
+originalPrice: 599
+discount: 17
+
+rating: 4.7
+reviewCount: 2156
+
+shortDescription: "Refreshing gel cleanser with Salicylic Acid, Niacinamide, and Green Tea to deeply cleanse pores, control excess oil, and help prevent breakouts without drying the skin."
+
+description: "GlowGuide Oil Control Gel Cleanser is a dermatologist-tested daily face wash specially formulated for oily, combination, and acne-prone skin. Enriched with Salicylic Acid, Niacinamide, Green Tea Extract, and Panthenol, this soap-free gel cleanser effectively removes dirt, excess oil, sunscreen, and impurities while helping unclog pores and reduce breakouts. Its gentle, non-drying formula maintains the skin's natural moisture barrier, leaving the skin clean, refreshed, balanced, and shine-free after every wash."
+
+keyBenefits:
+  - "Deeply cleanses pores and removes impurities"
+  - "Controls excess oil and shine"
+  - "Helps reduce acne and breakouts"
+  - "Unclogs pores without over-drying"
+  - "Maintains the skin's moisture barrier"
+  - "Refreshing soap-free gel formula"
+  - "Suitable for daily morning and evening use"
+  - "Dermatologist-tested and non-comedogenic"
+
+ingredients:
+  - "Salicylic Acid"
+  - "Niacinamide"
+  - "Green Tea Extract"
+  - "Panthenol (Vitamin B5)"
+  - "Glycerin"
+  - "Aloe Vera Extract"
+
+howToUse: "Wet your face with lukewarm water. Dispense one to two pumps into your hands and gently massage onto the face using circular motions. Rinse thoroughly and pat dry. Follow with toner, serum, and moisturizer. Use morning and evening."
+
+skinTypes:
+  - "oily"
+  - "combination"
+  - "acne-prone"
+
+suitableFor:
+  - "men"
+  - "women"
+  - "teens"
+  - "adults"
+
+concerns:
+  - "excess oil"
+  - "acne"
+  - "breakouts"
+  - "clogged pores"
+  - "blackheads"
+  - "shine"
+
+volume: "125ml"
+
+inStock: true
+stockCount: 182
+
+badges:
+  - "bestseller"
+  - "dermatologist-tested"
+  - "oil-control"
+  - "soap-free"
+  - "non-comedogenic"
+  - "cruelty-free"
+
+whereToBuy:
+  amazon: "#"
+  nykaa: "#"
+  flipkart: "#"
+  official: "https://glowguide.com"

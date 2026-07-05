@@ -1,0 +1,76 @@
+name: "GlowGuide Mini IPL Hair Removal Device"
+brand: "GlowGuide"
+
+category: "laser-devices"
+subcategory: "device"
+
+price: 12499
+originalPrice: 15999
+discount: 22
+
+rating: 4.4
+reviewCount: 678
+
+shortDescription: "Compact, travel-friendly IPL hair removal device with 150,000 flashes for safe, effective, and convenient hair reduction wherever you go."
+
+description: "GlowGuide Mini IPL Hair Removal Device is a compact, dermatologist-tested IPL system designed for effortless hair reduction at home or while traveling. Engineered with advanced Intense Pulsed Light (IPL) technology, 150,000 flashes, three adjustable intensity levels, and an intelligent safety system, it delivers smooth, long-lasting results in a lightweight, portable design. Its cordless, USB-rechargeable construction makes it ideal for quick touch-ups on the face, arms, legs, underarms, and bikini line. Gentle yet powerful, the device offers salon-inspired performance while fitting easily into your travel bag."
+
+keyBenefits: [
+  "Compact and travel-friendly design",
+  "150,000 flashes for long-term use",
+  "Professional IPL hair reduction",
+  "Cordless and USB rechargeable",
+  "3 adjustable intensity levels",
+  "Quick and virtually painless treatments",
+  "Suitable for face and body",
+  "Includes premium travel storage case"
+]
+
+ingredients: [
+  "IPL Light Technology",
+  "150,000 Flash Lamp",
+  "3 Energy Levels",
+  "USB-C Rechargeable Battery",
+  "Smart Safety Sensor",
+  "Protective Travel Case"
+]
+
+howToUse: "Fully charge the device before first use. Shave the treatment area and select the appropriate intensity level. Place the treatment window flat against the skin and press the flash button while moving systematically across the area. Use once weekly for the first 6–8 weeks, then perform maintenance treatments every 4–6 weeks."
+
+skinTypes: [
+  "oily",
+  "dry",
+  "combination",
+  "sensitive",
+  "normal"
+]
+
+suitableFor: [
+  "women",
+  "men",
+  "adults"
+]
+
+concerns: [
+  "hair removal",
+  "travel convenience",
+  "smooth skin"
+]
+
+volume: "Mini Handheld Device"
+
+inStock: true
+stockCount: 89
+
+badges: [
+  "new",
+  "travel-friendly",
+  "portable",
+  "dermatologist-tested"
+]
+
+whereToBuy: {
+  amazon: "#",
+  flipkart: "#",
+  official: "https://glowguide.com"
+}

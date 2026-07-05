@@ -1,0 +1,78 @@
+id: "gg-supple-hydration-toner"
+
+name: "GlowGuide Supple Hydration Toner"
+brand: "GlowGuide"
+
+category: "men-women"
+subcategory: "toner"
+
+price: 1299
+originalPrice: 1499
+discount: 13
+
+rating: 4.7
+reviewCount: 1642
+
+shortDescription: "Deeply hydrating Korean-inspired toner with Beta-Glucan, Hyaluronic Acid, and Centella Asiatica to strengthen the skin barrier and restore lasting moisture."
+
+description: "GlowGuide Supple Hydration Toner is a Korean-inspired, dermatologist-tested facial toner formulated to replenish moisture, calm sensitive skin, and prepare the skin for the rest of your skincare routine. Infused with Beta-Glucan, Hyaluronic Acid, and Centella Asiatica, this lightweight essence-like toner delivers long-lasting hydration while helping strengthen the skin's natural barrier. Its pH-balanced, fragrance-free formula absorbs quickly without stickiness, leaving the skin soft, plump, refreshed, and ready to maximize the absorption of serums and moisturizers."
+
+keyBenefits:
+  - "Provides intense, long-lasting hydration"
+  - "Strengthens the skin's moisture barrier"
+  - "Balances skin pH after cleansing"
+  - "Soothes redness and sensitivity"
+  - "Prepares skin for better serum absorption"
+  - "Leaves skin soft, plump, and refreshed"
+  - "Lightweight, non-sticky texture"
+  - "Dermatologist-tested and fragrance-free"
+
+ingredients:
+  - "Beta-Glucan"
+  - "Hyaluronic Acid"
+  - "Centella Asiatica Extract"
+  - "Panthenol (Vitamin B5)"
+  - "Allantoin"
+  - "Glycerin"
+
+howToUse: "After cleansing, dispense an appropriate amount onto your palms or a cotton pad and gently pat over the face and neck until fully absorbed. Follow with serum and moisturizer. Use morning and evening."
+
+skinTypes:
+  - "oily"
+  - "dry"
+  - "combination"
+  - "sensitive"
+  - "normal"
+
+suitableFor:
+  - "men"
+  - "women"
+  - "teens"
+  - "adults"
+
+concerns:
+  - "dehydration"
+  - "dryness"
+  - "sensitivity"
+  - "redness"
+  - "weakened skin barrier"
+  - "dullness"
+
+volume: "150ml"
+
+inStock: true
+stockCount: 156
+
+badges:
+  - "korean-formula"
+  - "dermatologist-tested"
+  - "fragrance-free"
+  - "non-comedogenic"
+  - "barrier-care"
+  - "cruelty-free"
+
+whereToBuy:
+  amazon: "#"
+  nykaa: "#"
+  flipkart: "#"
+  official: "https://glowguide.com"

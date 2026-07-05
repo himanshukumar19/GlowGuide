@@ -1,0 +1,75 @@
+name: "GlowGuide Pro IPL Hair Removal Device"
+brand: "GlowGuide"
+
+category: "laser-devices"
+subcategory: "device"
+
+price: 18999
+originalPrice: 24999
+discount: 24
+
+rating: 4.6
+reviewCount: 1234
+
+shortDescription: "Professional-grade IPL hair removal device with 300,000 flashes, intelligent skin tone sensor, and five intensity levels for safe, long-lasting hair reduction at home."
+
+description: "GlowGuide Pro IPL Hair Removal Device is a premium dermatologist-tested Intense Pulsed Light (IPL) system engineered to deliver professional-quality hair reduction from the comfort of your home. Featuring 300,000 high-performance flashes, five adjustable intensity levels, an intelligent skin tone sensor, and advanced safety protection, it offers fast, effective, and virtually painless treatments for the face, arms, legs, underarms, bikini line, and body. Its ergonomic lightweight design ensures comfortable handling while the precision treatment window delivers even coverage with every flash. Designed for long-term use, the device helps reduce hair regrowth, leaving skin smoother, softer, and hair-free with consistent treatments."
+
+keyBenefits: [
+  "Professional IPL technology for long-term hair reduction",
+  "300,000 flashes for years of use",
+  "Intelligent skin tone sensor for enhanced safety",
+  "5 adjustable intensity levels for personalized treatments",
+  "Suitable for face, legs, arms, underarms, and bikini line",
+  "Virtually painless and non-invasive treatment",
+  "Rechargeable ergonomic design for comfortable handling",
+  "Salon-quality results from the comfort of home"
+]
+
+ingredients: [
+  "IPL Light Technology",
+  "300,000 Flash Lamp",
+  "Smart Skin Tone Sensor",
+  "5 Energy Levels",
+  "Safety Lock System",
+  "Rechargeable Battery"
+]
+
+howToUse: "Shave the treatment area before use. Turn on the device and select the appropriate intensity level based on your skin tone. Place the treatment window flat against the skin and press the flash button while moving systematically across the treatment area. Use once or twice weekly for the first 4–8 weeks, then perform maintenance sessions every 4–6 weeks."
+
+skinTypes: [
+  "oily",
+  "dry",
+  "combination",
+  "sensitive",
+  "normal"
+]
+
+suitableFor: [
+  "women",
+  "men",
+  "adults"
+]
+
+concerns: [
+  "hair removal",
+  "smooth skin"
+]
+
+volume: "Handheld Device"
+
+inStock: true
+stockCount: 45
+
+badges: [
+  "bestseller",
+  "dermatologist-tested",
+  "professional-grade",
+  "home-use"
+]
+
+whereToBuy: {
+  amazon: "#",
+  flipkart: "#",
+  official: "https://glowguide.com"
+}

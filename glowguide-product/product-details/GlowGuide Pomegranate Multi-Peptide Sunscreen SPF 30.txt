@@ -1,0 +1,75 @@
+name: "GlowGuide Pomegranate Multi-Peptide Sunscreen SPF 30"
+brand: "GlowGuide"
+
+category: "men-women"
+subcategory: "sunscreen"
+
+price: 595
+originalPrice: 695
+discount: 14
+
+rating: 4.4
+reviewCount: 1654
+
+shortDescription: "Broad-spectrum SPF 30 sunscreen enriched with Pomegranate Extract, Multi-Peptide Complex, and Hyaluronic Acid for daily UV protection, hydration, and anti-aging care."
+
+description: "GlowGuide Pomegranate Multi-Peptide Sunscreen SPF 30 is a lightweight daily sunscreen that combines broad-spectrum UVA and UVB protection with advanced skincare benefits. Infused with antioxidant-rich Pomegranate Extract, Multi-Peptide Complex, and Hyaluronic Acid, it helps defend against sun damage while improving skin elasticity, reducing the appearance of fine lines, and providing long-lasting hydration. The non-greasy, fast-absorbing formula leaves no white cast, making it suitable for everyday use under makeup or on its own."
+
+keyBenefits: [
+  "Broad-spectrum SPF 30 UVA/UVB protection",
+  "Provides up to 48-hour hydration",
+  "Helps reduce fine lines and signs of aging",
+  "Supports collagen production",
+  "Lightweight, non-greasy formula",
+  "Leaves no white cast",
+  "Suitable for everyday wear"
+]
+
+ingredients: [
+  "Pomegranate Extract",
+  "Multi-Peptide Complex",
+  "Hyaluronic Acid",
+  "Broad Spectrum UV Filters",
+  "Vitamin E"
+]
+
+howToUse: "Apply generously as the final step of your morning skincare routine, at least 15 minutes before sun exposure. Reapply every 2–3 hours, especially after sweating, swimming, or towel drying."
+
+skinTypes: [
+  "oily",
+  "dry",
+  "combination",
+  "sensitive",
+  "normal"
+]
+
+suitableFor: [
+  "men",
+  "women",
+  "adults"
+]
+
+concerns: [
+  "sun protection",
+  "aging",
+  "dryness"
+]
+
+volume: "50g"
+
+inStock: true
+stockCount: 178
+
+badges: [
+  "dermatologist-tested",
+  "cruelty-free",
+  "lightweight",
+  "daily-use"
+]
+
+whereToBuy: {
+  amazon: "#",
+  nykaa: "#",
+  flipkart: "#",
+  official: "https://glowguide.com"
+}

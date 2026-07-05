@@ -1,0 +1,68 @@
+name: "GlowGuide Milky Soft Baby Lip Balm"
+brand: "GlowGuide"
+
+category: "children"
+subcategory: "lip-care"
+
+price: 199
+originalPrice: 249
+discount: 20
+
+rating: 4.4
+reviewCount: 892
+
+shortDescription: "Gentle petroleum-free baby lip balm enriched with Milk Protein, Coconut Oil, and Shea Butter to moisturize, protect, and soothe dry, delicate lips."
+
+description: "GlowGuide Milky Soft Baby Lip Balm is a nourishing daily lip balm specially formulated for children's delicate lips. Enriched with Milk Protein, Coconut Oil, Shea Butter, and Vitamin E, this petroleum-free, paraben-free, and non-sticky formula delivers long-lasting hydration while helping repair dry and chapped lips. The lightweight balm creates a protective moisture barrier that keeps lips soft, smooth, and healthy throughout the day. Gentle enough for everyday use, it is specially designed for sensitive lips and is suitable for children aged 2 years and above."
+
+keyBenefits: [
+  "Deeply moisturizes dry and chapped lips",
+  "Petroleum-free and paraben-free formula",
+  "Non-sticky with a smooth finish",
+  "Provides long-lasting hydration",
+  "Helps repair cracked lips",
+  "Made with naturally nourishing ingredients",
+  "Safe for children's delicate lips"
+]
+
+ingredients: [
+  "Milk Protein",
+  "Coconut Oil",
+  "Shea Butter",
+  "Vitamin E"
+]
+
+howToUse: "Apply directly to clean lips whenever needed throughout the day. Reapply as required to keep lips soft, hydrated, and protected."
+
+skinTypes: [
+  "sensitive",
+  "normal"
+]
+
+suitableFor: [
+  "children"
+]
+
+concerns: [
+  "dry lips",
+  "chapped lips"
+]
+
+volume: "4.5g"
+
+inStock: true
+stockCount: 345
+
+badges: [
+  "natural",
+  "petroleum-free",
+  "paraben-free",
+  "baby-safe"
+]
+
+whereToBuy: {
+  amazon: "#",
+  nykaa: "#",
+  flipkart: "#",
+  official: "https://glowguide.com"
+}

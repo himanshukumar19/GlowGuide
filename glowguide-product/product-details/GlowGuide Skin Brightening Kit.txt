@@ -1,0 +1,79 @@
+name: "GlowGuide Skin Brightening Kit"
+brand: "GlowGuide"
+
+category: "men-women"
+subcategory: "kit"
+
+price: 699
+originalPrice: 999
+discount: 30
+
+rating: 4.6
+reviewCount: 2845
+
+shortDescription: "Complete 4-step brightening skincare routine powered by Vitamin C, Turmeric, Saffron, and Niacinamide for radiant, hydrated, and even-toned skin."
+
+description: "GlowGuide Skin Brightening Kit is a complete daily skincare routine designed to visibly brighten skin, reduce pigmentation, and restore a healthy natural glow. This dermatologist-tested kit combines a Gentle Cleanser, Brightening Face Wash, Radiance Serum, and Hydrating Moisturizer, all infused with Vitamin C, Turmeric, Saffron, and Niacinamide. Working together, these products cleanse, nourish, hydrate, and protect the skin while helping reduce dullness, uneven skin tone, and dark spots. Suitable for daily use on all major skin types, the GlowGuide Skin Brightening Kit delivers a simple yet effective skincare routine for healthier, smoother, and naturally radiant skin."
+
+keyBenefits: [
+  "Complete 4-step skincare routine",
+  "Enhances natural skin radiance",
+  "Brightens dull and tired-looking skin",
+  "Helps reduce pigmentation and dark spots",
+  "Improves uneven skin tone",
+  "Hydrates and strengthens the skin barrier",
+  "Powered by antioxidant-rich ingredients",
+  "Suitable for everyday use"
+]
+
+ingredients: [
+  "Vitamin C",
+  "Turmeric Extract",
+  "Saffron Extract",
+  "Niacinamide",
+  "Hyaluronic Acid",
+  "Aloe Vera",
+  "Glycerin"
+]
+
+howToUse: "Step 1: Cleanse with the Gentle Cleanser. Step 2: Wash using the Brightening Face Wash. Step 3: Apply 2–3 drops of the Radiance Serum. Step 4: Finish with the Hydrating Moisturizer. Use every morning and evening for best results. During daytime, follow with sunscreen."
+
+skinTypes: [
+  "oily",
+  "dry",
+  "combination",
+  "normal"
+]
+
+suitableFor: [
+  "men",
+  "women",
+  "adults"
+]
+
+concerns: [
+  "dullness",
+  "uneven tone",
+  "pigmentation",
+  "dark spots",
+  "dehydration"
+]
+
+volume: "Kit (4 products)"
+
+inStock: true
+stockCount: 89
+
+badges: [
+  "bestseller",
+  "natural",
+  "dermatologist-tested",
+  "cruelty-free"
+]
+
+whereToBuy: {
+  amazon: "#",
+  nykaa: "#",
+  flipkart: "#",
+  official: "https://glowguide.com"
+}

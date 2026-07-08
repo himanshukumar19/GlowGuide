@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from "react";
 import {
   ShoppingBag,
   Users,
@@ -20,29 +21,52 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { products } from "@/data/products";
+import { api } from "@/api/client";
 import { MOCK_HISTORY } from "@/data/analysisHistory";
 
-const recentOrders = [
-  { id: "ORD-001", customer: "Jane Doe", items: 3, total: 2499, status: "completed" as const, date: "2026-06-25" },
-  { id: "ORD-002", customer: "Alice Vance", items: 1, total: 850, status: "processing" as const, date: "2026-06-26" },
-  { id: "ORD-003", customer: "Priya Sharma", items: 5, total: 4599, status: "completed" as const, date: "2026-06-24" },
-  { id: "ORD-004", customer: "Rahul Mehta", items: 2, total: 1798, status: "cancelled" as const, date: "2026-06-24" },
-  { id: "ORD-005", customer: "Sneha Kapoor", items: 4, total: 3296, status: "processing" as const, date: "2026-06-23" },
-];
-
-const statusVariant = {
-  completed: "default" as const,
-  processing: "secondary" as const,
-  cancelled: "destructive" as const,
+const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  confirmed: "default",
+  shipped: "secondary",
+  delivered: "default",
+  cancelled: "destructive",
+  pending: "outline",
 };
 
 const recentAnalyses = MOCK_HISTORY.slice(-3).reverse();
 
+interface AdminStats {
+  productCount: number;
+  customerCount: number;
+  orderCount: number;
+  recentOrders: Array<{
+    id: string;
+    total: number;
+    status: string;
+    createdAt: string;
+    customerName: string;
+  }>;
+}
+
 const AdminDashboard = () => {
-  const totalProducts = products.length;
-  const totalOrders = 156;
-  const totalCustomers = 2843;
+  const [stats, setStats] = useState<AdminStats>({
+    productCount: 0,
+    customerCount: 0,
+    orderCount: 0,
+    recentOrders: [],
+  });
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const data = await api.get<AdminStats>("/api/admin/stats");
+        setStats(data);
+      } catch (err) {
+        console.error("Failed to fetch admin stats:", err);
+      }
+    }
+    fetchStats();
+  }, []);
+
   const analysesToday = MOCK_HISTORY.filter((h) =>
     h.date.startsWith(new Date().toISOString().split("T")[0])
   ).length;
@@ -54,19 +78,19 @@ const AdminDashboard = () => {
           <AdminStatsCard
             icon={Package}
             label="Total Products"
-            value={totalProducts}
+            value={stats.productCount}
             trend={{ direction: "up", percentage: 12 }}
           />
           <AdminStatsCard
             icon={ShoppingBag}
             label="Total Orders"
-            value={totalOrders}
+            value={stats.orderCount}
             trend={{ direction: "up", percentage: 8 }}
           />
           <AdminStatsCard
             icon={Users}
             label="Total Customers"
-            value={totalCustomers}
+            value={stats.customerCount}
             trend={{ direction: "up", percentage: 5 }}
           />
           <AdminStatsCard
@@ -86,30 +110,40 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>{order.customer}</TableCell>
-                      <TableCell className="text-right">₹{order.total.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge variant={statusVariant[order.status]}>
-                          {order.status}
-                        </Badge>
-                      </TableCell>
+              {stats.recentOrders.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  No orders yet.
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {stats.recentOrders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium font-mono text-xs">
+                          {order.id.slice(0, 10)}...
+                        </TableCell>
+                        <TableCell>{order.customerName}</TableCell>
+                        <TableCell className="text-right">
+                          ₹{order.total.toLocaleString("en-IN")}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={statusVariant[order.status] || "outline"}>
+                            {order.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
 

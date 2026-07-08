@@ -38,7 +38,6 @@ export async function listAnalysesByCustomer(
   let query = db
     .collection(COLLECTION)
     .where("customerId", "==", customerId)
-    .orderBy("createdAt", "desc")
     .limit(limit + 1);
 
   if (options.startAfter) {
@@ -51,7 +50,10 @@ export async function listAnalysesByCustomer(
   const snapshot = await query.get();
   const docs = snapshot.docs;
   const hasMore = docs.length > limit;
-  const items = docs.slice(0, limit).map((doc) => validate(analysisSchema, doc.data()));
+  const sliced = docs.slice(0, limit).map((doc) => validate(analysisSchema, doc.data()));
+  const items = sliced.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   return { items, hasMore };
 }

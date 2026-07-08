@@ -4,12 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, AlertTriangle, ShieldCheck, Sun, Moon, Sparkles, ShoppingBag, RotateCcw, Heart } from "lucide-react";
-import { products } from "@/data/products";
 import type { Product } from "@/types/product";
 import Link from "next/link";
 import { useWishlist } from "@/store/useWishlistStore";
 import { useCart } from "@/store/useCartStore";
 import { toast } from "sonner";
+import { useState, useEffect } from "react";
 
 interface AnalysisResultsProps {
   skinType: string;
@@ -86,6 +86,17 @@ export const AnalysisResults = ({
 }: AnalysisResultsProps) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch("/api/products");
+        if (res.ok) setAllProducts(await res.json());
+      } catch {}
+    }
+    fetchProducts();
+  }, []);
 
   const formattedType = skinType.toLowerCase().trim();
   const typeConfig = SKIN_TYPE_DESCRIPTIONS[formattedType] || SKIN_TYPE_DESCRIPTIONS.normal;
@@ -121,7 +132,7 @@ export const AnalysisResults = ({
   const scoreColor = getScoreColor(healthScore);
 
   // 2. Load and filter matching product recommendations from live dataset
-  const recommendedProducts = products
+  const recommendedProducts = allProducts
     .filter((p) => p.skinTypes.some((t) => t.toLowerCase() === formattedType))
     .slice(0, 3); // show top 3 recommendations
 

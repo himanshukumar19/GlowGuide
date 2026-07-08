@@ -105,12 +105,12 @@ const WishlistPage = () => {
                 <div className="flex gap-2">
                   <Button
                     onClick={() => handleAddToCart(product.id)}
-                    disabled={!product.inStock}
+                    disabled={product.stockCount <= 0}
                     className="flex-1 gradient-primary text-primary-foreground gap-2"
                     size="sm"
                   >
                     <ShoppingCart className="h-4 w-4" />
-                    {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+                    {product.stockCount > 0 ? 'Add to Cart' : 'Out of Stock'}
                   </Button>
                   <Button
                     variant="outline"

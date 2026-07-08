@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { FilterState, SortOption } from '@/types/product';
-import { getAllBrands, categoryLabels } from '@/data/products';
+import { categoryLabels } from '@/lib/constants';
 import {
   X,
   SlidersHorizontal,
@@ -30,6 +30,7 @@ interface ProductFiltersProps {
   sortOption: SortOption;
   setSortOption: (sort: SortOption) => void;
   productCount: number;
+  brands: string[];
   mobileOnly?: boolean;
   desktopOnly?: boolean;
 }
@@ -64,11 +65,10 @@ const DEFAULT_FILTERS: FilterState = {
   brands: [],
   rating: 0,
   discount: 0,
-  inStock: false,
+  inStockOnly: false,
 };
 
 const categories = Object.entries(categoryLabels);
-const allBrands = getAllBrands();
 
 // ─── Section wrapper with collapse ─────────────────────────────────────────
 interface FilterSectionProps {
@@ -256,12 +256,14 @@ const FilterContent = ({
   hasActiveFilters,
   clearFilters,
   activeCount,
+  brands,
 }: {
   filters: FilterState;
   setFilters: (f: FilterState) => void;
   hasActiveFilters: boolean;
   clearFilters: () => void;
   activeCount: number;
+  brands: string[];
 }) => {
   const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) =>
     setFilters({ ...filters, [key]: value });
@@ -332,11 +334,11 @@ const FilterContent = ({
               <X className="h-2.5 w-2.5" />
             </Badge>
           )}
-          {filters.inStock && (
+          {filters.inStockOnly && (
             <Badge
               variant="secondary"
               className="gap-1 pl-2 pr-1 py-0.5 text-xs cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors"
-              onClick={() => updateFilter('inStock', false)}
+              onClick={() => updateFilter('inStockOnly', false)}
             >
               In Stock
               <X className="h-2.5 w-2.5" />
@@ -420,7 +422,7 @@ const FilterContent = ({
       {/* Brands */}
       <FilterSection title="Brand" badge={filters.brands.length} defaultOpen={false}>
         <div className="space-y-0.5 max-h-52 overflow-y-auto pr-1 scrollbar-thin">
-          {allBrands.map(brand => {
+          {brands.map(brand => {
             const active = filters.brands.includes(brand);
             return (
               <button
@@ -504,16 +506,16 @@ const FilterContent = ({
       <FilterSection title="Availability">
         <button
           type="button"
-          onClick={() => updateFilter('inStock', !filters.inStock)}
+          onClick={() => updateFilter('inStockOnly', !filters.inStockOnly)}
           className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm transition-all text-left border ${
-            filters.inStock
+            filters.inStockOnly
               ? 'bg-success/10 text-success font-medium border-success/20'
               : 'hover:bg-muted border-transparent'
           }`}
         >
-          <Package className={`h-3.5 w-3.5 ${filters.inStock ? 'text-success' : 'text-muted-foreground'}`} />
+          <Package className={`h-3.5 w-3.5 ${filters.inStockOnly ? 'text-success' : 'text-muted-foreground'}`} />
           In Stock Only
-          {filters.inStock && (
+          {filters.inStockOnly && (
             <span className="ml-auto">
               <X className="h-3 w-3 text-success" />
             </span>
@@ -531,6 +533,7 @@ const ProductFilters = ({
   sortOption,
   setSortOption,
   productCount,
+  brands,
   mobileOnly = false,
   desktopOnly = false,
 }: ProductFiltersProps) => {
@@ -544,7 +547,7 @@ const ProductFilters = ({
     filters.brands.length > 0 ||
     filters.rating > 0 ||
     filters.discount > 0 ||
-    filters.inStock ||
+    filters.inStockOnly ||
     filters.priceRange[0] > PRICE_MIN ||
     filters.priceRange[1] < PRICE_MAX;
 
@@ -554,10 +557,10 @@ const ProductFilters = ({
     filters.brands.length +
     (filters.rating > 0 ? 1 : 0) +
     (filters.discount > 0 ? 1 : 0) +
-    (filters.inStock ? 1 : 0) +
+    (filters.inStockOnly ? 1 : 0) +
     (filters.priceRange[0] > PRICE_MIN || filters.priceRange[1] < PRICE_MAX ? 1 : 0);
 
-  const sharedProps = { filters, setFilters, hasActiveFilters, clearFilters, activeCount };
+  const sharedProps = { filters, setFilters, hasActiveFilters, clearFilters, activeCount, brands };
 
   return (
     <>

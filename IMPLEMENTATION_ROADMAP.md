@@ -489,7 +489,7 @@ Use Recharts for data visualization.
 ## Phase 5: Product Recommendations
 
 ### Goal
-Recommend skincare products based on skin type with affiliate links.
+Recommend skincare products based on skin type.
 
 ### Tasks
 
@@ -506,7 +506,7 @@ Recommend skincare products based on skin type with affiliate links.
 Set up product recommendations:
 
 1. Add Product model to Prisma schema:
-   - id, name, brand, description, category, skinTypes[], imageUrl, affiliateUrl, price, rating
+   - id, name, brand, description, category, skinTypes[], imageUrl, price, rating
 
 2. Create seed file with products for each skin type:
    - Oily: oil-control cleansers, mattifying moisturizers
@@ -516,7 +516,7 @@ Set up product recommendations:
 
 3. Seed database: npx prisma db seed
 
-Start with 20-30 popular products from Amazon.
+Start with 20-30 popular products.
 ```
 
 #### Task 5.2: Recommendation Algorithm
@@ -550,7 +550,7 @@ User has oily skin with "dark spots" concern
 **What to do**:
 - Beautiful product cards
 - Carousel layout
-- Amazon affiliate links
+- Product recommendation cards
 
 **Instructions for AI**:
 ```
@@ -563,7 +563,7 @@ Create product recommendations section:
    - Price
    - Star rating
    - "Why recommended" text
-   - "View on Amazon" button (affiliate link)
+   - "View Product" button
 
 4. Add to results page after skin type display
 5. Track clicks for analytics

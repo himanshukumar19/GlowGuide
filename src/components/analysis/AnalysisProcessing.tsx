@@ -30,8 +30,10 @@ export const AnalysisProcessing = ({ statusText }: AnalysisProcessingProps) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] p-4 text-center animate-fade-in">
-      <Card className="w-full max-w-md border border-border shadow-card p-8 rounded-gg-lg relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }}>
-        <div className="absolute inset-0 bg-black/55 pointer-events-none rounded-gg-lg" />
+      <Card className="w-full max-w-md p-8 rounded-gg-lg relative overflow-hidden border-0 shadow-elevated">
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-[8px]" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60" />
+        <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px]" />
         <CardContent className="space-y-8 flex flex-col items-center pt-6 relative z-10">
           {/* DNA Helix Loader */}
           <div className="dna-loader relative w-48 h-16 flex items-center justify-between">

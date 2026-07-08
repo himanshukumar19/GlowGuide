@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronDown, ShoppingCart, Heart, User, LogOut, Crown } from "lucide-react";
+import { Menu, X, ChevronDown, ShoppingCart, Heart, User, LogOut, Crown, ListOrdered } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/useCartStore";
 import { useWishlist } from "@/store/useWishlistStore";
@@ -161,6 +161,10 @@ const Navbar = () => {
                         <User className="h-4 w-4 text-muted-foreground" />
                         Dashboard
                       </Link>
+                      <Link href="/dashboard/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-xs text-foreground hover:bg-muted transition-colors font-medium">
+                        <ListOrdered className="h-4 w-4 text-muted-foreground" />
+                        My Orders
+                      </Link>
                       <button onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full flex items-center gap-2 px-4 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors font-medium text-left">
                         <LogOut className="h-4 w-4" />
                         Sign Out
@@ -228,11 +232,28 @@ const Navbar = () => {
                 </div>
               ))}
               
-              <Link href={isAuthenticated ? "/analysis" : "/login"} onClick={() => setIsOpen(false)}>
-                <Button className="w-full mt-4 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm py-4 rounded-gg-sm shadow-primary">
-                  Start Skin Analysis
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <div className="mt-4 pt-4 border-t border-border space-y-2">
+                  <Link href="/dashboard" onClick={() => setIsOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-muted">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    Dashboard
+                  </Link>
+                  <Link href="/dashboard/orders" onClick={() => setIsOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-muted">
+                    <ListOrdered className="h-4 w-4 text-muted-foreground" />
+                    My Orders
+                  </Link>
+                  <button onClick={() => { setIsOpen(false); logout(); }} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left">
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <Link href="/login" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full mt-4 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm py-4 rounded-gg-sm shadow-primary">
+                    Sign In
+                  </Button>
+                </Link>
+              )}
             </div>
           </motion.div>
         )}

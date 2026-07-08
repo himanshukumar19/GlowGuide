@@ -18,6 +18,9 @@ An unauthenticated visitor who can browse public pages and the Shop but cannot i
 **Shop**:
 The product catalog browsable by Guests, with cart/checkout/order functionality gated behind Customer authentication.
 
+**Product**:
+An item available for purchase in the Shop. Each Product has a unique ID and lives in the `products` Firestore collection, with images stored in Cloudinary. Managed by Admins via the Admin Panel.
+
 **Product Recommendation**:
 Personalized product suggestions shown to Customers based on their Skin Analysis history. Available to both free and paid Customers. Separate from the Shop browsing experience.
 
@@ -43,7 +46,7 @@ A section in the Dashboard where a Customer's recommended skincare routine (morn
 An active component in skincare products. Managed via the Admin Panel in a searchable glossary with dropdown detail cards showing benefits, side effects, and suitable skin types.
 
 **Admin**:
-A staff role with a separate login accessing a distinct admin dashboard (separate subdomain/route, different layout from main site). Manages Products, Orders, and Skin Content.
+A staff role with a separate login accessing a distinct admin dashboard (separate subdomain/route, different layout from main site). Has CRUD access to Products, Orders, and manages product images in Cloudinary. Identified via `role: "ADMIN"` in the Customer Firestore document.
 
 **Live Photo Capture**:
 A guided camera flow that captures 5 facial photos in sequence (2 profile sides, 1 front, 2 at ~120° tilt) with an on-screen face guide overlay.
@@ -58,8 +61,17 @@ A soft visual prompt shown to free-tier Customers when they approach or hit thei
 Specific dermatological conditions (acne, hyperpigmentation, aging, dryness, sensitivity) detected by the VIT model and/or quiz responses.
 
 **Order**:
-A Customer's purchase transaction in the Shop. Tracked in the Dashboard under "My Routine" as auto-tracked products. Managed by Admins in the Order management panel.
+A Customer's purchase transaction in the Shop. Persisted in the `orders` Firestore collection. Contains a snapshot of purchased items at the time of payment (name, price, image). Tracked in the Dashboard under order history. Managed by Admins in the Order management panel.
 _Avoid_: Purchase
+
+**Stock Count**:
+The available quantity of a Product. Decremented automatically during Razorpay payment verification. Managed by Admins for restocking. A Product is considered in-stock when `stockCount > 0`.
+
+**Cart**:
+A temporary collection of Products a Customer intends to purchase. Stored client-side in localStorage. Cleared after successful checkout.
+
+**Checkout**:
+The multi-step flow where a Customer provides a shipping address and completes payment via Razorpay. Requires authentication. Validates stock availability before payment.
 
 **Auth Provider**:
 The method a Customer uses to sign in — Email/Password or Google. Both can be linked to the same Customer account via Firebase account linking.

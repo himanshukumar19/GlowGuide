@@ -16,6 +16,7 @@ Built with **Next.js 14 App Router**, **Firebase Auth**, and a standalone **Pyth
 | State | Zustand + TanStack Query |
 | Auth | Firebase Auth (Email/Password, Google) |
 | Database | Firestore + Firebase Admin SDK |
+| Image Hosting | Cloudinary |
 | UI Motion | Framer Motion |
 | Payments | Razorpay (test mode) |
 | ML Service | Python FastAPI + Vision Transformer (separate service) |
@@ -87,6 +88,7 @@ GlowGuide/
 │   │   ├── firebase.ts         # Client-side Firebase config
 │   │   ├── firebase-admin.ts   # Server-side Firebase Admin SDK
 │   │   ├── auth.ts             # verifyAuth helper for API routes
+│   │   ├── cloudinary.ts       # Cloudinary SDK config + upload helpers
 │   │   ├── models/customer.ts  # Firestore CRUD for customers
 │   │   ├── schemas/customer.ts # Zod schema for Customer
 │   │   └── validators.ts       # Generic Zod validation helper
@@ -171,7 +173,7 @@ npm install
 
 # Set up environment variables
 cp .env.example .env.local
-# Edit .env.local with your Firebase credentials
+# Edit .env.local with your Firebase and Cloudinary credentials
 
 # Run development server
 npm run dev
@@ -213,6 +215,14 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY----
 # Razorpay (test keys)
 RAZORPAY_KEY_ID=rzp_test_...
 RAZORPAY_KEY_SECRET=...
+
+# Cloudinary (public — exposed to browser)
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=...
+
+# Cloudinary (server-only)
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
 
 # ML Service
 ML_SERVICE_URL=http://localhost:8000
@@ -288,6 +298,7 @@ ML_SERVICE_URL=http://localhost:8000
 | Framework | Next.js 14 App Router | Unified full-stack React, SSR/SSG, route handlers |
 | Auth | Firebase Auth + HTTP-only session cookies | Middleware-based route protection, Firebase handles identity |
 | Database | Firestore | Real-time sync, integrates with Firebase Auth |
+| Image Hosting | Cloudinary | CDN delivery, built-in transformations, unsigned uploads |
 | State | Zustand | Lightweight, works outside React tree, persist middleware |
 | UI Components | shadcn/ui | Maintainable, themeable, accessible primitives |
 | Styling | Tailwind CSS 3.4 | Utility-first, consistent design tokens |

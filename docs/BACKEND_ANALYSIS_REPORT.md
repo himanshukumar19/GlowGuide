@@ -194,7 +194,6 @@ products/{productId}
   ├── inStock: boolean
   ├── stockCount: number
   ├── badges: string[]
-  ├── whereToBuy: { amazon?: string, nykaa?: string, ... }
   ├── isDeleted: boolean
   └── createdAt: Timestamp
 ```
@@ -949,7 +948,6 @@ interface Product {
   inStock: boolean;
   stockCount: number;
   badges?: string[];
-  whereToBuy: { amazon?: string; nykaa?: string; flipkart?: string; official?: string };
 }
 
 // Order (from types/product.ts)
@@ -1051,7 +1049,7 @@ The following questions are not answered by the existing codebase and require a 
 | **7** | **Chat history persistence** | Session only (in-memory/Redux) vs persist to Firestore | Session only for Phase 1; Firestore for Phase 2 |
 | **8** | **Firestore composite indexes** | Auto-index vs manual composite indexes | Composite indexes needed for: analyses(customerId, createdAt DESC), orders(customerId, createdAt DESC) |
 | **9** | **Frontend hosting** | Firebase Hosting vs Vercel | **Vercel** — already has `vercel.json` config, auto-deploys from GitHub, free tier generous. Firebase Hosting would require adding `firebase.json` and separate deploy setup |
-| **10** | **Product images** | Keep affiliate links (`whereToBuy`) as-is vs Cloudinary hosted | Keep affiliate links for now; Cloudinary for custom product photos |
+| **10** | **Product images** | Product images: Cloudinary vs self-hosted | Cloudinary for custom product photos |
 | **11** | **VIT model** | Use existing Random Forest ML service vs add Vision Transformer | Use Random Forest for Phase 1; VIT is Phase 2+ (already in IMPLEMENTATION_ROADMAP.md) |
 
 ---

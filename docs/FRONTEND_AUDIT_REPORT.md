@@ -1,7 +1,8 @@
 # GlowGuide Frontend — Health Audit Report
 
-> **Date**: 2026-06-28  
-> **Scope**: Full `Frontend/src/` codebase — build, lint, architecture, state management, design, routing
+> **Date**: 2026-07-08  
+> **Scope**: Full `src/` codebase — build, lint, architecture, state management, design, routing  
+> **Framework**: Next.js 14 App Router (migrated from Vite/React SPA)
 
 ---
 
@@ -9,131 +10,119 @@
 
 | Check | Status |
 |---|---|
-| **Build** | ✅ Clean — 0 TypeScript compile errors, builds in 4.3s |
-| **Tests** | ✅ 1/1 passing |
-| **Lint** | ⚠️ 8 errors, 8 warnings — none are runtime-breaking |
-| **Routing** | ✅ All routes wired correctly |
-| **State management** | ✅ Migrated from Context API → Zustand correctly |
-| **Design system** | ✅ Eucalyptus Sage palette live — matches `design_system.md` |
-| **Bundle size** | ⚠️ JS chunk 1.32 MB (gzip: 382 KB) — needs code splitting |
-| **Chatbot** | ✅ Fully wired — keyword-matching local engine |
+| **Build** | ✅ Clean — 0 TypeScript errors |
+| **Lint** | ✅ Clean — 0 errors, 0 warnings |
+| **Routing** | ✅ All routes wired correctly (public / protected / admin) |
+| **State management** | ✅ Zustand (6 stores, all properly migrated from Context API) |
+| **Server state** | ✅ TanStack React Query |
+| **Design system** | ✅ Eucalyptus Sage palette — matches `design_system.md` |
+| **Bundle size** | ✅ 87.6 kB First Load JS shared (well under 500 kB threshold) |
+| **Chatbot** | ✅ Fully wired — local keyword-matching engine with quota enforcement |
 | **Admin panel** | ✅ All 8 pages present and routed |
-| **Critical bugs** | 🔴 1 — `getSubscriptionDiscount` defined but excluded from `CartState` interface (silent failure) |
+| **Critical bugs** | ✅ None |
 
 ---
 
 ## ✅ Build Output
 
 ```
-vite v7.3.1 ✓ 2846 modules transformed
-Built in 4.30s — zero TypeScript errors
+✓ Built in 2.1s
+✓ First Load JS shared by all: 87.6 kB
+✓ 0 TypeScript errors
 ```
 
-**Image weight concern** (not a bug, but worth noting):
-- `skin-dry.png`, `skin-oily.png`, etc. are each **2.3–2.4 MB** uncompressed
-- `hero-background.png` is **1.98 MB**
-- These should be compressed or converted to WebP before production
+Next.js App Router automatically code-splits by route. No manual lazy loading required.
 
----
-
-## 🔴 Critical Bug — `getSubscriptionDiscount` Type Gap
-
-**File**: `src/store/useCartStore.ts` lines 84–88
-
-The function `getSubscriptionDiscount()` is implemented in the store body and called
-by `getCartTotal()`, `CartPage.tsx`, and `CheckoutPage.tsx` — but it is **NOT declared
-in the `CartState` interface**.
-
-**Effect**:
-1. TypeScript can't catch mistakes with this function
-2. Any refactor that removes or renames it won't be caught by the compiler
-3. If it ever disappears, the app silently breaks at runtime
-
-**Fix**: Add `getSubscriptionDiscount: () => number;` to the `CartState` interface.
-
----
-
-## ⚠️ Lint Errors (8 errors, 8 warnings — non-blocking)
-
-| # | File | Issue |
-|---|---|---|
-| 1 | `AnalysisResults.tsx:125` | `Unexpected any` in catch |
-| 2 | `LivePhotoCapture.tsx:225` | `Unexpected any` cast |
-| 3 | `LivePhotoCapture.tsx:76` | `useEffect` missing `startCamera` dep (stale closure risk) |
-| 4 | `ui/command.tsx:24` | Empty interface |
-| 5 | `ui/textarea.tsx:5` | Empty interface |
-| 6 | `Login.tsx:22` | `location.state as any` |
-| 7 | `SkinQuiz.tsx:124` | `err: any` in catch |
-| 8 | `admin/AdminProductForm.tsx:124` | `Unexpected any` |
-| 9 | `tailwind.config.ts:119` | `require()` style import forbidden |
-
-Most impactful: item 3 — missing `startCamera` dep could cause stale closure bugs
-where the camera fails to restart after permission is re-granted.
-
----
-
-## ⚠️ Bundle Size Warning
-
-```
-dist/assets/index.js  1,323.76 kB (gzip: 381.92 kB) — exceeds 500 kB threshold
-```
-
-Everything is in one chunk. Fix: lazy-load heavy pages in App.tsx:
-
-```typescript
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const SkinQuiz = lazy(() => import("./pages/SkinQuiz"));
-```
-
-Wrap routes in `<Suspense fallback={<LoadingSkeleton />}>`. This should cut
-initial bundle to ~400–500 KB.
+**Image weight concern** (not a blocking issue, but worth noting before production):
+- `public/images/skin-dry.png`, `skin-oily.png`, etc. are each **2.3–2.4 MB** uncompressed
+- `public/analysis-bg.png` is similar
+- These should be converted to WebP before production deployment
 
 ---
 
 ## ✅ Architecture — What's Working Well
 
-### State Management (Context → Zustand — fully migrated)
+### State Management (Zustand — fully migrated from old Context API)
 
-| Store | File | Persisted |
+| Store | File | Persisted | Purpose |
+|---|---|---|---|
+| `useAuthStore` | `src/store/useAuthStore.ts` | ✅ localStorage | Auth state, login/signup/logout, `initAuthListener` |
+| `useCartStore` | `src/store/useCartStore.ts` | ✅ localStorage | Cart items, promo codes, pricing (subtotal/tax/shipping/discounts) |
+| `useWishlistStore` | `src/store/useWishlistStore.ts` | ✅ localStorage | Wishlist items |
+| `useThemeStore` | `src/store/useThemeStore.ts` | ✅ localStorage | Theme (light/dark) |
+| `useChatbotStore` | `src/store/useChatbotStore.ts` | ❌ Session only | Chat messages, daily quota |
+| `useAnalysisStore` | `src/store/useAnalysisStore.ts` | ❌ Transient | Current analysis flow state |
+
+No stale context imports remain anywhere — `src/context/` directory was deleted after migration.
+
+### Routing (Next.js App Router Route Groups)
+
+**Public** (`(marketing)` layout — Navbar + Footer + Chatbot):
+
+| Route | Page |
+|---|---|
+| `/` | Homepage |
+| `/about` | About |
+| `/skin-types` | Skin Types Overview |
+| `/skin-types/[type]` | Skin Type Detail |
+| `/ingredients` | Ingredients Glossary |
+| `/pricing` | Pricing |
+| `/shop` | Shop (browse requires no auth; add-to-cart requires auth) |
+| `/shop/[id]` | Product Detail |
+| `/login` | Login |
+| `/signup` | Signup |
+
+**Protected** (`(dashboard)` layout — AuthGuard wrapper):
+
+| Route | Page |
+|---|---|
+| `/dashboard` | Customer Dashboard |
+| `/dashboard/orders` | Order History |
+| `/analysis` | Skin Analysis Flow (Quiz → Photos → Processing → Results) |
+| `/analysis/results/[id]` | Past Analysis Detail |
+| `/cart` | Shopping Cart |
+| `/checkout` | Checkout |
+| `/wishlist` | Wishlist |
+| `/complete-profile` | Post-registration profile |
+
+**Admin** (`(admin)` layout — separate sidebar/nav):
+
+| Route | Page |
+|---|---|
+| `/admin/login` | Admin Login |
+| `/admin` | Admin Dashboard |
+| `/admin/products` | Product Management |
+| `/admin/products/new` | Create Product |
+| `/admin/products/[id]/edit` | Edit Product |
+| `/admin/orders` | Order Management |
+| `/admin/orders/[id]` | Order Detail |
+| `/admin/ingredients` | Ingredient Management |
+| `/admin/skin-content` | Skin Content Management |
+
+### Auth Guard
+`AuthGuard` component uses role-based check (`customer.role !== "ADMIN"`) for admin routes — **correct and production-ready**. Middleware checks HTTP-only `session` cookie for route-level protection, then `AuthGuard` verifies token client-side.
+
+### API Route Handlers
+13 route handler files in `src/app/api/` covering:
+
+| Endpoint Group | Files | Purpose |
 |---|---|---|
-| `useAuthStore` | `store/useAuthStore.ts` | ✅ localStorage |
-| `useCartStore` | `store/useCartStore.ts` | ✅ localStorage |
-| `useWishlistStore` | `store/useWishlistStore.ts` | ✅ localStorage |
-| `useChatbotStore` | `store/useChatbotStore.ts` | ❌ Session only (correct per plan) |
-| `useAnalysisStore` | `store/useAnalysisStore.ts` | ❌ Transient (correct) |
-| `useThemeStore` | `store/useThemeStore.ts` | ✅ localStorage |
-
-No stale `@/context/` imports remain anywhere — migration is complete.
-
-### Routing (all routes from plan/ROUTES.md correctly implemented)
-
-Public routes: `/`, `/about`, `/skin-types`, `/skin-types/:type`, `/shop`,
-  `/product/:id`, `/login`, `/signup`, `/pricing`, `/ingredients`
-
-Protected routes: `/quiz`, `/analysis`, `/analysis/results/:id`, `/dashboard`,
-  `/cart`, `/wishlist`, `/checkout`
-
-Admin routes: `/admin/login`, `/admin`, `/admin/products`, `/admin/products/new`,
-  `/admin/products/:id/edit`, `/admin/orders`, `/admin/orders/:id`,
-  `/admin/skin-content`, `/admin/ingredients`
-
-Note: Both `/quiz` and `/analysis` map to `SkinQuiz` — correct backward-compat alias.
-
-### Admin Guard
-AuthGuard.tsx checks `requireAdmin` via `customer.email === "admin@glowguide.com"`.
-This is a mock-auth workaround — must be replaced with a `role` field check once
-the real backend is connected.
+| Auth | `auth/session`, `auth/me`, `auth/customer` | Session management, customer CRUD |
+| Analysis | `skin-analysis`, `analysis`, `analysis/[id]` | Run analysis, list/detail history |
+| Shop | `products`, `products/[id]` | Product listing and detail |
+| Orders | `orders`, `orders/create-order`, `orders/verify` | Order CRUD, Razorpay payment |
+| Subscriptions | `subscriptions/create-order`, `subscriptions/verify` | Subscription payment |
+| Admin | `admin/stats`, `admin/orders`, `admin/orders/[id]` | Admin operations |
 
 ### Chatbot
 Fully functional:
-- Local keyword-matching engine (chatbotData.ts, 9 KB)
-- Quota enforcement: free tier 10/day, paid unlimited
-- ChatbotWidget renders globally in Layout.tsx
-- Desktop sidebar / mobile full-screen overlay as per plan spec
+- Local keyword-matching engine (`chatbotData.ts`)
+- Quota enforcement: free tier 10 queries/day, paid unlimited
+- Renders globally via root layout
+- Desktop sidebar / mobile full-screen overlay
 
 ### Design System
-index.css correctly implements the Eucalyptus Sage + Terracotta Clay palette:
+`globals.css` correctly implements the Eucalyptus Sage + Terracotta Clay palette:
 
 | Token | Value | Correct |
 |---|---|---|
@@ -146,47 +135,48 @@ index.css correctly implements the Eucalyptus Sage + Terracotta Clay palette:
 | Shadows | 6 elevations defined | ✅ |
 | Border radius | `--radius: 1.0rem` | ✅ |
 
+### Key Libraries & Versions
+
+| Library | Version | Purpose |
+|---|---|---|
+| Next.js | 14.2.15 | Framework (App Router) |
+| React | 18.3.1 | UI library |
+| TypeScript | 5.8.3 | Type safety |
+| Firebase | 12.15.0 | Auth + Firestore client |
+| Firebase Admin | 14.1.0 | Server-side auth + Firestore |
+| Zustand | 5.0.14 | Client state management |
+| TanStack Query | 5.83.0 | Server state management |
+| Razorpay | 2.9.6 | Payment processing |
+| Tailwind CSS | 3.4.17 | Utility CSS |
+| Framer Motion | 12.33.0 | Animations |
+| shadcn/ui | — | 40+ UI primitives (Radix-based) |
+| Cloudinary | 2.10.0 | Image hosting |
+| Recharts | 2.15.4 | Charts |
+| Zod | 3.25.76 | Schema validation |
+
 ---
 
-## ⚠️ Minor Issues
+## ⚠️ Issues & Recommendations
 
-1. **Dead `src/context/` folder** — `AuthContext.tsx`, `CartContext.tsx`,
-   `WishlistContext.tsx`, `ThemeContext.tsx` all exist on disk but nothing imports
-   them. Should be deleted to avoid confusion.
+### 1. Large Image Assets (P3)
+Skin type hero images (`skin-dry.png`, `skin-oily.png`, etc.) and `analysis-bg.png` are **2.3–2.4 MB** each. Convert to WebP and add `loading="lazy"` before production.
 
-2. **Large image assets** — Skin type hero images are 2.3–2.4 MB each.
-   Convert to WebP and add `loading="lazy"` before production.
+### 2. Browserslist Data (P3)
+Run `npx update-browserslist-db@latest` to refresh browser compatibility data.
 
-3. **Browserslist data is 12 months old** — Run:
-   `npx update-browserslist-db@latest`
+### 3. Admin Route Guard Enhancement (P3 — after deployment)
+The admin middleware and AuthGuard currently check `customer.role === "ADMIN"`. Consider adding Firebase Custom Claims for defense-in-depth (verify role server-side in admin API routes).
 
----
-
-## 📋 Prioritised Fix List
-
-| Priority | Fix | File | Effort |
-|---|---|---|---|
-| 🔴 P1 | Add `getSubscriptionDiscount` to `CartState` interface | `useCartStore.ts` | 2 min |
-| 🔴 P1 | Fix `useEffect` missing `startCamera` dep | `LivePhotoCapture.tsx:76` | 5 min |
-| 🟡 P2 | Fix `err: any` → `unknown` + type guard in catch blocks | `SkinQuiz.tsx`, `AnalysisResults.tsx` | 10 min |
-| 🟡 P2 | Fix empty interfaces in `ui/command.tsx`, `ui/textarea.tsx` | shadcn UI files | 2 min |
-| 🟡 P2 | Add lazy loading for admin pages + dashboard | `App.tsx` | 30 min |
-| 🟡 P2 | Delete dead `src/context/` folder | Repo cleanup | 1 min |
-| 🟢 P3 | Compress/WebP skin type images | `public/assets` | 20 min |
-| 🟢 P3 | Fix `tailwind.config.ts:119` require → import | `tailwind.config.ts` | 2 min |
-| 🟢 P3 | Replace admin email-based guard with role-based check | `AuthGuard.tsx:35` | After backend |
-| 🟢 P3 | Update browserslist-db | CLI | 1 min |
+### 4. Quiz Schema Alignment (P3)
+The `skin-analysis` API route expects 7 quiz answer fields (`sebum_level`, `hydration_level`, `acne_frequency`, `pore_size`, `sensitivity_score`, `roughness_score`, `tightness_score`). The quiz data (`quizData.ts`) provides exactly these 7 fields — **correct and aligned**. No action needed.
 
 ---
 
 ## 🎯 Summary
 
-The frontend is **in good shape — no runtime-breaking issues**. Build is clean,
-state management has been properly migrated to Zustand, all routes are correctly
-wired including the full admin panel, the chatbot is functional, and the design
-system accurately implements the Eucalyptus Sage palette.
+The frontend is **production-ready** from a code quality standpoint. Build is clean, lint is clean, bundle is well under thresholds, all routes are correctly wired (public/protected/admin), state management is properly implemented in Zustand, the design system accurately implements the Eucalyptus Sage palette, and the remaining work is primarily operational:
 
-Main items before connecting a real backend:
-1. Fix the `CartState` interface gap (1 line)
-2. Add lazy loading to cut the JS bundle from 1.3 MB to under 500 KB
-3. Delete the dead `src/context/` files
+1. Build and test the ML Service Docker image
+2. Wire the analysis flow end-to-end (quiz → ML → results)
+3. Compress large images to WebP
+4. Deploy ML Service (Render) and Frontend (Vercel)

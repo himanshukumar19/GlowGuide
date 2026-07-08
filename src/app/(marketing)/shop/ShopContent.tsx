@@ -9,8 +9,8 @@ import ProductFilters from '@/components/shop/ProductFilters';
 import ProductSort from '@/components/shop/ProductSort';
 import CategoryCards from '@/components/shop/CategoryCards';
 import { Input } from '@/components/ui/input';
-import { products, categoryLabels } from '@/data/products';
-import { FilterState, SortOption } from '@/types/product';
+import { categoryLabels } from '@/lib/constants';
+import { FilterState, SortOption, Product } from '@/types/product';
 
 const VALID_CATEGORIES = ['men-women', 'korean', 'children', 'senior', 'laser-devices'];
 
@@ -18,6 +18,7 @@ export default function ShopContent() {
   const searchParams = useSearchParams();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
   const [filters, setFilters] = useState<FilterState>({
     category: [],
     priceRange: [0, 30000],
@@ -25,7 +26,7 @@ export default function ShopContent() {
     brands: [],
     rating: 0,
     discount: 0,
-    inStock: false
+    inStockOnly: false
   });
   const [sortOption, setSortOption] = useState<SortOption>('bestseller');
 
@@ -35,6 +36,25 @@ export default function ShopContent() {
       setFilters(prev => ({ ...prev, category: [category] }));
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch("/api/products");
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data);
+        }
+      } catch {
+        // API failed — products remain empty
+      }
+    }
+    fetchProducts();
+  }, []);
+
+  const brands = useMemo(() => {
+    return [...new Set(products.map(p => p.brand))];
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -75,8 +95,8 @@ export default function ShopContent() {
       result = result.filter(p => p.discount && p.discount >= filters.discount);
     }
 
-    if (filters.inStock) {
-      result = result.filter(p => p.inStock);
+    if (filters.inStockOnly) {
+      result = result.filter(p => p.stockCount > 0);
     }
 
     switch (sortOption) {
@@ -109,7 +129,7 @@ export default function ShopContent() {
     }
 
     return result;
-  }, [searchQuery, filters, sortOption]);
+  }, [searchQuery, filters, sortOption, products]);
 
   const hasActiveCategory = filters.category.length > 0;
 
@@ -377,6 +397,7 @@ export default function ShopContent() {
               sortOption={sortOption}
               setSortOption={setSortOption}
               productCount={filteredProducts.length}
+              brands={brands}
               desktopOnly={false}
               mobileOnly={true}
             />
@@ -406,6 +427,7 @@ export default function ShopContent() {
             sortOption={sortOption}
             setSortOption={setSortOption}
             productCount={filteredProducts.length}
+            brands={brands}
             desktopOnly={true}
             mobileOnly={false}
           />

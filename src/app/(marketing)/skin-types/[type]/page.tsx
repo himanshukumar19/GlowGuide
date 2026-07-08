@@ -20,7 +20,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ProductCard from "@/components/shop/ProductCard";
-import { products } from "@/data/products";
+import { useEffect, useState } from 'react';
+import type { Product } from "@/types/product";
 import { getSkinType, type SkinTypeConfig } from "@/data/skinTypes";
 
 const validSkinTypes = ["oily", "dry", "combination", "sensitive", "normal"] as const;
@@ -499,6 +500,17 @@ const ProductsSection = ({
   data: SkinTypeConfig;
   skinType: ValidSkinType;
 }) => {
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/products");
+        if (res.ok) setProducts(await res.json());
+      } catch {}
+    })();
+  }, []);
+
   const recommendedProducts = products
     .filter((p) => p.skinTypes.includes(skinType))
     .slice(0, 4);

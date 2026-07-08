@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useAuth } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -11,26 +14,51 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { 
   Sparkles, Calendar, User, Phone, Zap, ArrowRight, LogOut, 
   CheckCircle, History, Settings, Flame, ShieldAlert, Award, 
-  Lock, BookOpen, Clock, PlayCircle, Loader2, Sun, Moon
+  Lock, BookOpen, Clock, PlayCircle, Loader2, Sun, Moon, ListOrdered
 } from "lucide-react";
 import { toast } from "sonner";
 import { analysisApi, type AnalysisHistoryItem } from "@/api/analysis.api";
 import { HealthTrendCharts } from "@/components/analysis/HealthTrendCharts";
 import { AnalysisComparison } from "@/components/analysis/AnalysisComparison";
 import { DashboardErrorBoundary } from "@/components/analysis/DashboardErrorBoundary";
-import { products } from "@/data/products";
+import { OrderHistoryList } from "@/components/orders/OrderHistoryList";
+import type { Product } from "@/types/product";
+
+const settingsSchema = z.object({
+  displayName: z.string().min(1, "Full name is required"),
+  phone: z
+    .string()
+    .regex(/^[0-9+\-\s()]*$/, "Please enter a valid phone number")
+    .optional()
+    .or(z.literal("")),
+});
+
+type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 const Dashboard = () => {
   const { customer, logout, updateCustomer } = useAuth();
   const router = useRouter();
 
-  // Settings states
-  const [profileName, setProfileName] = useState(customer?.displayName || "");
-  const [profilePhone, setProfilePhone] = useState(customer?.phone || "");
-  const [settingsLoading, setSettingsLoading] = useState(false);
+  // Settings form
+  const settingsForm = useForm<SettingsFormValues>({
+    resolver: zodResolver(settingsSchema),
+    mode: "onChange",
+    defaultValues: {
+      displayName: customer?.displayName || "",
+      phone: customer?.phone || "",
+    },
+  });
 
   // Analysis history
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
@@ -39,10 +67,12 @@ const Dashboard = () => {
   // Sync profile values once customer loads asynchronously
   useEffect(() => {
     if (customer) {
-      setProfileName(customer.displayName || "");
-      setProfilePhone(customer.phone || "");
+      settingsForm.reset({
+        displayName: customer.displayName || "",
+        phone: customer.phone || "",
+      });
     }
-  }, [customer]);
+  }, [customer, settingsForm]);
 
   // Fetch real analysis history
   useEffect(() => {
@@ -81,16 +111,13 @@ const Dashboard = () => {
     router.push("/");
   };
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSettingsLoading(true);
+  const onSettingsSubmit = async (values: SettingsFormValues) => {
     try {
-      await updateCustomer({ displayName: profileName, phone: profilePhone });
+      await updateCustomer({ displayName: values.displayName, phone: values.phone || "" });
       toast.success("Profile updated successfully!");
     } catch {
       toast.error("Failed to update profile.");
     }
-    setSettingsLoading(false);
   };
 
   const handleSubscribeToggle = async () => {
@@ -109,16 +136,16 @@ const Dashboard = () => {
     return "bg-destructive text-destructive-foreground";
   };
 
-  // Mock auto-tracked products (e.g. purchased from app)
+  // Auto-tracked products (purchased from app)
   const trackedProducts = [
     {
-      product: products[0] || { name: "GlowGuide Guava Glow Radiance Cleanser", brand: "GlowGuide" },
+      product: { id: "gg-guava-glow-cleanser", name: "GlowGuide Guava Glow Radiance Cleanser", brand: "GlowGuide", image: "" } as Product,
       daysUsed: 18,
       lifespan: 60, // 60 days of usage
       status: "In Use"
     },
     {
-      product: products[2] || { name: "GlowGuide Glycolic Acid 7% Exfoliating Toner", brand: "GlowGuide" },
+      product: { id: "gg-glycolic-acid-toner", name: "GlowGuide Glycolic Acid 7% Exfoliating Toner", brand: "GlowGuide", image: "" } as Product,
       daysUsed: 35,
       lifespan: 90,
       status: "Running Low"
@@ -203,17 +230,20 @@ const Dashboard = () => {
 
           {/* Tab Navigation layout */}
           <Tabs defaultValue="overview" className="w-full space-y-6">
-            <TabsList className="bg-muted/40 border border-border p-1 rounded-gg w-full grid grid-cols-4 md:max-w-xl">
-              <TabsTrigger value="overview" className="rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <TabsList className="bg-muted/40 border border-border p-1 rounded-gg w-full flex overflow-x-auto md:grid md:grid-cols-5 md:max-w-xl">
+              <TabsTrigger value="overview" className="flex-shrink-0 rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="history" className="rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="history" className="flex-shrink-0 rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 History & Compare
               </TabsTrigger>
-              <TabsTrigger value="routine" className="rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="routine" className="flex-shrink-0 rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 My Routine
               </TabsTrigger>
-              <TabsTrigger value="settings" className="rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="orders" className="flex-shrink-0 rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Orders
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="flex-shrink-0 rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 Settings
               </TabsTrigger>
             </TabsList>
@@ -503,6 +533,17 @@ const Dashboard = () => {
               </div>
             </TabsContent>
 
+            {/* TAB CONTENT: ORDERS */}
+            <TabsContent value="orders" className="space-y-6 animate-fade-in outline-none">
+              <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+                <ListOrdered className="h-5 w-5 text-primary" />
+                <h3 className="font-heading text-lg font-bold text-foreground">
+                  My Orders
+                </h3>
+              </div>
+              <OrderHistoryList showHeading={false} />
+            </TabsContent>
+
             {/* TAB CONTENT: SETTINGS */}
             <TabsContent value="settings" className="space-y-6 animate-fade-in outline-none">
               <div className="grid md:grid-cols-3 gap-6 items-start">
@@ -520,59 +561,74 @@ const Dashboard = () => {
                   </CardHeader>
                   
                   <CardContent className="p-6">
-                    <form onSubmit={handleUpdateProfile} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="displayName" className="text-foreground text-xs font-semibold uppercase tracking-wider">
-                          Full Name
-                        </Label>
-                        <Input
-                          id="displayName"
-                          type="text"
-                          value={profileName}
-                          onChange={(e) => setProfileName(e.target.value)}
-                          className="rounded-gg-sm border-border text-sm"
-                          required
+                    <Form {...settingsForm}>
+                      <form onSubmit={settingsForm.handleSubmit(onSettingsSubmit)} className="space-y-4">
+                        <FormField
+                          control={settingsForm.control}
+                          name="displayName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                                Full Name
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="text"
+                                  className="rounded-gg-sm border-border text-sm"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="displayEmail" className="text-foreground text-xs font-semibold uppercase tracking-wider">
-                          Email Address
-                        </Label>
-                        <Input
-                          id="displayEmail"
-                          type="email"
-                          value={customer?.email || ""}
-                          className="rounded-gg-sm border-border text-sm bg-muted/40 cursor-not-allowed"
-                          disabled
+                        <div className="space-y-2">
+                          <Label htmlFor="displayEmail" className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                            Email Address
+                          </Label>
+                          <Input
+                            id="displayEmail"
+                            type="email"
+                            value={customer?.email || ""}
+                            className="rounded-gg-sm border-border text-sm bg-muted/40 cursor-not-allowed"
+                            disabled
+                          />
+                          <p className="text-[10px] text-muted-foreground">
+                            Email logins are locked to verify your JWT parameters securely.
+                          </p>
+                        </div>
+
+                        <FormField
+                          control={settingsForm.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                                Phone Number
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="tel"
+                                  className="rounded-gg-sm border-border text-sm"
+                                  placeholder="+1 (555) 000-0000"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                        <p className="text-[10px] text-muted-foreground">
-                          Email logins are locked to verify your JWT parameters securely.
-                        </p>
-                      </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="displayPhone" className="text-foreground text-xs font-semibold uppercase tracking-wider">
-                          Phone Number
-                        </Label>
-                        <Input
-                          id="displayPhone"
-                          type="tel"
-                          value={profilePhone}
-                          onChange={(e) => setProfilePhone(e.target.value)}
-                          className="rounded-gg-sm border-border text-sm"
-                          placeholder="+1 (555) 000-0000"
-                        />
-                      </div>
-
-                      <Button
-                        type="submit"
-                        disabled={settingsLoading}
-                        className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground font-semibold text-xs uppercase tracking-wider py-5 px-6 rounded-gg-sm shadow-primary"
-                      >
-                        {settingsLoading ? "Saving Settings..." : "Update Settings"}
-                      </Button>
-                    </form>
+                        <Button
+                          type="submit"
+                          disabled={settingsForm.formState.isSubmitting}
+                          className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground font-semibold text-xs uppercase tracking-wider py-5 px-6 rounded-gg-sm shadow-primary"
+                        >
+                          {settingsForm.formState.isSubmitting ? "Saving Settings..." : "Update Settings"}
+                        </Button>
+                      </form>
+                    </Form>
                   </CardContent>
                 </Card>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
+import { Heart, ShoppingCart, Star } from 'lucide-react';
 import Link from "next/link";
 import { Product } from '@/types/product';
 import { useCart } from '@/store/useCartStore';
@@ -21,16 +21,56 @@ const badgeColors: Record<string, string> = {
   'dermatologist-tested': 'bg-blue-500 text-white',
   'cruelty-free': 'bg-pink-500 text-white',
   vegan: 'bg-emerald-500 text-white',
-  natural: 'bg-lime-500 text-white',
-  'korean-formula': 'bg-purple-500 text-white'
+  natural: 'bg-lime-600 text-white',
+  'korean-formula': 'bg-purple-500 text-white',
+  'fragrance-free': 'bg-sky-500 text-white',
+  'non-comedogenic': 'bg-cyan-500 text-white',
+  'oil-control': 'bg-orange-500 text-white',
+  'soap-free': 'bg-indigo-400 text-white',
+  'barrier-care': 'bg-violet-500 text-white',
+  'glass-skin': 'bg-fuchsia-500 text-white',
+  'overnight-care': 'bg-slate-600 text-white',
+  'baby-safe': 'bg-rose-400 text-white',
+  hypoallergenic: 'bg-rose-400 text-white',
+  'petroleum-free': 'bg-teal-600 text-white',
+  'paraben-free': 'bg-teal-600 text-white',
+  'mineral-based': 'bg-amber-600 text-white',
+  'anti-aging': 'bg-purple-600 text-white',
+  'retinol-formula': 'bg-red-500 text-white',
+  'night-routine': 'bg-indigo-500 text-white',
+  retinol: 'bg-red-500 text-white',
+  'collagen-support': 'bg-rose-600 text-white',
+  firming: 'bg-violet-600 text-white',
+  'premium-care': 'bg-yellow-600 text-white',
+  'deep-hydration': 'bg-blue-600 text-white',
+  'non-greasy': 'bg-sky-600 text-white',
+  'professional-grade': 'bg-slate-700 text-white',
+  'home-use': 'bg-slate-600 text-white',
+  'travel-friendly': 'bg-cyan-600 text-white',
+  portable: 'bg-cyan-600 text-white',
+  '4-in-1': 'bg-orange-600 text-white',
+  'smart-sensor': 'bg-teal-700 text-white',
+  'spf-50': 'bg-yellow-500 text-white',
+  'broad-spectrum': 'bg-yellow-500 text-white',
+  'daily-use': 'bg-sky-400 text-white',
+  'fast-absorbing': 'bg-teal-400 text-white',
+  'sensitive-skin': 'bg-rose-300 text-rose-900',
+  brightening: 'bg-yellow-400 text-yellow-900',
+  hydrating: 'bg-blue-400 text-white',
+  'green-tea': 'bg-green-600 text-white',
+  'low-pH': 'bg-indigo-400 text-white',
+  'pH-balanced': 'bg-indigo-400 text-white',
+  'tear-free': 'bg-pink-300 text-pink-900',
+  'acne-prone': 'bg-red-400 text-white',
+  'lightweight': 'bg-sky-300 text-sky-900',
 };
 
 const skinTypeLabels: Record<string, { emoji: string; color: string }> = {
-  oily:      { emoji: '💧', color: 'bg-blue-50 text-blue-600' },
-  dry:       { emoji: '🌿', color: 'bg-amber-50 text-amber-700' },
-  combination: { emoji: '☯️', color: 'bg-purple-50 text-purple-600' },
-  sensitive: { emoji: '🌸', color: 'bg-pink-50 text-pink-600' },
-  normal:    { emoji: '✨', color: 'bg-emerald-50 text-emerald-600' },
+  oily:      { emoji: '💧', color: 'bg-blue-100 text-blue-700 border border-blue-200' },
+  dry:       { emoji: '🌿', color: 'bg-amber-100 text-amber-700 border border-amber-200' },
+  combination: { emoji: '☯️', color: 'bg-purple-100 text-purple-700 border border-purple-200' },
+  sensitive: { emoji: '🌸', color: 'bg-pink-100 text-pink-700 border border-pink-200' },
+  normal:    { emoji: '✨', color: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
 };
 
 const ProductCard = ({ product }: ProductCardProps) => {
@@ -84,7 +124,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           </Badge>
         )}
         {product.badges?.slice(0, 1).map((badge) => (
-          <Badge key={badge} className={`text-[10px] font-medium px-2 py-0.5 ${badgeColors[badge] || 'bg-muted'}`}>
+          <Badge key={badge} className={`text-[10px] font-medium px-2 py-0.5 ${badgeColors[badge] || 'bg-gray-500 text-white'}`}>
             {badge.replace('-', ' ')}
           </Badge>
         ))}
@@ -112,16 +152,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
           />
           
-          {/* Quick View on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-            <Button variant="secondary" size="sm" className="gap-1.5 text-xs shadow-lg">
-              <Eye className="h-3.5 w-3.5" />
-              Quick view
-            </Button>
-          </div>
-
           {/* Out of stock */}
-          {!product.inStock && (
+          {product.stockCount <= 0 && (
             <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center">
               <span className="text-foreground font-semibold text-sm bg-card px-4 py-1.5 rounded-full border border-border shadow-sm">
                 Out of stock
@@ -139,7 +171,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
             {product.brand}
           </span>
           {primaryIngredient && (
-            <span className="text-[10px] text-primary/80 font-medium truncate max-w-[50%] text-right">
+            <span className="text-[10px] text-primary font-semibold truncate max-w-[50%] text-right">
               {primaryIngredient}
             </span>
           )}
@@ -182,14 +214,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
             </span>
           )}
           {product.discount && product.discount > 0 && (
-            <span className="text-[10px] text-success font-semibold">
+            <span className="text-[10px] text-green-600 font-bold">
               Save {formatPrice(product.originalPrice! - product.price)}
             </span>
           )}
         </div>
 
         {/* Low stock warning */}
-        {product.inStock && product.stockCount < 20 && (
+        {product.stockCount > 0 && product.stockCount < 20 && (
           <p className="text-[11px] text-orange-500 font-medium flex items-center gap-1">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
             Only {product.stockCount} left
@@ -221,12 +253,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="pt-2">
           <Button
             onClick={handleAddToCart}
-            disabled={!product.inStock}
+            disabled={product.stockCount <= 0}
             className="w-full h-9 text-xs font-semibold gradient-primary text-primary-foreground gap-1.5 rounded-xl shadow-primary hover:shadow-lg transition-shadow"
             size="sm"
           >
             <ShoppingCart className="h-3.5 w-3.5" />
-            {product.inStock ? 'Add to cart' : 'Out of stock'}
+            {product.stockCount > 0 ? 'Add to cart' : 'Out of stock'}
           </Button>
         </div>
       </div>

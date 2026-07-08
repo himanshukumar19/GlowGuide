@@ -1,23 +1,47 @@
 'use client';
 
-import { useState } from "react";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useAuth, useAuthStore } from "@/store/useAuthStore";
 import type { Customer } from "@/types/customer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { useState } from "react";
+
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
   const { login, loginWithGoogle } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   const getRedirectTarget = (customer: Customer) => {
     if (typeof window === "undefined") return "/dashboard";
@@ -34,15 +58,10 @@ const Login = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError("Please enter both email and password.");
-      return;
-    }
+  const onSubmit = async (values: LoginFormValues) => {
     setError("");
     setLoading(true);
-    const result = await login(email, password);
+    const result = await login(values.email, values.password);
     setLoading(false);
     if (!result.success) {
       setError(result.error || "Invalid email or password.");
@@ -112,57 +131,71 @@ const Login = () => {
                 <Separator className="flex-1" />
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground text-xs font-semibold uppercase tracking-wider">
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    className="rounded-gg-sm border-border focus:ring-2 focus:ring-primary/20 focus:border-primary px-4 py-2.5 transition-all text-sm"
-                    disabled={loading}
-                    required
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                          Email Address
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="name@example.com"
+                            className="rounded-gg-sm border-border focus:ring-2 focus:ring-primary/20 focus:border-primary px-4 py-2.5 transition-all text-sm"
+                            disabled={loading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-foreground text-xs font-semibold uppercase tracking-wider">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="rounded-gg-sm border-border focus:ring-2 focus:ring-primary/20 focus:border-primary px-4 py-2.5 transition-all text-sm"
-                    disabled={loading}
-                    required
+                  
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                          Password
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            className="rounded-gg-sm border-border focus:ring-2 focus:ring-primary/20 focus:border-primary px-4 py-2.5 transition-all text-sm"
+                            disabled={loading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <Button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary-hover active:scale-95 transition-all duration-300 py-6 rounded-gg-sm text-primary-foreground shadow-primary font-semibold text-sm flex items-center justify-center"
-                  disabled={loading}
-                >
-                  {loading ? (
-                      <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing In...
-                      </>
-                  ) : (
-                      <>
-                      Sign In
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
-                  )}
-                </Button>
-              </form>
+                  
+                  <Button
+                    type="submit"
+                    className="w-full bg-primary hover:bg-primary-hover active:scale-95 transition-all duration-300 py-6 rounded-gg-sm text-primary-foreground shadow-primary font-semibold text-sm flex items-center justify-center"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                        <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing In...
+                        </>
+                    ) : (
+                        <>
+                        Sign In
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                    )}
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
             
             <CardFooter className="px-6 sm:px-8 pb-8 pt-2 flex justify-center text-sm border-t border-border/40 mt-4 bg-muted/10">

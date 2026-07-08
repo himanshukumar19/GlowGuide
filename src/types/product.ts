@@ -3,7 +3,7 @@ export interface Product {
   name: string;
   brand: string;
   category: 'men-women' | 'korean' | 'children' | 'senior' | 'laser-devices';
-  subcategory?: 'cleanser' | 'serum' | 'moisturizer' | 'sunscreen' | 'toner' | 'device' | 'kit' | 'lip-care';
+  subcategory?: 'cleanser' | 'serum' | 'moisturizer' | 'sunscreen' | 'toner' | 'device' | 'kit' | 'lip-care' | 'mask';
   price: number;
   originalPrice?: number;
   discount?: number;
@@ -20,15 +20,8 @@ export interface Product {
   suitableFor: string[];
   concerns: string[];
   volume: string;
-  inStock: boolean;
   stockCount: number;
   badges?: string[];
-  whereToBuy: {
-    amazon?: string;
-    nykaa?: string;
-    flipkart?: string;
-    official?: string;
-  };
 }
 
 export interface CartItem {
@@ -82,5 +75,5 @@ export interface FilterState {
   brands: string[];
   rating: number;
   discount: number;
-  inStock: boolean;
+  inStockOnly: boolean;
 }

@@ -38,17 +38,23 @@ export const useCartStore = create<CartState>()(
       appliedPromoCode: null,
       addToCart: (product, quantity = 1) => {
         set(state => {
+          const stockCount = product.stockCount ?? 0;
+          if (stockCount <= 0) return state;
+
           const existingItem = state.items.find(item => item.product.id === product.id);
           if (existingItem) {
+            const newQuantity = Math.min(existingItem.quantity + quantity, stockCount);
             return {
               items: state.items.map(item =>
                 item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + quantity }
+                  ? { ...item, quantity: newQuantity }
                   : item
               )
             };
           }
-          return { items: [...state.items, { product, quantity }] };
+
+          const cappedQuantity = Math.min(quantity, stockCount);
+          return { items: [...state.items, { product, quantity: cappedQuantity }] };
         });
       },
       removeFromCart: (productId) => {
@@ -62,9 +68,12 @@ export const useCartStore = create<CartState>()(
           return;
         }
         set(state => ({
-          items: state.items.map(item =>
-            item.product.id === productId ? { ...item, quantity } : item
-          )
+          items: state.items.map(item => {
+            if (item.product.id !== productId) return item;
+            const stockCount = item.product.stockCount ?? 0;
+            const cappedQuantity = Math.min(quantity, stockCount);
+            return { ...item, quantity: cappedQuantity };
+          })
         }));
       },
       clearCart: () => {

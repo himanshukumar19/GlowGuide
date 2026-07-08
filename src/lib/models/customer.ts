@@ -50,3 +50,8 @@ export async function createCustomer(
   await db.collection("customers").doc(uid).set(customer);
   return customer;
 }
+
+export async function countAllCustomers(): Promise<number> {
+  const snapshot = await db.collection("customers").count().get();
+  return snapshot.data().count;
+}

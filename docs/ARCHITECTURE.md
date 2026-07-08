@@ -1,7 +1,7 @@
 # GlowGuide — Architecture & Data Flow
 
 **Date:** 2026-06-29  
-**Stack:** Firebase Auth + Firestore, Express (Render), React + Vite (Vercel), Gemini Flash, Cloudinary, Resend
+**Stack:** Firebase Auth + Firestore, Express (Render), React + Vite (Vercel), Gemini Flash, Cloudinary (images), Resend
 
 ---
 

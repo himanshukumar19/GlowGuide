@@ -15,31 +15,31 @@ const categories: Category[] = [
     key: 'men-women',
     label: 'Men & Women',
     tagline: 'Daily essentials for every skin type',
-    image: '/images/GlowGuide Skin Brightening Kit.png',
+    image: 'https://res.cloudinary.com/dllxwarw6/image/upload/v1783378320/glowguide/products/gg-skin-brightening-kit/gg-skin-brightening-kit.png',
   },
   {
     key: 'korean',
     label: 'K-Beauty',
     tagline: '7-step routines, glass-skin results',
-    image: '/images/GlowGuide Korean Glass Skin 7-Step Routine Kit.png',
+    image: 'https://res.cloudinary.com/dllxwarw6/image/upload/v1783378330/glowguide/products/gg-korean-glass-skin-kit/gg-korean-glass-skin-kit.png',
   },
   {
     key: 'children',
     label: 'For Children',
     tagline: 'Gentle, dermatologist-approved formulas',
-    image: '/images/GlowGuide Milky Soft Baby Face Cream.png',
+    image: 'https://res.cloudinary.com/dllxwarw6/image/upload/v1783378339/glowguide/products/gg-baby-milky-soft-cream/gg-baby-milky-soft-cream.png',
   },
   {
     key: 'senior',
     label: 'For Seniors',
     tagline: 'Targeted care for mature skin',
-    image: '/images/GlowGuide Deep Hydration Moisturizing Cream.png',
+    image: 'https://res.cloudinary.com/dllxwarw6/image/upload/v1783378347/glowguide/products/gg-deep-hydration-moisturizer/gg-deep-hydration-moisturizer.png',
   },
   {
     key: 'laser-devices',
     label: 'Laser Devices',
     tagline: 'Professional-grade at-home treatments',
-    image: '/images/GlowGuide Pro IPL Hair Removal Device.png',
+    image: 'https://res.cloudinary.com/dllxwarw6/image/upload/v1783378353/glowguide/products/gg-pro-ipl-device/gg-pro-ipl-device.png',
   },
 ];
 

@@ -143,8 +143,10 @@ const SkinQuiz = () => {
                   </p>
                 </div>
 
-                <Card className="border border-border shadow-soft mb-8 rounded-gg relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }}>
-                  <div className="absolute inset-0 bg-black/55 pointer-events-none rounded-gg" />
+                <Card className="mb-8 rounded-gg relative overflow-hidden border-0 shadow-elevated">
+                  <div className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-[8px]" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }} />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60" />
+                  <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px]" />
                   <CardContent className="p-6 relative z-10">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-sm text-white/90">
                       <div className="relative">
@@ -195,8 +197,10 @@ const SkinQuiz = () => {
                 </div>
 
                 {/* Question Card */}
-                <Card className="border border-border shadow-card rounded-gg-lg overflow-hidden relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }}>
-                  <div className="absolute inset-0 bg-black/55 pointer-events-none rounded-gg-lg" />
+                <Card className="rounded-gg-lg overflow-hidden relative border-0 shadow-elevated">
+                  <div className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-[8px]" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }} />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60" />
+                  <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px]" />
                   <CardContent className="p-8 relative z-10">
                     <AnimatePresence mode="wait">
                       <motion.div

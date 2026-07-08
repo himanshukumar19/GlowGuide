@@ -1,14 +1,16 @@
 'use client';
 import { useParams, useRouter } from "next/navigation";
 
-import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { auth } from "@/lib/firebase";
 import {
   Save,
   ArrowLeft,
   Loader2,
+  Upload,
 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -39,8 +41,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { products, categoryLabels, getProductById } from "@/data/products";
-import type { Product } from "@/types/product";
+import { categoryLabels } from "@/lib/constants";
 
 const categories = ["men-women", "korean", "children", "senior", "laser-devices"] as const;
 
@@ -56,36 +57,51 @@ const badgeOptions = [
   "natural",
 ] as const;
 
+const subcategories = ["cleanser", "serum", "moisturizer", "sunscreen", "toner", "device", "kit", "lip-care", "mask"] as const;
+
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   brand: z.string().min(1, "Brand is required"),
   category: z.enum(categories),
+  subcategory: z.enum(subcategories).optional(),
   price: z.coerce.number().positive("Price must be positive"),
   originalPrice: z.coerce.number().optional(),
   discount: z.coerce.number().optional(),
   description: z.string().optional(),
   shortDescription: z.string().optional(),
   volume: z.string().optional(),
-  inStock: z.boolean(),
-  stockCount: z.coerce.number().optional(),
+  stockCount: z.coerce.number().min(0),
   skinTypes: z.array(z.string()),
   suitableFor: z.array(z.string()),
   concerns: z.string().optional(),
   badges: z.array(z.string()),
+  rating: z.coerce.number().min(0).max(5),
+  reviewCount: z.coerce.number().int().min(0),
+  keyBenefits: z.string().optional(),
+  ingredients: z.string().optional(),
+  howToUse: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+async function getToken(): Promise<string> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not authenticated");
+  return user.getIdToken();
+}
 
 export default function AdminProductForm() {
   const { id } = useParams();
   const router = useRouter();
   const { toast } = useToast();
   const isEditing = Boolean(id);
-
-  const existingProduct = id ? getProductById(id as string) : undefined;
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [existingImage, setExistingImage] = useState<string>("");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: "onChange",
     defaultValues: {
       name: "",
       brand: "",
@@ -96,70 +112,133 @@ export default function AdminProductForm() {
       description: "",
       shortDescription: "",
       volume: "",
-      inStock: true,
       stockCount: 0,
       skinTypes: [],
       suitableFor: [],
       concerns: "",
       badges: [],
+      rating: 0,
+      reviewCount: 0,
+      keyBenefits: "",
+      ingredients: "",
+      howToUse: "",
     },
   });
 
   useEffect(() => {
-    if (existingProduct) {
-      form.reset({
-        name: existingProduct.name,
-        brand: existingProduct.brand,
-        category: existingProduct.category,
-        price: existingProduct.price,
-        originalPrice: existingProduct.originalPrice,
-        discount: existingProduct.discount,
-        description: existingProduct.description,
-        shortDescription: existingProduct.shortDescription,
-        volume: existingProduct.volume,
-        inStock: existingProduct.inStock,
-        stockCount: existingProduct.stockCount,
-        skinTypes: existingProduct.skinTypes,
-        suitableFor: existingProduct.suitableFor,
-        concerns: existingProduct.concerns.join(", "),
-        badges: (existingProduct.badges ?? []).filter((b) =>
-          badgeOptions.includes(b as typeof badgeOptions[number]),
-        ),
-      });
+    if (!isEditing) return;
+    async function fetchProduct() {
+      try {
+        const token = await getToken();
+        const res = await fetch(`/api/products/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch");
+        const product = await res.json();
+        setExistingImage(product.image || "");
+        setImagePreview(product.image || "");
+        form.reset({
+          name: product.name || "",
+          brand: product.brand || "",
+          category: product.category || "men-women",
+          price: product.price || 0,
+          originalPrice: product.originalPrice || undefined,
+          discount: product.discount || undefined,
+          description: product.description || "",
+          shortDescription: product.shortDescription || "",
+          volume: product.volume || "",
+          stockCount: product.stockCount || 0,
+          skinTypes: product.skinTypes || [],
+          suitableFor: product.suitableFor || [],
+          concerns: (product.concerns || []).join(", "),
+          badges: (product.badges || []).filter((b: string) =>
+            badgeOptions.includes(b as typeof badgeOptions[number]),
+          ),
+          rating: product.rating || 0,
+          reviewCount: product.reviewCount || 0,
+          keyBenefits: (product.keyBenefits || []).join(", "),
+          ingredients: (product.ingredients || []).join(", "),
+          howToUse: product.howToUse || "",
+        });
+      } catch {
+        toast({ title: "Failed to load product", variant: "destructive" });
+      }
     }
-  }, [existingProduct, form]);
+    fetchProduct();
+  }, [id, isEditing, form, toast]);
 
-  const onSubmit = (data: FormValues) => {
-    const concerns = data.concerns
-      ? data.concerns.split(",").map((c) => c.trim()).filter(Boolean)
-      : [];
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const productData: Partial<Product> = {
-      name: data.name,
-      brand: data.brand,
-      category: data.category,
-      price: data.price,
-      originalPrice: data.originalPrice || undefined,
-      discount: data.discount || undefined,
-      description: data.description || "",
-      shortDescription: data.shortDescription || "",
-      volume: data.volume || "",
-      inStock: data.inStock,
-      stockCount: data.stockCount || 0,
-      skinTypes: data.skinTypes as Product["skinTypes"],
-      suitableFor: data.suitableFor as Product["suitableFor"],
-      concerns,
-      badges: data.badges as Product["badges"],
-    };
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
 
-    toast({
-      title: isEditing ? "Product updated" : "Product created",
-      description: isEditing
-        ? `"${data.name}" has been updated successfully.`
-        : `"${data.name}" has been created successfully.`,
-    });
+  const onSubmit = async (data: FormValues) => {
+    try {
+      const token = await getToken();
+      const formData = new FormData();
 
-    router.push("/admin/products");
+      const productId =
+        isEditing && id
+          ? (id as string)
+          : data.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+      formData.append("id", productId);
+      formData.append("name", data.name);
+      formData.append("brand", data.brand);
+      formData.append("category", data.category);
+      if (data.subcategory) formData.append("subcategory", data.subcategory);
+      formData.append("price", String(data.price));
+      if (data.originalPrice) formData.append("originalPrice", String(data.originalPrice));
+      if (data.discount) formData.append("discount", String(data.discount));
+      if (data.description) formData.append("description", data.description);
+      if (data.shortDescription) formData.append("shortDescription", data.shortDescription);
+      if (data.volume) formData.append("volume", data.volume);
+      formData.append("stockCount", String(data.stockCount));
+      formData.append("rating", String(data.rating));
+      formData.append("reviewCount", String(data.reviewCount));
+
+      formData.append("skinTypes", JSON.stringify(data.skinTypes));
+      formData.append("suitableFor", JSON.stringify(data.suitableFor));
+      const concerns = data.concerns ? data.concerns.split(",").map((c) => c.trim()).filter(Boolean) : [];
+      formData.append("concerns", JSON.stringify(concerns));
+      formData.append("badges", JSON.stringify(data.badges));
+      formData.append("keyBenefits", JSON.stringify(data.keyBenefits ? data.keyBenefits.split(",").map((s) => s.trim()).filter(Boolean) : []));
+      formData.append("ingredients", JSON.stringify(data.ingredients ? data.ingredients.split(",").map((s) => s.trim()).filter(Boolean) : []));
+      formData.append("howToUse", data.howToUse || "");
+      if (imageFile) {
+        formData.append("imageFile", imageFile);
+      } else if (existingImage) {
+        formData.append("imageUrl", existingImage);
+      }
+
+      const url = isEditing ? `/api/products/${id}` : "/api/products";
+      const method = isEditing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error?.message || "Failed to save");
+      }
+
+      toast({
+        title: isEditing ? "Product updated" : "Product created",
+        description: isEditing
+          ? `"${data.name}" has been updated successfully.`
+          : `"${data.name}" has been created successfully.`,
+      });
+
+      router.push("/admin/products");
+    } catch (error: any) {
+      toast({ title: error.message || "Failed to save product", variant: "destructive" });
+    }
   };
 
   return (
@@ -259,6 +338,47 @@ export default function AdminProductForm() {
             </CardContent>
           </Card>
 
+          {/* Product Image */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Image</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-start gap-6">
+                {(imagePreview || existingImage) && (
+                  <img
+                    src={imagePreview || existingImage}
+                    alt="Preview"
+                    className="h-32 w-32 rounded-lg object-cover border"
+                  />
+                )}
+                <div>
+                  <Label
+                    htmlFor="image-upload"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border cursor-pointer hover:bg-muted transition-colors"
+                  >
+                    <Upload className="h-4 w-4" />
+                    {imageFile ? "Change Image" : "Upload Image"}
+                  </Label>
+                  <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {imageFile
+                      ? "Image will be uploaded when you save."
+                      : existingImage
+                      ? "Current image. Select a new one to replace it."
+                      : "Select an image to include with this product."}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Pricing */}
           <Card>
             <CardHeader>
@@ -299,6 +419,41 @@ export default function AdminProductForm() {
                     <FormLabel>Discount (%)</FormLabel>
                     <FormControl>
                       <Input type="number" min="0" max="100" placeholder="25" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Ratings */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Rating & Reviews</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="rating"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rating (0-5)</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" max="5" step="0.1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="reviewCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Review Count</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" step="1" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -351,32 +506,81 @@ export default function AdminProductForm() {
             </CardContent>
           </Card>
 
+          {/* Key Benefits, Ingredients, How to Use */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Details</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              <FormField
+                control={form.control}
+                name="keyBenefits"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Key Benefits</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Comma-separated benefits, e.g. Hydrates, Brightens, Soothes"
+                        className="resize-none"
+                        rows={2}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Enter benefits separated by commas.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="ingredients"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ingredients</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Comma-separated, e.g. Vitamin C, Hyaluronic Acid, Glycerin"
+                        className="resize-none"
+                        rows={2}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Enter ingredients separated by commas.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="howToUse"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>How to Use</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Usage instructions"
+                        className="resize-none"
+                        rows={2}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
           {/* Inventory */}
           <Card>
             <CardHeader>
               <CardTitle>Inventory</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-6 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="inStock"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start gap-3 space-y-0 pt-2">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>In Stock</FormLabel>
-                      <FormDescription>
-                        Product is available for purchase
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
+            <CardContent>
               <FormField
                 control={form.control}
                 name="stockCount"
@@ -565,7 +769,7 @@ export default function AdminProductForm() {
           </Card>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-4 pb-8">
+          <div className="flex items-center justify-end gap-4 pb-12">
             <Button
               type="button"
               variant="outline"

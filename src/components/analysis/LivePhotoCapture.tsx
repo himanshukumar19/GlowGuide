@@ -354,8 +354,10 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
       <div className="max-w-2xl mx-auto">
         {!reviewMode ? (
           /* Capture Mode */
-          <Card className="border border-border shadow-card rounded-gg-lg overflow-hidden relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }}>
-            <div className="absolute inset-0 bg-black/55 pointer-events-none rounded-gg-lg" />
+          <Card className="rounded-gg-lg overflow-hidden relative border-0 shadow-elevated">
+            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-[8px]" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }} />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60" />
+            <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px]" />
             <div className="relative z-10">
               <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
                 {/* Video elements */}

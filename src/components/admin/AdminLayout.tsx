@@ -55,7 +55,7 @@ export function AdminLayout({ title, children, backTo }: AdminLayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-0 lg:px-6 lg:pt-6 lg:pb-0">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}

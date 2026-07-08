@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Plus, Search, Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { products as initialProducts, categoryLabels } from "@/data/products";
+import { api } from "@/api/client";
+import { auth } from "@/lib/firebase";
+import { categoryLabels } from "@/lib/constants";
 import type { Product } from "@/types/product";
 
 const categoryColors: Record<string, string> = {
@@ -44,12 +46,27 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function AdminProducts() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<string>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const data = await api.get<Product[]>("/api/products");
+        setProducts(data);
+      } catch {
+        toast({ title: "Failed to load products", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
+  }, [toast]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -81,13 +98,22 @@ export default function AdminProducts() {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteId) return;
-    setProducts((prev) => prev.filter((p) => p.id !== deleteId));
-    toast({
-      title: "Product deleted",
-      description: "The product has been removed successfully.",
-    });
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      await fetch(`/api/products/${deleteId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProducts((prev) => prev.filter((p) => p.id !== deleteId));
+      toast({
+        title: "Product deleted",
+        description: "The product has been removed successfully.",
+      });
+    } catch {
+      toast({ title: "Failed to delete product", variant: "destructive" });
+    }
     setDeleteId(null);
   };
 
@@ -120,6 +146,13 @@ export default function AdminProducts() {
           </Link>
         </Button>
       </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <>
 
       {/* Desktop table */}
       <Card className="hidden md:block">
@@ -187,7 +220,7 @@ export default function AdminProducts() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {product.inStock ? (
+                    {product.stockCount > 0 ? (
                       <Badge variant="default" className="bg-green-600">
                         {product.stockCount} in stock
                       </Badge>
@@ -283,7 +316,7 @@ export default function AdminProducts() {
                     )}
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    {product.inStock ? (
+                    {product.stockCount > 0 ? (
                       <Badge variant="default" className="bg-green-600 text-xs">
                         {product.stockCount} in stock
                       </Badge>
@@ -334,6 +367,8 @@ export default function AdminProducts() {
           </motion.div>
         ))}
       </div>
+      </>
+      )}
     </AdminLayout>
   );
 }

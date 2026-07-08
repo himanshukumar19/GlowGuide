@@ -27,3 +27,18 @@ export type {
   SkinType,
   AnalysisSource,
 } from "./analysis";
+
+export {
+  productSchema,
+  productCategoryEnum,
+  productSubcategoryEnum,
+} from "./product";
+export type { Product } from "./product";
+
+export {
+  orderSchema,
+  orderItemSchema,
+  addressSchema,
+  orderStatusEnum,
+} from "./order";
+export type { Order, OrderItem, OrderStatus, Address } from "./order";

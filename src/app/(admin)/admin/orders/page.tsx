@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,107 +21,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Eye } from "lucide-react";
+import { Eye, Loader2 } from "lucide-react";
+import { api } from "@/api/client";
+import type { Order, OrderStatus } from "@/lib/schemas";
 
-interface AdminOrder {
-  id: string;
-  customerName: string;
-  customerEmail: string;
-  date: string;
-  itemsCount: number;
-  total: number;
-  status: "pending" | "processing" | "shipped" | "delivered";
-}
-
-const MOCK_ORDERS: AdminOrder[] = [
-  {
-    id: "ORD-001",
-    customerName: "Priya Sharma",
-    customerEmail: "priya@example.com",
-    date: "2026-06-25",
-    itemsCount: 3,
-    total: 124.99,
-    status: "delivered",
-  },
-  {
-    id: "ORD-002",
-    customerName: "Ananya Patel",
-    customerEmail: "ananya@example.com",
-    date: "2026-06-24",
-    itemsCount: 1,
-    total: 49.99,
-    status: "shipped",
-  },
-  {
-    id: "ORD-003",
-    customerName: "Rahul Verma",
-    customerEmail: "rahul@example.com",
-    date: "2026-06-24",
-    itemsCount: 5,
-    total: 299.95,
-    status: "processing",
-  },
-  {
-    id: "ORD-004",
-    customerName: "Neha Gupta",
-    customerEmail: "neha@example.com",
-    date: "2026-06-23",
-    itemsCount: 2,
-    total: 89.98,
-    status: "pending",
-  },
-  {
-    id: "ORD-005",
-    customerName: "Arjun Singh",
-    customerEmail: "arjun@example.com",
-    date: "2026-06-22",
-    itemsCount: 4,
-    total: 189.96,
-    status: "pending",
-  },
-  {
-    id: "ORD-006",
-    customerName: "Kavya Reddy",
-    customerEmail: "kavya@example.com",
-    date: "2026-06-21",
-    itemsCount: 2,
-    total: 74.50,
-    status: "shipped",
-  },
-  {
-    id: "ORD-007",
-    customerName: "Vikram Joshi",
-    customerEmail: "vikram@example.com",
-    date: "2026-06-20",
-    itemsCount: 1,
-    total: 39.99,
-    status: "delivered",
-  },
-  {
-    id: "ORD-008",
-    customerName: "Isha Kapoor",
-    customerEmail: "isha@example.com",
-    date: "2026-06-19",
-    itemsCount: 6,
-    total: 359.94,
-    status: "processing",
-  },
-];
-
-const statusColorMap: Record<AdminOrder["status"], string> = {
+const statusColorMap: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  processing: "bg-blue-100 text-blue-800 border-blue-200",
+  confirmed: "bg-blue-100 text-blue-800 border-blue-200",
   shipped: "bg-purple-100 text-purple-800 border-purple-200",
   delivered: "bg-green-100 text-green-800 border-green-200",
+  cancelled: "bg-red-100 text-red-800 border-red-200",
 };
 
 const AdminOrders = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        const data = await api.get<Order[]>("/api/admin/orders");
+        setOrders(data);
+      } catch (err) {
+        console.error("Failed to fetch orders:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchOrders();
+  }, []);
+
   const filteredOrders = useMemo(() => {
-    if (statusFilter === "all") return MOCK_ORDERS;
-    return MOCK_ORDERS.filter((o) => o.status === statusFilter);
-  }, [statusFilter]);
+    if (statusFilter === "all") return orders;
+    return orders.filter((o) => o.status === statusFilter);
+  }, [orders, statusFilter]);
 
   return (
     <AdminLayout title="Orders">
@@ -136,61 +70,71 @@ const AdminOrders = () => {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
+                <SelectItem value="confirmed">Confirmed</SelectItem>
                 <SelectItem value="shipped">Shipped</SelectItem>
                 <SelectItem value="delivered">Delivered</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-center">Items</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredOrders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{order.customerName}</p>
-                      <p className="text-xs text-muted-foreground">{order.customerEmail}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{order.date}</TableCell>
-                  <TableCell className="text-center">{order.itemsCount}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    ${order.total.toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={statusColorMap[order.status]} variant="outline">
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Link href={`/admin/orders/${order.id}`}>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-center">Items</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredOrders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium font-mono text-xs">
+                        {order.id.slice(0, 12)}...
+                      </TableCell>
+                      <TableCell>
+                        {new Date(order.createdAt).toLocaleDateString("en-IN")}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {order.items.length}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        ₹{order.total.toLocaleString("en-IN")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={statusColorMap[order.status]}
+                          variant="outline"
+                        >
+                          {order.status.charAt(0).toUpperCase() +
+                            order.status.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link href={`/admin/orders/${order.id}`}>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
-          {filteredOrders.length === 0 && (
+          {!loading && filteredOrders.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
               No orders found matching the selected filter.
             </div>

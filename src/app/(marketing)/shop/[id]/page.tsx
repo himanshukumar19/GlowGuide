@@ -2,7 +2,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Star, 
@@ -14,27 +14,52 @@ import {
   Truck, 
   Shield, 
   RefreshCcw,
-  ExternalLink,
   ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { getProductById, getRelatedProducts, generateReviews, categoryLabels } from '@/data/products';
+import { generateReviews } from '@/lib/reviews';
+import { categoryLabels } from '@/lib/constants';
 import { useCart } from '@/store/useCartStore';
 import { useWishlist } from '@/store/useWishlistStore';
 import ProductCard from '@/components/shop/ProductCard';
 import { toast } from 'sonner';
+import type { Product } from '@/types/product';
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [quantity, setQuantity] = useState(1);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
-  const product = id ? getProductById(id) : null;
-  const relatedProducts = product ? getRelatedProducts(product) : [];
+  useEffect(() => {
+    if (!id) return;
+    async function fetchProduct() {
+      try {
+        const res = await fetch(`/api/products/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setProduct(data);
+          const allRes = await fetch("/api/products");
+          if (allRes.ok) {
+            const all = await allRes.json();
+            const related = all.filter(
+              (p: Product) => p.category === data.category && p.id !== data.id
+            ).slice(0, 4);
+            setRelatedProducts(related);
+          }
+        }
+      } catch {
+        // API failed — show not found state
+      }
+    }
+    fetchProduct();
+  }, [id]);
+
   const reviews = product ? generateReviews(product.id) : [];
 
   if (!product) {
@@ -80,8 +105,48 @@ const ProductDetailPage = () => {
     'dermatologist-tested': 'bg-blue-500 text-white',
     'cruelty-free': 'bg-pink-500 text-white',
     vegan: 'bg-emerald-500 text-white',
-    natural: 'bg-lime-500 text-white',
-    'korean-formula': 'bg-purple-500 text-white'
+    natural: 'bg-lime-600 text-white',
+    'korean-formula': 'bg-purple-500 text-white',
+    'fragrance-free': 'bg-sky-500 text-white',
+    'non-comedogenic': 'bg-cyan-500 text-white',
+    'oil-control': 'bg-orange-500 text-white',
+    'soap-free': 'bg-indigo-400 text-white',
+    'barrier-care': 'bg-violet-500 text-white',
+    'glass-skin': 'bg-fuchsia-500 text-white',
+    'overnight-care': 'bg-slate-600 text-white',
+    'baby-safe': 'bg-rose-400 text-white',
+    hypoallergenic: 'bg-rose-400 text-white',
+    'petroleum-free': 'bg-teal-600 text-white',
+    'paraben-free': 'bg-teal-600 text-white',
+    'mineral-based': 'bg-amber-600 text-white',
+    'anti-aging': 'bg-purple-600 text-white',
+    'retinol-formula': 'bg-red-500 text-white',
+    'night-routine': 'bg-indigo-500 text-white',
+    retinol: 'bg-red-500 text-white',
+    'collagen-support': 'bg-rose-600 text-white',
+    firming: 'bg-violet-600 text-white',
+    'premium-care': 'bg-yellow-600 text-white',
+    'deep-hydration': 'bg-blue-600 text-white',
+    'non-greasy': 'bg-sky-600 text-white',
+    'professional-grade': 'bg-slate-700 text-white',
+    'home-use': 'bg-slate-600 text-white',
+    'travel-friendly': 'bg-cyan-600 text-white',
+    portable: 'bg-cyan-600 text-white',
+    '4-in-1': 'bg-orange-600 text-white',
+    'smart-sensor': 'bg-teal-700 text-white',
+    'spf-50': 'bg-yellow-500 text-white',
+    'broad-spectrum': 'bg-yellow-500 text-white',
+    'daily-use': 'bg-sky-400 text-white',
+    'fast-absorbing': 'bg-teal-400 text-white',
+    'sensitive-skin': 'bg-rose-300 text-rose-900',
+    brightening: 'bg-yellow-400 text-yellow-900',
+    hydrating: 'bg-blue-400 text-white',
+    'green-tea': 'bg-green-600 text-white',
+    'low-pH': 'bg-indigo-400 text-white',
+    'pH-balanced': 'bg-indigo-400 text-white',
+    'tear-free': 'bg-pink-300 text-pink-900',
+    'acne-prone': 'bg-red-400 text-white',
+    'lightweight': 'bg-sky-300 text-sky-900',
   };
 
   return (
@@ -123,7 +188,7 @@ const ProductDetailPage = () => {
                 </Badge>
               )}
               {product.badges?.map((badge) => (
-                <Badge key={badge} className={`text-sm px-3 py-1 ${badgeColors[badge] || 'bg-muted'}`}>
+                <Badge key={badge} className={`text-sm px-3 py-1 ${badgeColors[badge] || 'bg-gray-500 text-white'}`}>
                   {badge.replace('-', ' ')}
                 </Badge>
               ))}
@@ -190,7 +255,7 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Stock Status */}
-            {product.inStock ? (
+            {product.stockCount > 0 ? (
               <div className="flex items-center gap-2 text-green-600">
                 <Check className="h-5 w-5" />
                 <span className="font-medium">In Stock</span>
@@ -226,7 +291,7 @@ const ProductDetailPage = () => {
 
               <Button
                 onClick={handleAddToCart}
-                disabled={!product.inStock}
+                disabled={product.stockCount <= 0}
                 className="flex-1 gradient-primary text-primary-foreground h-12 text-lg gap-2"
               >
                 <ShoppingCart className="h-5 w-5" />
@@ -261,43 +326,6 @@ const ProductDetailPage = () => {
                 <p className="text-xs text-muted-foreground">7-Day Policy</p>
               </div>
             </div>
-
-            {/* Where to Buy */}
-            {Object.keys(product.whereToBuy).length > 0 && (
-              <div className="pt-4">
-                <p className="text-sm font-medium mb-3">Also Available On:</p>
-                <div className="flex flex-wrap gap-2">
-                  {product.whereToBuy.amazon && (
-                    <a href={product.whereToBuy.amazon} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm" className="gap-2">
-                        Amazon <ExternalLink className="h-3 w-3" />
-                      </Button>
-                    </a>
-                  )}
-                  {product.whereToBuy.nykaa && (
-                    <a href={product.whereToBuy.nykaa} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm" className="gap-2">
-                        Nykaa <ExternalLink className="h-3 w-3" />
-                      </Button>
-                    </a>
-                  )}
-                  {product.whereToBuy.flipkart && (
-                    <a href={product.whereToBuy.flipkart} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm" className="gap-2">
-                        Flipkart <ExternalLink className="h-3 w-3" />
-                      </Button>
-                    </a>
-                  )}
-                  {product.whereToBuy.official && (
-                    <a href={product.whereToBuy.official} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm" className="gap-2">
-                        Official Site <ExternalLink className="h-3 w-3" />
-                      </Button>
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
           </motion.div>
         </div>
 

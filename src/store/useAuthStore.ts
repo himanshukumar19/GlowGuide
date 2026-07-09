@@ -45,22 +45,42 @@ async function deleteSessionCookie() {
   }
 }
 
-function clearPersistedAuth() {
+async function syncCustomClaims(user: any): Promise<void> {
   try {
-    localStorage.removeItem("glowguide-customer-store");
-  } catch (e) {
-    // ignore
+    const idToken = await user.getIdToken();
+    await fetch("/api/auth/sync-claims", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${idToken}` },
+      credentials: "include",
+    });
+    await user.getIdToken(true);
+  } catch {
+    console.warn("syncCustomClaims error");
   }
 }
+
+function clearLocalStorageData() {
+  try {
+    localStorage.removeItem("glowguide-customer-store");
+    localStorage.removeItem("glowguide-cart-store");
+    localStorage.removeItem("glowguide-wishlist-store");
+  } catch (e) {
+  }
+}
+
+export type LoginSource = "customer" | "admin";
+
+const ROLE_MISMATCH_ADMIN_ON_CUSTOMER_LOGIN = "ADMIN_ON_CUSTOMER_LOGIN";
+const ROLE_MISMATCH_CUSTOMER_ON_ADMIN_LOGIN = "CUSTOMER_ON_ADMIN_LOGIN";
 
 interface AuthState {
   customer: Customer | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   initialized: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string, source?: LoginSource) => Promise<{ success: boolean; error?: string }>;
   signup: (displayName: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (source?: LoginSource) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateCustomer: (updates: Partial<Customer>) => Promise<void>;
   refreshCustomer: () => Promise<void>;
@@ -74,25 +94,43 @@ export const useAuthStore = create<AuthState>()(
       isLoading: true,
       initialized: false,
 
-      login: async (email, password) => {
+      login: async (email, password, source) => {
         try {
           const cred = await signInWithEmailAndPassword(auth, email, password);
           const uid = cred.user.uid;
           const docSnap = await getDoc(doc(db, "customers", uid));
-          if (docSnap.exists()) {
-            const data = docSnap.data() as Customer;
-            const cookieCreated = await createSessionCookie(cred.user);
-            if (!cookieCreated) {
-              await signOut(auth);
-              set({ isLoading: false, initialized: true });
-              return { success: false, error: "Failed to create session. Please try again." };
-            }
-            set({ customer: data, isAuthenticated: true, isLoading: false, initialized: true });
-            return { success: true };
+
+          if (!docSnap.exists()) {
+            await signOut(auth);
+            set({ isLoading: false, initialized: true });
+            return { success: false, error: "Account not fully set up. Please sign up again." };
           }
-          await signOut(auth);
-          set({ isLoading: false, initialized: true });
-          return { success: false, error: "Account not fully set up. Please sign up again." };
+
+          const data = docSnap.data() as Customer;
+
+          if (source === "customer" && data.role === "ADMIN") {
+            await signOut(auth);
+            set({ isLoading: false, initialized: true });
+            return { success: false, error: ROLE_MISMATCH_ADMIN_ON_CUSTOMER_LOGIN };
+          }
+
+          if (source === "admin" && data.role === "CUSTOMER") {
+            await signOut(auth);
+            set({ isLoading: false, initialized: true });
+            return { success: false, error: ROLE_MISMATCH_CUSTOMER_ON_ADMIN_LOGIN };
+          }
+
+          await syncCustomClaims(cred.user);
+
+          const cookieCreated = await createSessionCookie(cred.user);
+          if (!cookieCreated) {
+            await signOut(auth);
+            set({ isLoading: false, initialized: true });
+            return { success: false, error: "Failed to create session. Please try again." };
+          }
+
+          set({ customer: data, isAuthenticated: true, isLoading: false, initialized: true });
+          return { success: true };
         } catch (e: any) {
           let error = "Invalid email or password.";
           if (e.code === "auth/user-not-found") error = "No account found with this email.";
@@ -127,6 +165,9 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const data = await res.json();
+
+          await syncCustomClaims(cred.user);
+
           const cookieCreated = await createSessionCookie(cred.user);
           if (!cookieCreated) {
             await signOut(auth);
@@ -143,15 +184,31 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      loginWithGoogle: async () => {
+      loginWithGoogle: async (source) => {
         try {
           const provider = new GoogleAuthProvider();
           const cred = await signInWithPopup(auth, provider);
           const uid = cred.user.uid;
 
           const docSnap = await getDoc(doc(db, "customers", uid));
+
           if (docSnap.exists()) {
             const data = docSnap.data() as Customer;
+
+            if (source === "customer" && data.role === "ADMIN") {
+              await signOut(auth);
+              set({ isLoading: false, initialized: true });
+              return { success: false, error: ROLE_MISMATCH_ADMIN_ON_CUSTOMER_LOGIN };
+            }
+
+            if (source === "admin" && data.role === "CUSTOMER") {
+              await signOut(auth);
+              set({ isLoading: false, initialized: true });
+              return { success: false, error: ROLE_MISMATCH_CUSTOMER_ON_ADMIN_LOGIN };
+            }
+
+            await syncCustomClaims(cred.user);
+
             const cookieCreated = await createSessionCookie(cred.user);
             if (!cookieCreated) {
               await signOut(auth);
@@ -186,6 +243,9 @@ export const useAuthStore = create<AuthState>()(
             set({ isLoading: false, initialized: true });
             return { success: false, error: "Account not fully set up. Please sign up again." };
           }
+
+          await syncCustomClaims(cred.user);
+
           const cookieCreated = await createSessionCookie(cred.user);
           if (!cookieCreated) {
             await signOut(auth);
@@ -205,7 +265,7 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         await deleteSessionCookie();
         await signOut(auth);
-        clearPersistedAuth();
+        clearLocalStorageData();
         set({ customer: null, isAuthenticated: false, isLoading: false });
       },
 
@@ -239,25 +299,67 @@ export const useAuthStore = create<AuthState>()(
 
 let unsubscribeAuth: (() => void) | null = null;
 
+async function signOutAndRedirect(targetUrl: string) {
+  await deleteSessionCookie();
+  await signOut(auth);
+  clearLocalStorageData();
+  useAuthStore.setState({ customer: null, isAuthenticated: false, isLoading: false, initialized: true });
+  window.location.replace(targetUrl);
+}
+
 export function initAuthListener() {
   if (unsubscribeAuth) return;
 
   unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-    const store = useAuthStore.getState();
     if (user) {
-      const docSnap = await getDoc(doc(db, "customers", user.uid));
-      if (docSnap.exists()) {
+      try {
+        const docSnap = await getDoc(doc(db, "customers", user.uid));
+        if (!docSnap.exists()) {
+          useAuthStore.setState({ isLoading: false, initialized: true });
+          return;
+        }
+
+        const firestoreCustomer = docSnap.data() as Customer;
+
+        let tokenResult = await user.getIdTokenResult();
+        let claimRole = tokenResult.claims.role as string | undefined;
+
+        if (claimRole !== firestoreCustomer.role) {
+          await user.getIdToken(true);
+          tokenResult = await user.getIdTokenResult();
+          claimRole = tokenResult.claims.role as string | undefined;
+        }
+
+        if (claimRole !== firestoreCustomer.role) {
+          try {
+            const idToken = await user.getIdToken();
+            await fetch("/api/auth/sync-claims", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${idToken}` },
+              credentials: "include",
+            });
+            await user.getIdToken(true);
+            const refreshed = await user.getIdTokenResult();
+            claimRole = refreshed.claims.role as string | undefined;
+          } catch {
+            claimRole = firestoreCustomer.role;
+          }
+        }
+
+        if (claimRole !== firestoreCustomer.role) {
+          const redirectUrl = firestoreCustomer.role === "ADMIN" ? "/admin/login" : "/login";
+          await signOutAndRedirect(redirectUrl);
+          return;
+        }
+
         useAuthStore.setState({
-          customer: docSnap.data() as Customer,
+          customer: firestoreCustomer,
           isAuthenticated: true,
           isLoading: false,
           initialized: true,
         });
-      } else {
-        useAuthStore.setState({
-          isLoading: false,
-          initialized: true,
-        });
+      } catch {
+        useAuthStore.setState({ isLoading: false, initialized: true });
       }
     } else {
       useAuthStore.setState({

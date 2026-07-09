@@ -5,12 +5,22 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/store/useAuthStore";
 import { Loader2 } from "lucide-react";
 
-interface AuthGuardProps {
+interface GuardProps {
   children: ReactNode;
-  requireAdmin?: boolean;
 }
 
-export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
+function AuthLoader() {
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+      <p className="text-muted-foreground font-medium animate-pulse">
+        Verifying session...
+      </p>
+    </div>
+  );
+}
+
+export function CustomerGuard({ children }: GuardProps) {
   const { customer, isLoading, initialized } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -24,27 +34,46 @@ export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
       return;
     }
 
-    if (requireAdmin && customer.role !== "ADMIN") {
-      router.replace("/dashboard");
+    if (customer.role !== "CUSTOMER") {
+      router.replace("/admin");
     }
-  }, [initialized, isLoading, customer, requireAdmin, router, pathname]);
+  }, [initialized, isLoading, customer, router, pathname]);
 
-  if (!initialized || isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
-        <p className="text-muted-foreground font-medium animate-pulse">
-          Verifying session...
-        </p>
-      </div>
-    );
-  }
+  if (!initialized || isLoading) return <AuthLoader />;
 
-  if (!customer || (requireAdmin && customer.role !== "ADMIN")) {
-    return null;
-  }
+  if (!customer || customer.role !== "CUSTOMER") return <AuthLoader />;
 
   return <>{children}</>;
 }
 
-export default AuthGuard;
+export function AdminGuard({ children }: GuardProps) {
+  const { customer, isLoading, initialized } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const isLoginPage = pathname === "/admin/login";
+
+  useEffect(() => {
+    if (!initialized || isLoading) return;
+    if (isLoginPage) return;
+
+    if (!customer) {
+      router.replace("/admin/login");
+      return;
+    }
+
+    if (customer.role !== "ADMIN") {
+      router.replace("/dashboard");
+    }
+  }, [initialized, isLoading, customer, router, isLoginPage]);
+
+  if (!initialized || isLoading) return <AuthLoader />;
+
+  if (isLoginPage) return <>{children}</>;
+
+  if (!customer || customer.role !== "ADMIN") return <AuthLoader />;
+
+  return <>{children}</>;
+}
+
+export default CustomerGuard;

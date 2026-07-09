@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { AuthGuard } from "@/components/auth-guard";
+import { AdminGuard } from "@/components/auth-guard";
 
 export default function AdminLayout({
   children,
@@ -17,5 +17,5 @@ export default function AdminLayout({
     };
   }, []);
 
-  return <AuthGuard requireAdmin>{children}</AuthGuard>;
+  return <AdminGuard>{children}</AdminGuard>;
 }

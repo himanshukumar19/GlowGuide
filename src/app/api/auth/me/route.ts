@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { getCustomerById } from "@/lib/models";
 
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await verifyAuth(request);
+    const authResult = await requireRole(request, ["CUSTOMER", "ADMIN"]);
     if ("error" in authResult) return authResult.error;
     const uid = authResult.uid;
 

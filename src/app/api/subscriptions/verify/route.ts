@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
+import { authorize } from "@/lib/api-auth";
 import { DEFAULT_PAID_PLAN } from "@/lib/subscription-plans";
 import {
   updatePayment,
@@ -10,9 +10,9 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await verifyAuth(request);
-    if ("error" in authResult) return authResult.error;
-    const uid = authResult.uid;
+    const authCheck = await authorize(request, ["CUSTOMER"]);
+    if ("error" in authCheck) return authCheck.error;
+    const uid = authCheck.uid;
 
     const body = await request.json();
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = body;

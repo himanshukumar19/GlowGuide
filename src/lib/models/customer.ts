@@ -1,4 +1,4 @@
-import { db } from "@/lib/firebase-admin";
+import { auth, db } from "@/lib/firebase-admin";
 import { validate } from "@/lib/validators";
 import { customerSchema, type Customer } from "@/lib/schemas";
 
@@ -54,4 +54,11 @@ export async function createCustomer(
 export async function countAllCustomers(): Promise<number> {
   const snapshot = await db.collection("customers").count().get();
   return snapshot.data().count;
+}
+
+export async function setUserRole(
+  uid: string,
+  role: "CUSTOMER" | "ADMIN"
+): Promise<void> {
+  await auth.setCustomUserClaims(uid, { role });
 }

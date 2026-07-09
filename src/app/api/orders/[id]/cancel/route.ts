@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
+import { authorize } from "@/lib/api-auth";
 import { getOrderById, updateOrderStatus } from "@/lib/models/order";
 
 export async function POST(
@@ -7,8 +7,8 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authResult = await verifyAuth(request);
-    if ("error" in authResult) return authResult.error;
+    const authCheck = await authorize(request, ["CUSTOMER"]);
+    if ("error" in authCheck) return authCheck.error;
 
     const order = await getOrderById(params.id);
     if (!order) {
@@ -18,7 +18,7 @@ export async function POST(
       );
     }
 
-    if (order.customerId !== authResult.uid) {
+    if (order.customerId !== authCheck.uid) {
       return NextResponse.json(
         { error: { code: "FORBIDDEN", message: "You can only cancel your own orders" } },
         { status: 403 }

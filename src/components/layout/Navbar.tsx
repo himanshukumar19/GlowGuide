@@ -38,6 +38,8 @@ const Navbar = () => {
   const { itemCount: wishlistCount } = useWishlist();
   const { customer, isAuthenticated, logout } = useAuth();
 
+  const isAdmin = isAuthenticated && customer?.role === "ADMIN";
+
   const isActive = (path: string) => pathname === path;
 
   return (
@@ -99,39 +101,42 @@ const Navbar = () => {
               </div>
             ))}
             
-            {/* Show Quiz link conditionally based on auth */}
-            <Link href={isAuthenticated ? "/analysis" : "/login"}
-              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive("/analysis")
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              Skin Analysis
-            </Link>
+            {!isAdmin && (
+              <Link href={isAuthenticated ? "/analysis" : "/login"}
+                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive("/analysis")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                Skin Analysis
+              </Link>
+            )}
           </div>
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            {/* Wishlist */}
-            <Link href="/wishlist" className="relative p-2 rounded-lg hover:bg-muted transition-colors">
-              <Heart className="h-5 w-5" />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                  {wishlistCount}
-                </span>
-              )}
-            </Link>
+            {!isAdmin && (
+              <Link href="/wishlist" className="relative p-2 rounded-lg hover:bg-muted transition-colors">
+                <Heart className="h-5 w-5" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
-            {/* Cart */}
-            <Link href="/cart" className="relative p-2 rounded-lg hover:bg-muted transition-colors">
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
+            {!isAdmin && (
+              <Link href="/cart" className="relative p-2 rounded-lg hover:bg-muted transition-colors">
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* User Account / Login State */}
             {isAuthenticated ? (
@@ -153,18 +158,31 @@ const Navbar = () => {
                     <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-lg shadow-card py-1.5 z-50 before:content-[''] before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
                       <div className="px-4 py-2 border-b border-border/40 mb-1">
                         <span className="font-semibold text-xs text-foreground block truncate">{customer?.displayName}</span>
-                        <span className="text-[10px] text-muted-foreground block uppercase font-bold mt-0.5">
-                          {customer?.subscriptionTier === "PAID" ? "★ Pro Tier" : "Free Tier"}
-                        </span>
+                        {isAdmin ? (
+                          <span className="text-[10px] text-destructive block uppercase font-bold mt-0.5">Admin</span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground block uppercase font-bold mt-0.5">
+                            {customer?.subscriptionTier === "PAID" ? "★ Pro Tier" : "Free Tier"}
+                          </span>
+                        )}
                       </div>
-                      <Link href="/dashboard" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-xs text-foreground hover:bg-muted transition-colors font-medium">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        Dashboard
-                      </Link>
-                      <Link href="/dashboard/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-xs text-foreground hover:bg-muted transition-colors font-medium">
-                        <ListOrdered className="h-4 w-4 text-muted-foreground" />
-                        My Orders
-                      </Link>
+                      {isAdmin ? (
+                        <Link href="/admin" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-xs text-foreground hover:bg-muted transition-colors font-medium">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          Admin Panel
+                        </Link>
+                      ) : (
+                        <>
+                          <Link href="/dashboard" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-xs text-foreground hover:bg-muted transition-colors font-medium">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            Dashboard
+                          </Link>
+                          <Link href="/dashboard/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-xs text-foreground hover:bg-muted transition-colors font-medium">
+                            <ListOrdered className="h-4 w-4 text-muted-foreground" />
+                            My Orders
+                          </Link>
+                        </>
+                      )}
                       <button onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full flex items-center gap-2 px-4 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors font-medium text-left">
                         <LogOut className="h-4 w-4" />
                         Sign Out
@@ -234,14 +252,23 @@ const Navbar = () => {
               
               {isAuthenticated ? (
                 <div className="mt-4 pt-4 border-t border-border space-y-2">
-                  <Link href="/dashboard" onClick={() => setIsOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-muted">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    Dashboard
-                  </Link>
-                  <Link href="/dashboard/orders" onClick={() => setIsOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-muted">
-                    <ListOrdered className="h-4 w-4 text-muted-foreground" />
-                    My Orders
-                  </Link>
+                  {isAdmin ? (
+                    <Link href="/admin" onClick={() => setIsOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-muted">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      Admin Panel
+                    </Link>
+                  ) : (
+                    <>
+                      <Link href="/dashboard" onClick={() => setIsOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-muted">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        Dashboard
+                      </Link>
+                      <Link href="/dashboard/orders" onClick={() => setIsOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-muted">
+                        <ListOrdered className="h-4 w-4 text-muted-foreground" />
+                        My Orders
+                      </Link>
+                    </>
+                  )}
                   <button onClick={() => { setIsOpen(false); logout(); }} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left">
                     <LogOut className="h-4 w-4" />
                     Sign Out

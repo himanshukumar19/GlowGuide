@@ -1,14 +1,14 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
+import { authorize } from "@/lib/api-auth";
 import { updatePayment, getPaymentById } from "@/lib/models";
 import { getOrderById, updateOrderStatus } from "@/lib/models/order";
 import { getProductById, updateProduct } from "@/lib/models/product";
 
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await verifyAuth(request);
-    if ("error" in authResult) return authResult.error;
+    const authCheck = await authorize(request, ["CUSTOMER"]);
+    if ("error" in authCheck) return authCheck.error;
 
     const body = await request.json();
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = body;

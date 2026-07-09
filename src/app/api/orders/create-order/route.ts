@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
+import { authorize } from "@/lib/api-auth";
 import { razorpay } from "@/lib/razorpay";
 import { getCustomerById, createPayment, createOrder } from "@/lib/models";
 import { getProductById } from "@/lib/models/product";
@@ -29,9 +29,9 @@ interface OrderPayload {
 
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await verifyAuth(request);
-    if ("error" in authResult) return authResult.error;
-    const uid = authResult.uid;
+    const authCheck = await authorize(request, ["CUSTOMER"]);
+    if ("error" in authCheck) return authCheck.error;
+    const uid = authCheck.uid;
 
     const customer = await getCustomerById(uid);
     if (!customer) {

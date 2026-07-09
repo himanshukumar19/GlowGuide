@@ -1,24 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
-import { getCustomerById } from "@/lib/models";
+import { authorize } from "@/lib/api-auth";
 import { getProductById, updateProduct, deleteProduct } from "@/lib/models/product";
 import { uploadImageBuffer } from "@/lib/cloudinary";
-
-async function requireAdmin(request: NextRequest) {
-  const authResult = await verifyAuth(request);
-  if ("error" in authResult) return { error: authResult.error };
-
-  const customer = await getCustomerById(authResult.uid);
-  if (!customer || customer.role !== "ADMIN") {
-    return {
-      error: NextResponse.json(
-        { error: { code: "FORBIDDEN", message: "Admin access required" } },
-        { status: 403 }
-      ),
-    };
-  }
-  return { uid: authResult.uid };
-}
 
 export async function GET(
   _request: NextRequest,
@@ -47,8 +30,8 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const adminCheck = await requireAdmin(request);
-    if ("error" in adminCheck) return adminCheck.error;
+    const authCheck = await authorize(request, ["ADMIN"]);
+    if ("error" in authCheck) return authCheck.error;
 
     const existing = await getProductById(params.id);
     if (!existing) {
@@ -112,8 +95,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const adminCheck = await requireAdmin(request);
-    if ("error" in adminCheck) return adminCheck.error;
+    const authCheck = await authorize(request, ["ADMIN"]);
+    if ("error" in authCheck) return authCheck.error;
 
     const product = await getProductById(params.id);
     if (!product) {

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_ROUTES = [
+const CUSTOMER_PROTECTED_ROUTES = [
   "/dashboard",
   "/quiz",
   "/analysis",
@@ -10,7 +10,7 @@ const PROTECTED_ROUTES = [
   "/complete-profile",
 ];
 
-const ADMIN_ROUTES = ["/admin"];
+const ADMIN_PROTECTED_ROUTES = ["/admin"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -29,20 +29,32 @@ export function middleware(request: NextRequest) {
 
   const sessionCookie = request.cookies.get("session")?.value;
 
-  const isProtected = PROTECTED_ROUTES.some((route) =>
+  const isCustomerProtected = CUSTOMER_PROTECTED_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
 
-  if (isProtected && !sessionCookie) {
+  if (isCustomerProtected && !sessionCookie) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  const isAdmin = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
-  if (isAdmin && pathname !== "/admin/login" && !sessionCookie) {
+  const isAdminRoute = ADMIN_PROTECTED_ROUTES.some((route) =>
+    pathname.startsWith(route)
+  );
+  if (isAdminRoute && pathname !== "/admin/login" && !sessionCookie) {
     const loginUrl = new URL("/admin/login", request.url);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (sessionCookie) {
+    if (pathname === "/login") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    if (pathname === "/admin/login") {
+      return NextResponse.redirect(new URL("/", request.url));
+      
+    }
   }
 
   return NextResponse.next();

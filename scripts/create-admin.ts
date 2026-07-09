@@ -32,6 +32,8 @@ async function createAdmin() {
     updatedAt: new Date().toISOString(),
   });
 
+  await auth.setCustomUserClaims(user.uid, { role: "ADMIN" });
+
   console.log(`Admin created successfully!`);
   console.log(`Email: ${email}`);
   console.log(`Password: ${password}`);

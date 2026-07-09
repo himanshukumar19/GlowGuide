@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
+import { authorize } from "@/lib/api-auth";
 import { listOrdersByCustomer } from "@/lib/models/order";
 
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await verifyAuth(request);
-    if ("error" in authResult) return authResult.error;
-    const uid = authResult.uid;
+    const authCheck = await authorize(request, ["CUSTOMER"]);
+    if ("error" in authCheck) return authCheck.error;
 
-    const orders = await listOrdersByCustomer(uid);
+    const orders = await listOrdersByCustomer(authCheck.uid);
     return NextResponse.json(orders);
   } catch (error: any) {
     console.error("listOrders error:", error);

@@ -3,6 +3,7 @@ export {
   updateCustomer,
   createCustomer,
   countAllCustomers,
+  setUserRole,
 } from "./customer";
 export {
   createPayment,

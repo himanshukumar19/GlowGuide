@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth";
-import { getCustomerById, createCustomer } from "@/lib/models";
+import { getCustomerById, createCustomer, setUserRole } from "@/lib/models";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     const customer = await createCustomer(uid, { displayName, email, photoURL });
+    await setUserRole(uid, "CUSTOMER");
     return NextResponse.json(
       { message: "Customer created", customer },
       { status: 201 }

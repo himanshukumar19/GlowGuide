@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
+import { authorize } from "@/lib/api-auth";
 import { razorpay } from "@/lib/razorpay";
 import { DEFAULT_PAID_PLAN } from "@/lib/subscription-plans";
 import {
@@ -9,9 +9,9 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await verifyAuth(request);
-    if ("error" in authResult) return authResult.error;
-    const uid = authResult.uid;
+    const authCheck = await authorize(request, ["CUSTOMER"]);
+    if ("error" in authCheck) return authCheck.error;
+    const uid = authCheck.uid;
 
     const customer = await getCustomerById(uid);
     if (!customer) {

@@ -1,28 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
-import { getCustomerById } from "@/lib/models";
+import { authorize } from "@/lib/api-auth";
 import { listAllOrders } from "@/lib/models/order";
-
-async function requireAdmin(request: NextRequest) {
-  const authResult = await verifyAuth(request);
-  if ("error" in authResult) return { error: authResult.error };
-
-  const customer = await getCustomerById(authResult.uid);
-  if (!customer || customer.role !== "ADMIN") {
-    return {
-      error: NextResponse.json(
-        { error: { code: "FORBIDDEN", message: "Admin access required" } },
-        { status: 403 }
-      ),
-    };
-  }
-  return { uid: authResult.uid };
-}
 
 export async function GET(request: NextRequest) {
   try {
-    const adminCheck = await requireAdmin(request);
-    if ("error" in adminCheck) return adminCheck.error;
+    const authCheck = await authorize(request, ["ADMIN"]);
+    if ("error" in authCheck) return authCheck.error;
 
     const orders = await listAllOrders();
     return NextResponse.json(orders);

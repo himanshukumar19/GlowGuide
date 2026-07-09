@@ -33,6 +33,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [adminMismatch, setAdminMismatch] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -60,10 +61,15 @@ const Login = () => {
 
   const onSubmit = async (values: LoginFormValues) => {
     setError("");
+    setAdminMismatch(false);
     setLoading(true);
-    const result = await login(values.email, values.password);
+    const result = await login(values.email, values.password, "customer");
     setLoading(false);
     if (!result.success) {
+      if (result.error === "ADMIN_ON_CUSTOMER_LOGIN") {
+        setAdminMismatch(true);
+        return;
+      }
       setError(result.error || "Invalid email or password.");
       return;
     }
@@ -72,10 +78,15 @@ const Login = () => {
 
   const handleGoogle = async () => {
     setError("");
+    setAdminMismatch(false);
     setGoogleLoading(true);
-    const result = await loginWithGoogle();
+    const result = await loginWithGoogle("customer");
     setGoogleLoading(false);
     if (!result.success && result.error) {
+      if (result.error === "ADMIN_ON_CUSTOMER_LOGIN") {
+        setAdminMismatch(true);
+        return;
+      }
       setError(result.error);
       return;
     }
@@ -99,6 +110,14 @@ const Login = () => {
             </CardHeader>
             
             <CardContent className="px-6 sm:px-8 py-4">
+              {adminMismatch && (
+                <div className="mb-4 p-3.5 rounded-gg-sm bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium space-y-2">
+                  <p>This account is for administrator access only. Please use the Admin Portal.</p>
+                  <a href="/admin/login" className="text-destructive underline font-semibold inline-block">
+                    Go to Admin Portal →
+                  </a>
+                </div>
+              )}
               {error && (
                 <div className="mb-4 p-3.5 rounded-gg-sm bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
                   {error}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
+import { authorize } from "@/lib/api-auth";
 import { getCustomerById } from "@/lib/models";
 import { listAnalysesByCustomer } from "@/lib/models";
 import type { Analysis } from "@/lib/schemas/analysis";
@@ -34,12 +34,12 @@ function toListItem(analysis: Analysis): AnalysisListItem {
 }
 
 export async function GET(request: NextRequest) {
-  const authResult = await verifyAuth(request);
-  if ("error" in authResult) {
-    return authResult.error;
+  const authCheck = await authorize(request, ["CUSTOMER"]);
+  if ("error" in authCheck) {
+    return authCheck.error;
   }
 
-  const customer = await getCustomerById(authResult.uid);
+  const customer = await getCustomerById(authCheck.uid);
   if (!customer) {
     return NextResponse.json(
       { error: { code: "CUSTOMER_NOT_FOUND", message: "Customer not found" } },

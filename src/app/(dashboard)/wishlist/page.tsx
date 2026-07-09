@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from 'framer-motion';
-import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
+import { Heart, ShoppingCart, Trash2, ArrowRightLeft } from 'lucide-react';
 import { useWishlist } from '@/store/useWishlistStore';
 import { useCart } from '@/store/useCartStore';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,16 @@ const WishlistPage = () => {
     const product = items.find(item => item.id === productId);
     if (product) {
       addToCart(product);
+      toast.success(`${product.name} added to cart`);
+    }
+  };
+
+  const handleMoveToCart = (productId: string) => {
+    const product = items.find(item => item.id === productId);
+    if (product) {
+      addToCart(product);
       removeFromWishlist(productId);
-      toast.success('Added to cart');
+      toast.success(`${product.name} moved to cart`);
     }
   };
 
@@ -115,7 +123,17 @@ const WishlistPage = () => {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => handleMoveToCart(product.id)}
+                    disabled={product.stockCount <= 0}
+                    title="Move to Cart"
+                  >
+                    <ArrowRightLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => removeFromWishlist(product.id)}
+                    title="Remove from wishlist"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

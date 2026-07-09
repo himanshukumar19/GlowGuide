@@ -138,7 +138,6 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'glowguide-cart-store',
-      skipHydration: true,
     }
   )
 );

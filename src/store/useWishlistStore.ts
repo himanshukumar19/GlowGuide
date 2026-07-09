@@ -51,7 +51,6 @@ export const useWishlistStore = create<WishlistState>()(
     }),
     {
       name: 'glowguide-wishlist-store',
-      skipHydration: true,
     }
   )
 );

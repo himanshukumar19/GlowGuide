@@ -8,7 +8,6 @@ import { z } from "zod";
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, 
-  CreditCard, 
   Check, 
   ArrowLeft, 
   ArrowRight,
@@ -73,7 +72,7 @@ const shippingSchema = z.object({
 
 type ShippingFormValues = z.infer<typeof shippingSchema>;
 
-type CheckoutStep = 'shipping' | 'payment' | 'confirmation';
+type CheckoutStep = 'shipping' | 'confirmation';
 
 const CheckoutPage = () => {
   const router = useRouter();
@@ -92,7 +91,6 @@ const CheckoutPage = () => {
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState('card');
 
   const form = useForm<ShippingFormValues>({
     resolver: zodResolver(shippingSchema),
@@ -117,18 +115,11 @@ const CheckoutPage = () => {
     }).format(price);
   };
 
-  const onShippingSubmit = (values: ShippingFormValues) => {
-    setCurrentStep('payment');
-  };
-
-  const handlePayment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onShippingSubmit = async (values: ShippingFormValues) => {
     setIsProcessing(true);
 
     try {
       await loadRazorpayScript();
-
-      const shippingAddress = form.getValues();
 
       const payload = {
         items: items.map(item => ({
@@ -140,14 +131,14 @@ const CheckoutPage = () => {
         })),
         shippingAddress: {
           id: `addr_${Date.now()}`,
-          fullName: shippingAddress.fullName,
-          email: shippingAddress.email,
-          phone: shippingAddress.phone,
-          street: shippingAddress.street,
-          city: shippingAddress.city,
-          state: shippingAddress.state,
-          pincode: shippingAddress.pincode,
-          type: shippingAddress.type,
+          fullName: values.fullName,
+          email: values.email,
+          phone: values.phone,
+          street: values.street,
+          city: values.city,
+          state: values.state,
+          pincode: values.pincode,
+          type: values.type,
         },
         subtotal: getCartSubtotal(),
         tax: getCartTax(),
@@ -169,9 +160,9 @@ const CheckoutPage = () => {
         description: `Order ${orderResponse.appOrderId}`,
         order_id: orderResponse.orderId,
         prefill: {
-          name: customer?.displayName || shippingAddress.fullName,
-          email: customer?.email || shippingAddress.email,
-          contact: shippingAddress.phone,
+          name: customer?.displayName || values.fullName,
+          email: customer?.email || values.email,
+          contact: values.phone,
         },
         theme: { color: "#355245" },
         handler: async function (response: {
@@ -189,7 +180,7 @@ const CheckoutPage = () => {
             const newOrder: Order = {
               orderId: orderResponse.appOrderId,
               items: items,
-              shippingAddress: { id: `addr_${Date.now()}`, ...shippingAddress } as Address,
+              shippingAddress: { id: `addr_${Date.now()}`, ...values } as Address,
               subtotal: getCartSubtotal(),
               tax: getCartTax(),
               shipping: getShippingCost(),
@@ -228,7 +219,6 @@ const CheckoutPage = () => {
 
   const steps = [
     { id: 'shipping', label: 'Shipping', icon: MapPin },
-    { id: 'payment', label: 'Payment', icon: CreditCard },
     { id: 'confirmation', label: 'Confirmation', icon: Check }
   ];
 
@@ -422,84 +412,22 @@ const CheckoutPage = () => {
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Back to Cart
                           </Button>
-                          <Button type="submit" className="flex-1">
-                            Continue to Payment
-                            <ArrowRight className="h-4 w-4 ml-2" />
+                          <Button type="submit" disabled={isProcessing} className="flex-1">
+                            {isProcessing ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-t-transparent mr-2" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                Pay {formatPrice(getCartTotal())}
+                                <ShieldCheck className="h-4 w-4 ml-2" />
+                              </>
+                            )}
                           </Button>
                         </div>
                       </form>
                     </Form>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-
-            {/* Payment Step */}
-            {currentStep === 'payment' && (
-              <motion.div
-                key="payment"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Payment Method</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handlePayment}>
-                      <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
-                        <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                          paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-border'
-                        }`}>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="card" id="card" />
-                            <Label htmlFor="card" className="flex-1 cursor-pointer">
-                              <div className="font-medium">Credit/Debit Card</div>
-                              <div className="text-sm text-muted-foreground">Visa, Mastercard, RuPay</div>
-                            </Label>
-                            <CreditCard className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                        </div>
-
-                        <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                          paymentMethod === 'upi' ? 'border-primary bg-primary/5' : 'border-border'
-                        }`}>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="upi" id="upi" />
-                            <Label htmlFor="upi" className="flex-1 cursor-pointer">
-                              <div className="font-medium">UPI</div>
-                              <div className="text-sm text-muted-foreground">Google Pay, PhonePe, Paytm</div>
-                            </Label>
-                          </div>
-                        </div>
-                      </RadioGroup>
-
-                      <div className="flex gap-4 pt-6">
-                        <Button type="button" variant="outline" onClick={() => setCurrentStep('shipping')}>
-                          <ArrowLeft className="h-4 w-4 mr-2" />
-                          Back
-                        </Button>
-                        <Button 
-                          type="submit" 
-                          disabled={isProcessing}
-                          className="flex-1"
-                          size="lg"
-                        >
-                          {isProcessing ? (
-                              <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-t-transparent mr-2" />
-                              Processing...
-                              </>
-                          ) : (
-                              <>
-                              Pay {formatPrice(getCartTotal())}
-                              <ShieldCheck className="h-4 w-4 ml-2" />
-                              </>
-                          )}
-                        </Button>
-                      </div>
-                    </form>
                   </CardContent>
                 </Card>
               </motion.div>

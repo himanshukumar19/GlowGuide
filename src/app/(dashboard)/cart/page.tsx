@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from "next/link";
 import { motion } from 'framer-motion';
-import { Minus, Plus, Trash2, Heart, ShoppingBag, ArrowRight, Tag } from 'lucide-react';
+import { Minus, Plus, Trash2, Heart, ShoppingBag, ArrowRight, Tag, ArrowRightLeft } from 'lucide-react';
 import { useCart } from '@/store/useCartStore';
 import { useWishlist } from '@/store/useWishlistStore';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ const CartPage = () => {
     getPromoDiscount,
     getSubscriptionDiscount
   } = useCart();
-  const { addToWishlist } = useWishlist();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [promoInput, setPromoInput] = useState('');
 
   const handleApplyPromo = () => {
@@ -37,6 +37,18 @@ const CartPage = () => {
       setPromoInput('');
     } else {
       toast.error(result.message);
+    }
+  };
+
+  const handleWishlistToggle = (productId: string) => {
+    const item = items.find(i => i.product.id === productId);
+    if (!item) return;
+    if (isInWishlist(productId)) {
+      removeFromWishlist(productId);
+      toast.info('Removed from wishlist');
+    } else {
+      addToWishlist(item.product);
+      toast.success('Added to wishlist');
     }
   };
 
@@ -142,12 +154,21 @@ const CartPage = () => {
 
                     {/* Actions */}
                     <button
-                      onClick={() => handleMoveToWishlist(item.product.id)}
-                      className="p-2 text-muted-foreground hover:text-primary transition-colors"
-                      title="Move to Wishlist"
+                      onClick={() => handleWishlistToggle(item.product.id)}
+                      className={`p-2 transition-colors ${isInWishlist(item.product.id) ? 'text-red-500' : 'text-muted-foreground hover:text-primary'}`}
+                      title={isInWishlist(item.product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                     >
-                      <Heart className="h-4 w-4" />
+                      <Heart className={`h-4 w-4 ${isInWishlist(item.product.id) ? 'fill-current' : ''}`} />
                     </button>
+                    {!isInWishlist(item.product.id) && (
+                      <button
+                        onClick={() => handleMoveToWishlist(item.product.id)}
+                        className="p-2 text-muted-foreground hover:text-primary transition-colors"
+                        title="Move to Wishlist"
+                      >
+                        <ArrowRightLeft className="h-4 w-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => removeFromCart(item.product.id)}
                       className="p-2 text-muted-foreground hover:text-destructive transition-colors"

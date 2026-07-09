@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Package, ChevronDown, ChevronUp, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Package, ChevronDown, ChevronUp, Loader2, AlertCircle, RefreshCw, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/api/client";
+import { toast } from "sonner";
 import type { Order } from "@/lib/schemas";
 
 const statusColors: Record<string, string> = {
@@ -42,6 +43,17 @@ export function OrderHistoryList({ showHeading = true }: OrderHistoryListProps) 
       setError(err?.message || "Failed to load orders.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleCancel(orderId: string) {
+    if (!confirm("Are you sure you want to cancel this order?")) return;
+    try {
+      await api.post(`/api/orders/${orderId}/cancel`, {});
+      toast.success("Order cancelled");
+      fetchOrders();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to cancel order");
     }
   }
 
@@ -246,6 +258,18 @@ export function OrderHistoryList({ showHeading = true }: OrderHistoryListProps) 
                           <p className="text-xs text-muted-foreground">
                             Promo: {order.promoCode}
                           </p>
+                        )}
+
+                        {(order.status === "pending" || order.status === "confirmed") && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCancel(order.id)}
+                            className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 gap-1.5"
+                          >
+                            <XCircle className="h-4 w-4" />
+                            Cancel Order
+                          </Button>
                         )}
                       </CardContent>
                     )}

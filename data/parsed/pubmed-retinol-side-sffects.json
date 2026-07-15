@@ -1,0 +1,14 @@
+{
+  "docId": "pubmed-retinol-side-sffects",
+  "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/14615068/",
+  "title": "The Mechanism of Retinol-Induced Irritation and Its Application to Anti-Irritant Development",
+  "markdown": "Despite its well-documented dermatological benefits, retinol and its derivatives \ncommonly cause local skin irritation, presenting as mild redness (erythema) and \npeeling of the outer skin layer (stratum corneum). Researchers hypothesized that \ncytokines act as key inflammatory mediators in this retinoid-induced irritation. \nUsing mouse epidermal cells treated with 2% retinol, the study measured changes \nin inflammatory cytokine expression, including MCP-1 and IL-8, via RT-PCR \nanalysis. Results confirmed that retinoid-induced inflammation is primarily \nmediated through increased MCP-1 and IL-8 levels, both at the mRNA and protein \nlevel, in human epidermal keratinocytes, melanocytes, and fibroblasts. The study \nalso screened several natural compounds (including beta-sitosterol, Ginkgo \nextract, and raspberry extract) as potential anti-irritant additives to \ncounteract this inflammatory response.",
+  "metadata": {
+    "Title": "The Mechanism of Retinol-Induced Irritation and Its Application to Anti-Irritant Development",
+    "Source": "PubMed",
+    "URL": "https://pubmed.ncbi.nlm.nih.gov/14615068/",
+    "Authors": "Kim et al.",
+    "Year": "2003",
+    "sourceType": "pubmed"
+  }
+}

@@ -1,0 +1,18 @@
+Title: Niacinamide - Mechanisms of Action and Its Topical Use in Dermatology
+Source: PubMed
+URL: https://pubmed.ncbi.nlm.nih.gov/24993939/
+Authors: Wohlrab J, Kreft D
+Year: 2014
+
+---
+
+Niacinamide, the amide form of vitamin B3, is a water-soluble compound whose 
+skin effects have been studied extensively. When applied topically at sufficient 
+concentrations, niacinamide shows antipruritic (anti-itch), antimicrobial, 
+vasoactive, photo-protective, sebum-regulating, and skin-brightening effects, 
+with the degree of each effect depending on concentration used. Mechanistically, 
+niacinamide influences NFκB-mediated signaling pathways by inhibiting an enzyme 
+called PARP-1, which plays a role in regulating inflammatory and stress responses 
+in skin cells. This mechanistic basis supports its widespread use as an active 
+ingredient in dermatological and cosmetic formulations targeting inflammation, 
+oil production, and pigmentation concerns.

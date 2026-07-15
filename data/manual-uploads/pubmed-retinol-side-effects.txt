@@ -1,0 +1,20 @@
+Title: The Mechanism of Retinol-Induced Irritation and Its Application to Anti-Irritant Development
+Source: PubMed
+URL: https://pubmed.ncbi.nlm.nih.gov/14615068/
+Authors: Kim et al.
+Year: 2003
+
+---
+
+Despite its well-documented dermatological benefits, retinol and its derivatives 
+commonly cause local skin irritation, presenting as mild redness (erythema) and 
+peeling of the outer skin layer (stratum corneum). Researchers hypothesized that 
+cytokines act as key inflammatory mediators in this retinoid-induced irritation. 
+Using mouse epidermal cells treated with 2% retinol, the study measured changes 
+in inflammatory cytokine expression, including MCP-1 and IL-8, via RT-PCR 
+analysis. Results confirmed that retinoid-induced inflammation is primarily 
+mediated through increased MCP-1 and IL-8 levels, both at the mRNA and protein 
+level, in human epidermal keratinocytes, melanocytes, and fibroblasts. The study 
+also screened several natural compounds (including beta-sitosterol, Ginkgo 
+extract, and raspberry extract) as potential anti-irritant additives to 
+counteract this inflammatory response.

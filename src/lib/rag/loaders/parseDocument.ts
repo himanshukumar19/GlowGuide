@@ -14,7 +14,7 @@ function shortHash(text: string): string {
   for (let i = 0; i < text.length; i++) {
     const char = text.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash = hash & hash;
+    hash = hash | 0;
   }
   return Math.abs(hash).toString(36).slice(0, 8);
 }

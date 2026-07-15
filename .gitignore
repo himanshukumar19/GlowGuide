@@ -9,6 +9,7 @@ build/
 .next/
 out/
 *.js.map
+*.tsbuildinfo
 
 # Environment variables (NEVER commit these)
 .env

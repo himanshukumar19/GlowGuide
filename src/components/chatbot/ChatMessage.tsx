@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronDown, Info, User } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ChatMessage as ChatMessageType } from "@/store/useChatbotStore";
 import {
@@ -12,6 +12,38 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+
+const markdownComponents: Components = {
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  table: ({ children }) => (
+    <div className="my-2 overflow-x-auto rounded-gg-sm border border-border">
+      <table className="w-full border-collapse text-inherit">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-muted [&_tr]:bg-transparent">{children}</thead>,
+  tbody: ({ children }) => <tbody>{children}</tbody>,
+  tr: ({ children }) => (
+    <tr className="even:bg-muted/30">
+      {children}
+    </tr>
+  ),
+  th: ({ children, ...props }) => (
+    <th
+      className="border border-border px-3 py-2 text-left font-semibold text-xs whitespace-nowrap"
+      align={props.align as "left" | "center" | "right" | undefined}
+    >
+      {children}
+    </th>
+  ),
+  td: ({ children, ...props }) => (
+    <td
+      className="border border-border px-3 py-2 text-sm"
+      align={props.align as "left" | "center" | "right" | undefined}
+    >
+      {children}
+    </td>
+  ),
+};
 
 const skincareChemist = "/images/skincare-chemist.jpg";
 
@@ -73,8 +105,8 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
           {isUser ? (
             message.text
           ) : (
-            <div className="space-y-2 [&_p]:m-0 [&_ul]:my-1 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:my-1 [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0.5 [&_strong]:font-semibold [&_em]:italic [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-foreground/5 [&_code]:text-[13px]">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <div className="space-y-2 [&_p]:m-0 [&_ul]:my-1 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:my-1 [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0.5 [&_em]:italic [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-foreground/5 [&_code]:text-[13px]">
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                 {body}
               </ReactMarkdown>
             </div>

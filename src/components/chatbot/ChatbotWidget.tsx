@@ -87,7 +87,7 @@ export const ChatbotWidget = () => {
                 className="fixed top-0 right-0 z-50 h-full w-[400px] bg-card border-l border-border shadow-elevated flex flex-col"
               >
                 <ChatHeader />
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
                   {messages.length === 0 && !isLoading ? emptyState : messageList}
                 </div>
                 <ChatInput />
@@ -102,7 +102,7 @@ export const ChatbotWidget = () => {
                 className="fixed inset-0 z-50 bg-card flex flex-col"
               >
                 <ChatHeader />
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
                   {messages.length === 0 && !isLoading ? emptyState : messageList}
                 </div>
                 <ChatInput />

@@ -9,7 +9,7 @@ export type ChatRequest = {
 
 export type ChatResponse = {
   answer: string;
-  sources: { title: string; url: string }[];
+  sources: { title: string; url: string; sourceType: string }[];
   conversationId: string;
   provider: "openrouter" | "groq";
 };
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       convId,
       "assistant",
       answer,
-      sources.map((s: { title: string; url: string }) => ({ title: s.title, sourceUrl: s.url, score: 0 }))
+      sources.map((s: { title: string; url: string; sourceType?: string }) => ({ title: s.title, sourceUrl: s.url, score: 0, sourceType: s.sourceType }))
     );
 
     return NextResponse.json({

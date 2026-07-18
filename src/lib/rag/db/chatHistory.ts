@@ -14,7 +14,7 @@ export type ConversationDoc = {
 export type MessageDoc = {
   role: "user" | "assistant";
   content: string;
-  sources?: { title: string; sourceUrl: string; score: number }[];
+  sources?: { title: string; sourceUrl: string; score: number; sourceType?: string }[];
   createdAt: FirebaseFirestore.Timestamp;
 };
 
@@ -45,7 +45,7 @@ export async function addMessage(
   conversationId: string,
   role: "user" | "assistant",
   content: string,
-  sources?: { title: string; sourceUrl: string; score: number }[]
+  sources?: { title: string; sourceUrl: string; score: number; sourceType?: string }[]
 ): Promise<string> {
   // TODO: Implement message addition
   // 1. Add doc to conversations/{conversationId}/messages with role, content, sources, createdAt

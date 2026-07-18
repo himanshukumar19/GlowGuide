@@ -7,7 +7,7 @@ export interface ChatMessage {
   role: 'user' | 'bot';
   text: string;
   timestamp: number;
-  sources?: { title: string; url: string }[];
+  sources?: { title: string; url: string; sourceType?: string }[];
 }
 
 interface ChatbotState {
@@ -21,7 +21,7 @@ interface ChatbotState {
   toggleOpen: () => void;
   open: () => void;
   close: () => void;
-  addMessage: (role: 'user' | 'bot', text: string, sources?: { title: string; url: string }[]) => void;
+  addMessage: (role: 'user' | 'bot', text: string, sources?: { title: string; url: string; sourceType?: string }[]) => void;
   sendQuery: (text: string) => Promise<void>;
   resetQueryCount: () => void;
 }

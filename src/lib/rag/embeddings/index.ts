@@ -1,6 +1,18 @@
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 
 const EXPECTED_DIM = 768;
+const QUERY_MAX_RETRIES = 5;
+const QUERY_BASE_DELAY_MS = 3000;
+const BATCH_MAX_RETRIES = 1;
+const BATCH_BASE_DELAY_MS = 5000;
+
+async function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function isEmpty(vector: number[]): boolean {
+  return vector.length === 0;
+}
 
 class DimensionValidatedEmbeddings extends GoogleGenerativeAIEmbeddings {
   private verified = false;
@@ -20,7 +32,7 @@ class DimensionValidatedEmbeddings extends GoogleGenerativeAIEmbeddings {
   }
 
   private validateBatch(vectors: number[][]): number[][] {
-    if (!this.verified && vectors.length > 0) {
+    if (!this.verified && vectors.length > 0 && vectors[0].length > 0) {
       this.validate(vectors[0]);
     }
     return vectors.map((v) =>
@@ -29,11 +41,49 @@ class DimensionValidatedEmbeddings extends GoogleGenerativeAIEmbeddings {
   }
 
   async embedQuery(document: string): Promise<number[]> {
-    return this.validate(await super.embedQuery(document));
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt <= QUERY_MAX_RETRIES; attempt++) {
+      const result = await super.embedQuery(document);
+      if (!isEmpty(result)) return this.validate(result);
+      lastError = new Error(
+        `[embeddings] embedQuery returned empty vector (attempt ${attempt + 1}/${QUERY_MAX_RETRIES + 1})`
+      );
+      console.warn(lastError.message);
+      if (attempt < QUERY_MAX_RETRIES) {
+        const delay = QUERY_BASE_DELAY_MS * Math.pow(2, attempt);
+        console.warn(`[embeddings] Retrying in ${delay}ms...`);
+        await sleep(delay);
+      }
+    }
+    throw lastError!;
   }
 
   async embedDocuments(documents: string[]): Promise<number[][]> {
-    return this.validateBatch(await super.embedDocuments(documents));
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt <= BATCH_MAX_RETRIES; attempt++) {
+      const results = await super.embedDocuments(documents);
+      const validated = this.validateBatch(results);
+
+      const emptyIndices: number[] = [];
+      for (let i = 0; i < validated.length; i++) {
+        if (isEmpty(validated[i])) emptyIndices.push(i);
+      }
+
+      if (emptyIndices.length === 0) return validated;
+
+      if (attempt < BATCH_MAX_RETRIES) {
+        const delay = BATCH_BASE_DELAY_MS * Math.pow(2, attempt);
+        console.warn(
+          `[embeddings] ${emptyIndices.length}/${documents.length} vectors came back empty (attempt ${attempt + 1}/${BATCH_MAX_RETRIES + 1}). Retrying in ${delay}ms...`
+        );
+        await sleep(delay);
+      } else {
+        lastError = new Error(
+          `[embeddings] ${emptyIndices.length}/${documents.length} vectors still empty after ${BATCH_MAX_RETRIES + 1} attempts`
+        );
+      }
+    }
+    throw lastError!;
   }
 }
 
@@ -45,3 +95,10 @@ export const embeddings = new DimensionValidatedEmbeddings({
   model: "gemini-embedding-001",
   apiKey: process.env.GEMINI_API_KEY,
 });
+
+export function createEmbeddings(apiKey: string): DimensionValidatedEmbeddings {
+  return new DimensionValidatedEmbeddings({
+    model: "gemini-embedding-001",
+    apiKey,
+  });
+}

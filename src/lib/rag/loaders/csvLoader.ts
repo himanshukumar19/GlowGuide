@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "fs";
+import { readdirSync, readFileSync, existsSync } from "fs";
 import { join, extname, basename } from "path";
 import { Document } from "@langchain/core/documents";
 
@@ -78,38 +78,107 @@ function parseCSV(text: string): { headers: string[]; rows: Record<string, strin
   return { headers, rows };
 }
 
+function rowToPageContent(
+  row: Record<string, string>,
+  _headers: string[]
+): string {
+  const entries = Object.entries(row).filter(
+    ([, v]) => v && v.trim().length > 0
+  );
+
+  if (entries.length === 0) return "";
+
+  const label = entries[0][0];
+  const value = entries[0][1];
+
+  if (entries.length === 1) {
+    return `${label}: ${value}`;
+  }
+
+  const rest = entries
+    .slice(1)
+    .map(([k, v]) => `${k.toLowerCase()}: ${v}`)
+    .join(", ");
+
+  return `${label}: ${value}. ${rest}.`;
+}
+
+function loadSidecar(dirPath: string, filename: string): Record<string, string> | null {
+  const sidecarPath = join(dirPath, `${filename}.json`);
+  if (!existsSync(sidecarPath)) return null;
+
+  try {
+    const raw = readFileSync(sidecarPath, "utf-8");
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+const URL_COLUMNS = ["product_url", "url", "link", "source_url"];
+const NAME_COLUMNS = ["product_name", "name", "title"];
+
+function extractRowUrl(row: Record<string, string>): string {
+  for (const col of URL_COLUMNS) {
+    const val = row[col];
+    if (val && val.trim().startsWith("http")) return val.trim();
+  }
+  return "";
+}
+
+function extractRowTitle(row: Record<string, string>): string {
+  for (const col of NAME_COLUMNS) {
+    const val = row[col];
+    if (val && val.trim().length > 0) return val.trim();
+  }
+  return "";
+}
+
 /**
- * Load all .csv files from a directory and return one Document per file.
- * Each Document carries parsed row data in metadata.rows for table chunking.
+ * Read all .csv files in a directory and return one Document per row.
+ * Each Document's pageContent is a natural-language sentence derived
+ * from the row's fields. Metadata includes sourceUrl from a matching
+ * .json sidecar file if one exists (same filename, .json extension).
  *
  * @param dirPath - Directory containing .csv files
- * @returns Array of Document objects, one per CSV file
+ * @returns Array of Document objects, one per CSV row
  */
-export function loadCsvDocs(dirPath: string): Document[] {
+export async function loadCsvDocs(dirPath: string): Promise<Document[]> {
   const files = readdirSync(dirPath).filter((f) => extname(f) === ".csv");
+  const documents: Document[] = [];
 
-  return files.map((file) => {
+  for (const file of files) {
     const filePath = join(dirPath, file);
     const raw = readFileSync(filePath, "utf-8");
     const filename = basename(file, extname(file));
     const { headers, rows } = parseCSV(raw);
 
-    const docId = filename;
+    const sidecar = loadSidecar(dirPath, filename);
+    const sourceUrl = sidecar?.sourceUrl ?? sidecar?.url ?? sidecar?.URL ?? "";
 
-    return new Document({
-      pageContent: raw.trim(),
-      metadata: {
-        docId,
-        title: `${filename} (${rows.length} products)`,
-        sourceUrl: "",
-        sourceType: "dataset",
-        isTable: true,
-        retrievedAt: new Date().toISOString(),
-        rows,
-        headers,
-      },
-    });
-  });
+    for (let i = 0; i < rows.length; i++) {
+      const pageContent = rowToPageContent(rows[i], headers);
+      if (!pageContent) continue;
+
+      const rowUrl = extractRowUrl(rows[i]);
+      const rowTitle = extractRowTitle(rows[i]);
+
+      documents.push(
+        new Document({
+          pageContent,
+          metadata: {
+            docId: `${filename}-row-${i}`,
+            title: rowTitle || filename,
+            sourceType: "dataset",
+            sourceUrl: rowUrl || sourceUrl,
+            retrievedAt: new Date().toISOString(),
+          },
+        })
+      );
+    }
+  }
+
+  return documents;
 }
 
 export { parseCSV };

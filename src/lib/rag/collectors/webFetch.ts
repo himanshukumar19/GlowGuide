@@ -1,6 +1,7 @@
 import { Readability } from "@mozilla/readability";
 import { JSDOM } from "jsdom";
 import * as cheerio from "cheerio";
+import FirecrawlApp from "@mendable/firecrawl-js";
 import type { RawDoc } from "./types";
 
 function cleanText(text: string): string {
@@ -127,4 +128,48 @@ export async function collectFromWebBatch(
   }
 
   return results;
+}
+
+/**
+ * Fetch a URL and return clean markdown content using Firecrawl.
+ * Used for live web search fallback — not for bulk ingestion.
+ *
+ * @param url - The URL to scrape
+ * @returns {title, markdown} or empty string on failure
+ */
+export async function fetchAndClean(
+  url: string
+): Promise<{ title: string; markdown: string }> {
+  const apiKey = process.env.FIRECRAWL_API_KEY;
+  if (!apiKey) {
+    console.warn("[webFetch] FIRECRAWL_API_KEY not set — skipping scrape");
+    return { title: "", markdown: "" };
+  }
+
+  const app = new FirecrawlApp({ apiKey });
+
+  try {
+    const result = await app.scrapeUrl(url, {
+      formats: ["markdown"],
+    });
+
+    if (!result || "error" in result) {
+      console.warn("[webFetch] Firecrawl error for", url, ":", (result as any)?.error);
+      return { title: "", markdown: "" };
+    }
+
+    const data = (result as any).data ?? result;
+    const title = data?.metadata?.title ?? data?.title ?? "";
+    const markdown = data?.markdown ?? "";
+
+    if (!markdown) {
+      console.warn("[webFetch] No markdown content from", url);
+      return { title, markdown: "" };
+    }
+
+    return { title, markdown };
+  } catch (e) {
+    console.warn("[webFetch] Firecrawl scrape failed for", url, ":", e instanceof Error ? e.message : e);
+    return { title: "", markdown: "" };
+  }
 }

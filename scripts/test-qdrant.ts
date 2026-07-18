@@ -28,7 +28,30 @@ async function test() {
       console.log("ℹ️ Collection already exists: skincare_chunks");
     }
 
-    // 3. Insert one test point using the real embedding you just generated
+    // 3. Count total points in the collection
+    const count = await client.count("skincare_chunks", { exact: true });
+    console.log(`📊 Total points in collection: ${count.count}`);
+
+    // 3b. Debug: scroll all points (--debug or --list flag)
+    const debug = process.argv.includes("--debug") || process.argv.includes("--list");
+    if (debug) {
+      console.log("\n🔍 Debug: scrolling all points...\n");
+      const scrollResult = await client.scroll("skincare_chunks", {
+        limit: 20,
+        with_payload: true,
+        with_vector: false,
+      });
+
+      for (const point of scrollResult.points) {
+        const payload = point.payload as Record<string, any> | undefined;
+        const text = payload?.text ?? payload?.pageContent ?? payload?.title ?? JSON.stringify(payload);
+        const preview = String(text).slice(0, 120).replace(/\n/g, " ");
+        console.log(`  [id: ${point.id}] ${preview}${String(text).length > 120 ? "..." : ""}`);
+      }
+      console.log(`\n  (showing ${scrollResult.points.length} points)\n`);
+    }
+
+    // 4. Insert one test point
     await client.upsert("skincare_chunks", {
       points: [
         {

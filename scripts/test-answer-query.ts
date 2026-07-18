@@ -6,7 +6,7 @@ dotenv.config({ path: ".env.local" });
 async function main() {
   const { answerQuery } = await import("../src/lib/rag/retrieve");
 
-  const question = "Does niacinamide help with acne?";
+  const question = process.argv[2] || "Does niacinamide help with acne?";
 
   console.log(`Question: ${question}\n`);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useReducer } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -17,6 +17,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -25,174 +32,123 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { api } from "@/api/client";
+import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
+import type { Ingredient } from "@/lib/schemas";
 
-interface Ingredient {
-  id: string;
-  name: string;
-  description: string;
-  benefits: string[];
-  sideEffects: string[];
-  suitableSkinTypes: string[];
-  category: string;
-}
-
-type Action =
-  | { type: "ADD"; ingredient: Ingredient }
-  | { type: "UPDATE"; ingredient: Ingredient }
-  | { type: "DELETE"; id: string };
-
-const INITIAL_INGREDIENTS: Ingredient[] = [
-  {
-    id: "1",
-    name: "Centella Asiatica (Cica)",
-    description: "A botanical herb known for its exceptional wound healing and anti-inflammatory properties.",
-    benefits: ["Calms redness and inflammation", "Repairs skin barrier", "Stimulates collagen synthesis"],
-    sideEffects: ["Extremely rare contact dermatitis"],
-    suitableSkinTypes: ["Sensitive", "Dry", "Combination", "Normal"],
-    category: "Soothing Agent",
-  },
-  {
-    id: "2",
-    name: "Ceramides",
-    description: "Lipids that make up over 50% of the skin barrier, essential for moisture retention.",
-    benefits: ["Restores skin moisture barrier", "Prevents transepidermal water loss", "Smoothes skin texture"],
-    sideEffects: ["None reported"],
-    suitableSkinTypes: ["Dry", "Sensitive", "Normal", "Combination", "Oily"],
-    category: "Barrier Restorer",
-  },
-  {
-    id: "3",
-    name: "Glycolic Acid",
-    description: "The smallest alpha hydroxy acid molecule that penetrates deeply to dissolve dead skin cells.",
-    benefits: ["Brightens dull skin tone", "Fades hyperpigmentation", "Smooths fine lines"],
-    sideEffects: ["Mild stinging", "Increased sun sensitivity", "Redness if overused"],
-    suitableSkinTypes: ["Normal", "Dry", "Combination"],
-    category: "Chemical Exfoliant (AHA)",
-  },
-  {
-    id: "4",
-    name: "Hyaluronic Acid",
-    description: "A powerful moisture-binding ingredient capable of holding up to 1000 times its weight in water.",
-    benefits: ["Intense surface hydration", "Reduces dehydration lines", "Plumps skin surface"],
-    sideEffects: ["Can dry out skin if applied in dry climates without a locking moisturizer"],
-    suitableSkinTypes: ["Dry", "Normal", "Combination", "Oily", "Sensitive"],
-    category: "Humectant",
-  },
-  {
-    id: "5",
-    name: "Niacinamide (Vitamin B3)",
-    description: "A water-soluble vitamin that works to refine pores, even skin tone, and strengthen the barrier.",
-    benefits: ["Regulates excess sebum", "Reduces hyperpigmentation", "Minimizes visible pores"],
-    sideEffects: ["Mild flushing at high concentrations (>10%)"],
-    suitableSkinTypes: ["Oily", "Combination", "Normal", "Dry", "Sensitive"],
-    category: "Multitasker",
-  },
-  {
-    id: "6",
-    name: "Retinol (Vitamin A)",
-    description: "A gold-standard active that speeds up skin cell renewal and boosts collagen production.",
-    benefits: ["Speeds up cell turnover", "Fades wrinkles", "Clears congested pores"],
-    sideEffects: ["Dryness and flaking", "Sun sensitivity", "Redness and irritation"],
-    suitableSkinTypes: ["Normal", "Dry", "Combination", "Oily"],
-    category: "Anti-Aging Active",
-  },
-  {
-    id: "7",
-    name: "Salicylic Acid (BHA)",
-    description: "An oil-soluble exfoliant that penetrates deep into pores to dissolve sebum and debris.",
-    benefits: ["Clears deep clogged pores", "Exfoliates interior pore walls", "Reduces acne breakouts"],
-    sideEffects: ["Mild dryness", "Slight irritation on compromised skin"],
-    suitableSkinTypes: ["Oily", "Combination"],
-    category: "Acne Treatment",
-  },
-  {
-    id: "8",
-    name: "Vitamin C (L-Ascorbic Acid)",
-    description: "A potent antioxidant that neutralizes free radicals and brightens skin tone.",
-    benefits: ["Neutralizes free radical damage", "Fades sun spots", "Enhances natural radiance"],
-    sideEffects: ["Tingling sensation", "Can oxidize easily if exposed to light"],
-    suitableSkinTypes: ["Normal", "Dry", "Combination", "Oily"],
-    category: "Antioxidant",
-  },
-];
-
-function reducer(state: Ingredient[], action: Action): Ingredient[] {
-  switch (action.type) {
-    case "ADD":
-      return [...state, action.ingredient];
-    case "UPDATE":
-      return state.map((i) => (i.id === action.ingredient.id ? action.ingredient : i));
-    case "DELETE":
-      return state.filter((i) => i.id !== action.id);
-    default:
-      return state;
-  }
-}
-
-const emptyForm: Ingredient = {
-  id: "",
+const emptyForm: Omit<Ingredient, "id" | "createdAt" | "updatedAt"> = {
   name: "",
   description: "",
   benefits: [],
   sideEffects: [],
   suitableSkinTypes: [],
   category: "",
+  safetyRating: undefined,
 };
 
 const AdminIngredients = () => {
-  const [ingredients, dispatch] = useReducer(reducer, INITIAL_INGREDIENTS);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<Ingredient>(emptyForm);
+  const [form, setForm] = useState<typeof emptyForm>(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchIngredients();
+  }, []);
+
+  const fetchIngredients = async () => {
+    try {
+      const data = await api.get<Ingredient[]>("/api/admin/ingredients");
+      setIngredients(data);
+    } catch {
+      toast({ title: "Failed to load ingredients", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const openAdd = () => {
     setEditingId(null);
-    setForm({ ...emptyForm, id: String(Date.now()) });
+    setForm(emptyForm);
     setDialogOpen(true);
   };
 
   const openEdit = (ingredient: Ingredient) => {
     setEditingId(ingredient.id);
-    setForm({ ...ingredient });
+    setForm({
+      name: ingredient.name,
+      description: ingredient.description,
+      benefits: ingredient.benefits,
+      sideEffects: ingredient.sideEffects,
+      suitableSkinTypes: ingredient.suitableSkinTypes,
+      category: ingredient.category,
+      safetyRating: ingredient.safetyRating,
+    });
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim() || !form.category.trim()) {
       toast({ title: "Validation Error", description: "Name and category are required.", variant: "destructive" });
       return;
     }
-    const benefits = typeof form.benefits === "string"
-      ? (form.benefits as unknown as string).split(",").map((s) => s.trim()).filter(Boolean)
-      : form.benefits;
-    const sideEffects = typeof form.sideEffects === "string"
-      ? (form.sideEffects as unknown as string).split(",").map((s) => s.trim()).filter(Boolean)
-      : form.sideEffects;
-    const suitableSkinTypes = typeof form.suitableSkinTypes === "string"
-      ? (form.suitableSkinTypes as unknown as string).split(",").map((s) => s.trim()).filter(Boolean)
-      : form.suitableSkinTypes;
 
-    const payload = { ...form, benefits, sideEffects, suitableSkinTypes };
-
-    if (editingId) {
-      dispatch({ type: "UPDATE", ingredient: payload });
-      toast({ title: "Ingredient Updated", description: `${payload.name} has been updated.` });
-    } else {
-      dispatch({ type: "ADD", ingredient: payload });
-      toast({ title: "Ingredient Added", description: `${payload.name} has been added.` });
+    setSaving(true);
+    try {
+      if (editingId) {
+        const data = await api.put<{ success: boolean; ingredient: Ingredient }>(
+          `/api/admin/ingredients/${editingId}`,
+          form
+        );
+        setIngredients((prev) =>
+          prev.map((i) => (i.id === editingId ? data.ingredient : i))
+        );
+        toast({ title: "Ingredient Updated", description: `${form.name} has been updated.` });
+      } else {
+        const data = await api.post<{ success: boolean; ingredient: Ingredient }>(
+          "/api/admin/ingredients",
+          form
+        );
+        setIngredients((prev) => [...prev, data.ingredient]);
+        toast({ title: "Ingredient Added", description: `${form.name} has been added.` });
+      }
+      setDialogOpen(false);
+    } catch {
+      toast({ title: "Save Failed", description: "Could not save ingredient.", variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    setDialogOpen(false);
   };
 
-  const handleDelete = (id: string, name: string) => {
-    dispatch({ type: "DELETE", id });
-    toast({ title: "Ingredient Deleted", description: `${name} has been removed.` });
+  const handleDelete = async (id: string, name: string) => {
+    setDeleting(id);
+    try {
+      await api.del(`/api/admin/ingredients/${id}`);
+      setIngredients((prev) => prev.filter((i) => i.id !== id));
+      toast({ title: "Ingredient Deleted", description: `${name} has been removed.` });
+    } catch {
+      toast({ title: "Delete Failed", description: "Could not delete ingredient.", variant: "destructive" });
+    } finally {
+      setDeleting(null);
+    }
   };
 
-  const setFormField = (field: keyof Ingredient, value: string | string[]) => {
+  const setFormField = (field: keyof typeof emptyForm, value: unknown) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
+
+  if (loading) {
+    return (
+      <AdminLayout title="Ingredients">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Ingredients">
@@ -210,49 +166,80 @@ const AdminIngredients = () => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Safety Rating</TableHead>
                 <TableHead>Suitable Skin Types</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ingredients.map((ing) => (
-                <TableRow key={ing.id}>
-                  <TableCell className="font-medium">{ing.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{ing.category}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {ing.suitableSkinTypes.map((st) => (
-                        <Badge key={st} variant="outline" className="text-xs">
-                          {st}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(ing)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(ing.id, ing.name)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+              {ingredients.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                    No ingredients yet. Click "Add Ingredient" to create one.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                ingredients.map((ing) => (
+                  <TableRow key={ing.id}>
+                    <TableCell className="font-medium">{ing.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{ing.category}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {ing.safetyRating ? (
+                        <Badge
+                          variant="outline"
+                          className={
+                            ing.safetyRating === "safe"
+                              ? "bg-green-50 text-green-700 border-green-200"
+                              : ing.safetyRating === "moderate"
+                              ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                              : "bg-red-50 text-red-700 border-red-200"
+                          }
+                        >
+                          {ing.safetyRating}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {ing.suitableSkinTypes.map((st) => (
+                          <Badge key={st} variant="outline" className="text-xs">
+                            {st}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(ing)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(ing.id, ing.name)}
+                          disabled={deleting === ing.id}
+                        >
+                          {deleting === ing.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -285,6 +272,25 @@ const AdminIngredients = () => {
               </div>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="safetyRating">Safety Rating</Label>
+              <Select
+                value={form.safetyRating || ""}
+                onValueChange={(val) =>
+                  setFormField("safetyRating", val || undefined)
+                }
+              >
+                <SelectTrigger id="safetyRating">
+                  <SelectValue placeholder="Select safety rating (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="safe">Safe</SelectItem>
+                  <SelectItem value="moderate">Moderate</SelectItem>
+                  <SelectItem value="caution">Caution</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
@@ -300,7 +306,7 @@ const AdminIngredients = () => {
                 id="benefits"
                 value={form.benefits.join(", ")}
                 onChange={(e) =>
-                  setFormField("benefits", e.target.value.split(",").map((s) => s.trim()))
+                  setFormField("benefits", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))
                 }
                 placeholder="Brightens skin, Fades spots, Boosts collagen"
               />
@@ -311,7 +317,7 @@ const AdminIngredients = () => {
                 id="sideEffects"
                 value={form.sideEffects.join(", ")}
                 onChange={(e) =>
-                  setFormField("sideEffects", e.target.value.split(",").map((s) => s.trim()))
+                  setFormField("sideEffects", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))
                 }
                 placeholder="Mild irritation, Sun sensitivity"
               />
@@ -324,7 +330,7 @@ const AdminIngredients = () => {
                 onChange={(e) =>
                   setFormField(
                     "suitableSkinTypes",
-                    e.target.value.split(",").map((s) => s.trim()),
+                    e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
                   )
                 }
                 placeholder="Oily, Dry, Combination, Normal, Sensitive"
@@ -335,7 +341,10 @@ const AdminIngredients = () => {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>{editingId ? "Update" : "Add"} Ingredient</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+              {editingId ? "Update" : "Add"} Ingredient
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

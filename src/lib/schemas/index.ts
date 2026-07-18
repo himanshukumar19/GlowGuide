@@ -42,3 +42,6 @@ export {
   orderStatusEnum,
 } from "./order";
 export type { Order, OrderItem, OrderStatus, Address } from "./order";
+
+export { ingredientSchema, ingredientSafetyRatingEnum } from "./ingredient";
+export type { Ingredient } from "./ingredient";

@@ -35,3 +35,11 @@ export {
   listAllOrders,
   updateOrderStatus,
 } from "./order";
+export {
+  getAllIngredients,
+  getIngredientById,
+  createIngredient,
+  updateIngredient,
+  deleteIngredient,
+  countIngredients,
+} from "./ingredient";

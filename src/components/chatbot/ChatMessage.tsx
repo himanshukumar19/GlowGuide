@@ -37,6 +37,23 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
         >
           {message.text}
         </div>
+
+        {!isUser && message.sources && message.sources.length > 0 && (
+          <div className="px-4 space-y-0.5">
+            {message.sources.map((source, idx) => (
+              <a
+                key={source.url}
+                href={source.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-[11px] text-muted-foreground/60 hover:text-primary transition-colors truncate"
+              >
+                {source.title}
+              </a>
+            ))}
+          </div>
+        )}
+
         <p
           className={cn(
             "text-[10px] text-muted-foreground px-1",

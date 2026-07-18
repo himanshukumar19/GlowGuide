@@ -9,20 +9,21 @@ import { cn } from "@/lib/utils";
 export const ChatInput = () => {
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const { sendQuery, queryCount, maxQueries } = useChatbotStore();
+  const { sendQuery, queryCount, maxQueries, isLoading } = useChatbotStore();
   const { customer } = useAuth();
 
   const isPaid = customer?.subscriptionTier === "PAID";
   const isAtLimit = !isPaid && queryCount >= maxQueries;
   const remaining = maxQueries - queryCount;
   const trimmed = text.trim();
+  const isBlocked = isAtLimit || isLoading;
 
   const handleSubmit = useCallback(() => {
-    if (!trimmed || isAtLimit) return;
-    sendQuery(trimmed, isPaid);
+    if (!trimmed || isBlocked) return;
+    sendQuery(trimmed);
     setText("");
     inputRef.current?.focus();
-  }, [trimmed, isAtLimit, sendQuery, isPaid]);
+  }, [trimmed, isBlocked, sendQuery]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -55,8 +56,8 @@ export const ChatInput = () => {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask about products, skin concerns..."
-          disabled={isAtLimit}
+          placeholder={isLoading ? "Glowy is typing..." : "Ask about products, skin concerns..."}
+          disabled={isBlocked}
           className={cn(
             "flex-1 h-10 px-4 py-2 rounded-gg bg-muted border border-border text-sm text-foreground",
             "placeholder:text-muted-foreground",
@@ -68,10 +69,10 @@ export const ChatInput = () => {
 
         <button
           onClick={handleSubmit}
-          disabled={!trimmed || isAtLimit}
+          disabled={!trimmed || isBlocked}
           className={cn(
             "w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0",
-            trimmed && !isAtLimit
+            trimmed && !isBlocked
               ? "bg-primary text-primary-foreground hover:bg-primary-hover active:scale-95"
               : "bg-muted text-muted-foreground",
             "disabled:opacity-50 disabled:cursor-not-allowed"

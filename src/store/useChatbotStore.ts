@@ -1,13 +1,13 @@
 'use client';
 
 import { create } from 'zustand';
-import { CHATBOT_RESPONSES, FALLBACK_RESPONSE } from '@/data/chatbotData';
 
 export interface ChatMessage {
   id: string;
   role: 'user' | 'bot';
   text: string;
   timestamp: number;
+  sources?: { title: string; url: string }[];
 }
 
 interface ChatbotState {
@@ -15,23 +15,15 @@ interface ChatbotState {
   messages: ChatMessage[];
   queryCount: number;
   maxQueries: number;
+  conversationId: string | null;
+  isLoading: boolean;
 
   toggleOpen: () => void;
   open: () => void;
   close: () => void;
-  addMessage: (role: 'user' | 'bot', text: string) => void;
-  sendQuery: (text: string, isPaid: boolean) => void;
+  addMessage: (role: 'user' | 'bot', text: string, sources?: { title: string; url: string }[]) => void;
+  sendQuery: (text: string) => Promise<void>;
   resetQueryCount: () => void;
-}
-
-function findResponse(input: string): string {
-  const lower = input.toLowerCase();
-  for (const entry of CHATBOT_RESPONSES) {
-    if (entry.keywords.some((kw) => lower.includes(kw))) {
-      return entry.response;
-    }
-  }
-  return FALLBACK_RESPONSE;
 }
 
 function generateId(): string {
@@ -46,31 +38,56 @@ export const useChatbotStore = create<ChatbotState>()((set, get) => ({
   messages: [],
   queryCount: 0,
   maxQueries: 10,
+  conversationId: null,
+  isLoading: false,
 
   toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
 
-  addMessage: (role, text) => {
+  addMessage: (role, text, sources) => {
     const message: ChatMessage = {
       id: generateId(),
       role,
       text,
       timestamp: Date.now(),
+      sources,
     };
     set((state) => ({ messages: [...state.messages, message] }));
   },
 
-  sendQuery: (text, isPaid) => {
-    const { queryCount, addMessage } = get();
-    const max = isPaid ? Infinity : 10;
+  sendQuery: async (text) => {
+    if (!text.trim()) return;
 
-    if (!isPaid && queryCount >= 10) return;
+    const { isLoading, conversationId, addMessage } = get();
+    if (isLoading) return;
 
     addMessage('user', text);
-    const response = findResponse(text);
-    addMessage('bot', response);
-    set({ queryCount: queryCount + 1, maxQueries: max });
+    set({ isLoading: true });
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, conversationId }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+      const { answer, sources, conversationId: newConversationId } = data;
+
+      if (newConversationId) {
+        set({ conversationId: newConversationId });
+      }
+
+      addMessage('bot', answer, sources);
+      set((state) => ({ queryCount: state.queryCount + 1 }));
+    } catch {
+      addMessage('bot', "Sorry, I'm having trouble responding right now. Please try again.");
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   resetQueryCount: () => set({ queryCount: 0 }),

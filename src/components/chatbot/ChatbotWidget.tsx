@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useChatbotStore } from "@/store/useChatbotStore";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessage } from "./ChatMessage";
@@ -11,7 +11,7 @@ import { ChatInput } from "./ChatInput";
 const skincareChemist = "/images/skincare-chemist.jpg";
 
 export const ChatbotWidget = () => {
-  const { isOpen, toggleOpen, messages } = useChatbotStore();
+  const { isOpen, toggleOpen, messages, isLoading } = useChatbotStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isDesktop, setIsDesktop] = useState(true);
 
@@ -25,7 +25,52 @@ export const ChatbotWidget = () => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isLoading]);
+
+  const emptyState = (
+    <div className="flex flex-col items-center justify-center h-full text-center px-6">
+      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20 shadow-soft mb-4 animate-float">
+        <img src={skincareChemist} alt="Glowy" className="w-full h-full object-cover" />
+      </div>
+      <h4 className="font-heading text-base font-bold text-foreground mb-1">
+        Chat with Glowy
+      </h4>
+      <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+        Ask me anything about skincare products, routines, and
+        ingredients!
+      </p>
+    </div>
+  );
+
+  const typingIndicator = (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="flex gap-3 items-end justify-start"
+    >
+      <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-primary/20">
+        <img src={skincareChemist} alt="Glowy" className="w-full h-full object-cover" />
+      </div>
+      <div className="px-4 py-2.5 bg-muted text-foreground rounded-gg rounded-bl-sm">
+        <div className="flex gap-1 py-0.5">
+          <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+          <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+          <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  const messageList = (
+    <>
+      {messages.map((msg) => (
+        <ChatMessage key={msg.id} message={msg} />
+      ))}
+      {isLoading && typingIndicator}
+      <div ref={messagesEndRef} />
+    </>
+  );
 
   return (
     <>
@@ -43,25 +88,7 @@ export const ChatbotWidget = () => {
               >
                 <ChatHeader />
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20 shadow-soft mb-4 animate-float">
-                        <img src={skincareChemist} alt="Glowy" className="w-full h-full object-cover" />
-                      </div>
-                      <h4 className="font-heading text-base font-bold text-foreground mb-1">
-                        Chat with Glowy
-                      </h4>
-                      <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-                        Ask me anything about skincare products, routines, and
-                        ingredients!
-                      </p>
-                    </div>
-                  ) : (
-                    messages.map((msg) => (
-                      <ChatMessage key={msg.id} message={msg} />
-                    ))
-                  )}
-                  <div ref={messagesEndRef} />
+                  {messages.length === 0 && !isLoading ? emptyState : messageList}
                 </div>
                 <ChatInput />
               </motion.div>
@@ -76,25 +103,7 @@ export const ChatbotWidget = () => {
               >
                 <ChatHeader />
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20 shadow-soft mb-4 animate-float">
-                        <img src={skincareChemist} alt="Glowy" className="w-full h-full object-cover" />
-                      </div>
-                      <h4 className="font-heading text-base font-bold text-foreground mb-1">
-                        Chat with Glowy
-                      </h4>
-                      <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-                        Ask me anything about skincare products, routines, and
-                        ingredients!
-                      </p>
-                    </div>
-                  ) : (
-                    messages.map((msg) => (
-                      <ChatMessage key={msg.id} message={msg} />
-                    ))
-                  )}
-                  <div ref={messagesEndRef} />
+                  {messages.length === 0 && !isLoading ? emptyState : messageList}
                 </div>
                 <ChatInput />
               </motion.div>

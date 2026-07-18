@@ -303,9 +303,11 @@ async function classifyMessage(
     [
       "system",
       `Classify this message into exactly one category:
-- GREETING: a greeting, farewell, thanks, or casual small talk with no actual skincare question
-- SKINCARE_QUESTION: a question or request related to skincare, dermatology, ingredients, skin conditions, routines, or beauty products
-- OFF_TOPIC: any other question or request unrelated to skincare (general knowledge, other topics, unrelated tasks, etc.)
+- GREETING: a greeting, farewell, thanks, or casual small talk
+- SKINCARE_QUESTION: the user is asking for skincare ADVICE or INFORMATION — about ingredients, routines, skin conditions, treatments, or product recommendations. This is about genuinely wanting skincare knowledge, not just messages that happen to mention skin-related words.
+- OFF_TOPIC: anything else — including creative writing requests (poems, stories, jokes) even if they mention skin/skincare as a topic, general knowledge questions, requests unrelated to getting skincare advice, or any other task not asking for actual skincare information/advice.
+
+Important: a request like "write a poem about skin" is OFF_TOPIC (it's a creative writing task, not a request for skincare advice), even though it mentions "skin". Focus on INTENT (does the user want skincare advice/info?), not just keyword presence.
 
 If GREETING: respond with a JSON object containing a friendly, skincare-branded short reply (no medical disclaimer, no sources). The reply should match the context — greet back warmly for hellos, acknowledge thanks for gratitude, say goodbye for farewells, respond casually for small talk. Always steer toward offering skincare help. Format: {{"type":"GREETING","response":"your reply here"}}
 
@@ -359,7 +361,7 @@ export async function answerQuery(query: string): Promise<QueryResult> {
     console.log("[retrieve] Detected off-topic via LLM, skipping RAG pipeline");
     return {
       answer:
-        "I'm specifically designed to help with skincare-related questions — things like ingredients, routines, skin conditions, or product recommendations. Is there something skincare-related I can help you with?",
+        "I'm specifically designed to help with skincare questions rather than creative writing — but I'd love to help with anything skincare-related! What would you like to know?",
       sources: [],
       provider: "groq",
       usedWebFallback: false,

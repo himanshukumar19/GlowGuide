@@ -286,7 +286,66 @@ async function fetchWebResults(
   return webDocs;
 }
 
+async function classifyMessage(
+  query: string
+): Promise<{ type: "GREETING" | "QUESTION"; response?: string }> {
+  const model = new ChatGroq({
+    model: "llama-3.1-8b-instant",
+    apiKey: process.env.GROQ_API_KEY,
+    temperature: 0,
+    maxRetries: 1,
+  });
+
+  const prompt = ChatPromptTemplate.fromMessages([
+    [
+      "system",
+      `Classify this message as either GREETING (a greeting, farewell, thanks, or casual small talk with no actual skincare question) or QUESTION (contains an actual skincare-related question or request).
+
+If GREETING: respond with a JSON object containing a friendly, skincare-branded short reply (no medical disclaimer, no sources). The reply should match the context — greet back warmly for hellos, acknowledge thanks for gratitude, say goodbye for farewells, respond casually for small talk. Always steer toward offering skincare help. Format: {{"type":"GREETING","response":"your reply here"}}
+
+If QUESTION: respond with {{"type":"QUESTION"}}
+
+Respond with ONLY the JSON object, no other text.`,
+    ],
+    ["human", "Message: {message}"],
+  ]);
+
+  const chain = RunnableSequence.from([
+    prompt,
+    model,
+    new StringOutputParser(),
+  ]);
+
+  try {
+    const result = await chain.invoke({ message: query });
+    const clean = result
+      .trim()
+      .replace(/^```json\s*/, "")
+      .replace(/\s*```$/, "");
+    return JSON.parse(clean);
+  } catch (e) {
+    console.warn(
+      "[retrieve] Greeting classification failed:",
+      e instanceof Error ? e.message : e
+    );
+    return { type: "QUESTION" };
+  }
+}
+
 export async function answerQuery(query: string): Promise<QueryResult> {
+  const classification = await classifyMessage(query);
+  if (classification.type === "GREETING") {
+    console.log("[retrieve] Detected greeting via LLM, skipping RAG pipeline");
+    return {
+      answer:
+        classification.response ||
+        "Hi! I'm your skincare assistant — how can I help you today?",
+      sources: [],
+      provider: "groq",
+      usedWebFallback: false,
+    };
+  }
+
   const vectorStore = await getVectorStore();
 
   const scoredResults = await vectorStore.similaritySearchWithScore(query, 4);

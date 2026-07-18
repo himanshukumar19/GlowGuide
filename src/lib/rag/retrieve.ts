@@ -1,5 +1,6 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatOpenAI } from "@langchain/openai";
 import { ChatGroq } from "@langchain/groq";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { RunnableSequence } from "@langchain/core/runnables";
@@ -20,6 +21,8 @@ Sources labeled "(Source: Live web search)" are live web results fetched specifi
 
 IMPORTANT: Do NOT use inline numbered citation markers like [1], [2], [5] in your answer. Write in natural, flowing language. If you need to attribute a specific claim, reference the source naturally within the sentence (e.g., "According to the AAD...", "One study found...", or "As noted by Incidecoder..."). The full source list with titles and URLs will be displayed separately after your answer — you do not need to include URLs in the answer text.
 
+HARD RULE — NO HALLUCINATED PRODUCTS: Never state a specific product or brand name unless it appears verbatim in the provided context. For ingredient-level advice, general knowledge is fine — you can discuss ingredients, their benefits, what to look for, and general product categories. But named brands and specific product recommendations must come strictly from the knowledge base. If the context does not contain any specific product names, give ingredient and routine guidance without inventing brand names from your training data. Do not say things like "Try CeraVe" or "La Roche-Posay" unless those exact brand names are present in the provided context.
+
 STYLE: Keep answers concise and conversational. For simple factual or yes/no questions, limit your response to 3-5 sentences. Prioritize the 1-2 most directly relevant facts from the context rather than listing every retrieved detail. Expand into deeper explanations, mechanisms of action, or combination therapy notes ONLY when the question itself asks for detail (e.g., "explain how it works," "tell me everything about X," or "what are all the options"). Always keep safety-relevant caveats (e.g., blood clotting risks, medical supervision requirements, pregnancy warnings) even in short answers — those are important regardless of length.
 
 Only say "I don't have enough information to answer that." if neither the curated knowledge base nor the live web sources provide enough information.
@@ -38,7 +41,7 @@ type Source = {
 type QueryResult = {
   answer: string;
   sources: Source[];
-  provider: "gemini" | "groq";
+  provider: "openrouter" | "groq";
   usedWebFallback: boolean;
 };
 
@@ -55,7 +58,7 @@ function formatDocs(docs: Document[]): string {
 }
 
 function buildChain(
-  model: ChatGoogleGenerativeAI | ChatGroq,
+  model: ChatOpenAI | ChatGroq | ChatGoogleGenerativeAI,
   contextDocs: Document[]
 ) {
   const prompt = ChatPromptTemplate.fromMessages([
@@ -419,7 +422,17 @@ export async function answerQuery(query: string): Promise<QueryResult> {
     maxRetries: 2,
   });
 
-  const fallbackModel = new ChatGoogleGenerativeAI({
+  const openRouterModel = new ChatOpenAI({
+    model: "meta-llama/llama-3.3-70b-instruct:free",
+    apiKey: process.env.OPENROUTER_API_KEY,
+    temperature: 0.2,
+    maxRetries: 2,
+    configuration: {
+      baseURL: "https://openrouter.ai/api/v1",
+    },
+  });
+
+  const geminiModel = new ChatGoogleGenerativeAI({
     model: "gemini-2.0-flash",
     apiKey: process.env.GEMINI_API_KEY,
     temperature: 0.2,
@@ -440,27 +453,50 @@ export async function answerQuery(query: string): Promise<QueryResult> {
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     console.warn("[retrieve] Groq failed:", reason);
-    console.log("[retrieve] Gemini fallback triggered");
+    console.log("[retrieve] OpenRouter fallback triggered");
 
     try {
-      const chain = buildChain(fallbackModel, allDocs);
+      const chain = buildChain(openRouterModel, allDocs);
       const rawAnswer = await chain.invoke({ question: query });
       const answer = normalizeAnswerSpacing(rawAnswer);
+      console.log("[retrieve] Answered via: OpenRouter");
       return {
         answer,
         sources: buildSources(allDocs),
-        provider: "gemini",
+        provider: "openrouter",
         usedWebFallback,
       };
-    } catch (fallbackError) {
-      const fbReason = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
-      console.error("[retrieve] Both Groq and Gemini failed:", fbReason);
-      return {
-        answer: "I'm sorry, I'm having technical difficulties right now. Please try again in a moment.",
-        sources: buildSources(allDocs),
-        provider: "gemini",
-        usedWebFallback,
-      };
+    } catch (openRouterError) {
+      const orReason = openRouterError instanceof Error ? openRouterError.message : String(openRouterError);
+      const isModelGone = /404|model.*not.*found|unavailable|invalid.*model/i.test(orReason);
+      if (isModelGone) {
+        console.error("[retrieve] OpenRouter model may have rotated — check https://openrouter.ai/models for current free models. Error:", orReason);
+      } else {
+        console.warn("[retrieve] OpenRouter failed:", orReason);
+      }
+      console.log("[retrieve] Gemini fallback triggered");
+
+      try {
+        const chain = buildChain(geminiModel, allDocs);
+        const rawAnswer = await chain.invoke({ question: query });
+        const answer = normalizeAnswerSpacing(rawAnswer);
+        console.log("[retrieve] Answered via: Gemini");
+        return {
+          answer,
+          sources: buildSources(allDocs),
+          provider: "openrouter",
+          usedWebFallback,
+        };
+      } catch (geminiError) {
+        const gReason = geminiError instanceof Error ? geminiError.message : String(geminiError);
+        console.error("[retrieve] All providers (Groq, OpenRouter, Gemini) failed:", gReason);
+        return {
+          answer: "I'm sorry, I'm having technical difficulties right now. Please try again in a moment.",
+          sources: buildSources(allDocs),
+          provider: "openrouter",
+          usedWebFallback,
+        };
+      }
     }
   }
 }

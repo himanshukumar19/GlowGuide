@@ -14,7 +14,6 @@ export const ChatInput = () => {
 
   const isPaid = customer?.subscriptionTier === "PAID";
   const isAtLimit = !isPaid && queryCount >= maxQueries;
-  const remaining = maxQueries - queryCount;
   const trimmed = text.trim();
   const isBlocked = isAtLimit || isLoading;
 
@@ -34,21 +33,6 @@ export const ChatInput = () => {
 
   return (
     <div className="border-t border-border p-4 bg-background/80 backdrop-blur-sm">
-      {isAtLimit && (
-        <p className="text-xs text-muted-foreground text-center mb-2">
-          You've used {queryCount}/{maxQueries} free queries today.{" "}
-          <button className="text-primary underline font-medium hover:text-primary-hover transition-colors">
-            Upgrade for unlimited
-          </button>
-        </p>
-      )}
-
-      {!isAtLimit && remaining > 0 && remaining <= 2 && (
-        <p className="text-xs text-muted-foreground text-center mb-2">
-          {remaining} query{remaining !== 1 ? "ies" : "y"} remaining today
-        </p>
-      )}
-
       <div className="flex items-center gap-2">
         <input
           ref={inputRef}

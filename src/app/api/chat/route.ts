@@ -11,7 +11,7 @@ export type ChatResponse = {
   answer: string;
   sources: { title: string; url: string }[];
   conversationId: string;
-  provider: "gemini" | "groq";
+  provider: "openrouter" | "groq";
 };
 
 /**

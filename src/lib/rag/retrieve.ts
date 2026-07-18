@@ -288,7 +288,10 @@ async function fetchWebResults(
 
 async function classifyMessage(
   query: string
-): Promise<{ type: "GREETING" | "QUESTION"; response?: string }> {
+): Promise<
+  | { type: "GREETING"; response: string }
+  | { type: "SKINCARE_QUESTION" | "OFF_TOPIC" }
+> {
   const model = new ChatGroq({
     model: "llama-3.1-8b-instant",
     apiKey: process.env.GROQ_API_KEY,
@@ -299,11 +302,16 @@ async function classifyMessage(
   const prompt = ChatPromptTemplate.fromMessages([
     [
       "system",
-      `Classify this message as either GREETING (a greeting, farewell, thanks, or casual small talk with no actual skincare question) or QUESTION (contains an actual skincare-related question or request).
+      `Classify this message into exactly one category:
+- GREETING: a greeting, farewell, thanks, or casual small talk with no actual skincare question
+- SKINCARE_QUESTION: a question or request related to skincare, dermatology, ingredients, skin conditions, routines, or beauty products
+- OFF_TOPIC: any other question or request unrelated to skincare (general knowledge, other topics, unrelated tasks, etc.)
 
 If GREETING: respond with a JSON object containing a friendly, skincare-branded short reply (no medical disclaimer, no sources). The reply should match the context — greet back warmly for hellos, acknowledge thanks for gratitude, say goodbye for farewells, respond casually for small talk. Always steer toward offering skincare help. Format: {{"type":"GREETING","response":"your reply here"}}
 
-If QUESTION: respond with {{"type":"QUESTION"}}
+If SKINCARE_QUESTION: respond with {{"type":"SKINCARE_QUESTION"}}
+
+If OFF_TOPIC: respond with {{"type":"OFF_TOPIC"}}
 
 Respond with ONLY the JSON object, no other text.`,
     ],
@@ -325,21 +333,33 @@ Respond with ONLY the JSON object, no other text.`,
     return JSON.parse(clean);
   } catch (e) {
     console.warn(
-      "[retrieve] Greeting classification failed:",
+      "[retrieve] Intent classification failed:",
       e instanceof Error ? e.message : e
     );
-    return { type: "QUESTION" };
+    return { type: "SKINCARE_QUESTION" };
   }
 }
 
 export async function answerQuery(query: string): Promise<QueryResult> {
   const classification = await classifyMessage(query);
+
   if (classification.type === "GREETING") {
     console.log("[retrieve] Detected greeting via LLM, skipping RAG pipeline");
     return {
       answer:
         classification.response ||
         "Hi! I'm your skincare assistant — how can I help you today?",
+      sources: [],
+      provider: "groq",
+      usedWebFallback: false,
+    };
+  }
+
+  if (classification.type === "OFF_TOPIC") {
+    console.log("[retrieve] Detected off-topic via LLM, skipping RAG pipeline");
+    return {
+      answer:
+        "I'm specifically designed to help with skincare-related questions — things like ingredients, routines, skin conditions, or product recommendations. Is there something skincare-related I can help you with?",
       sources: [],
       provider: "groq",
       usedWebFallback: false,

@@ -77,6 +77,11 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+def health_check():
+    return {"status": "ok", "service": "GlowGuide ML Service", "version": "3.0.0"}
+
+
 def load_model_metadata(name: str, model_id: str):
     model_dir = os.path.join(MODEL_ROOT, name)
     with open(os.path.join(model_dir, "config.json"), encoding="utf-8") as handle:

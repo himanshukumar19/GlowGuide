@@ -1,301 +1,72 @@
+import json
+import gc
+import logging
 import os
-import re
-import joblib
+import secrets
+import time
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from io import BytesIO
+from typing import Dict, Optional
+
+import cv2
 import numpy as np
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
-from fastapi import FastAPI, HTTPException
+import onnxruntime
+from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from PIL import Image, UnidentifiedImageError
 
-# ── Constants ─────────────────────────────────────────────────────────────────
+from fusion import fuse_scores, predict_skin_type
+from schemas import AnalyzeResponse, QuizScores
 
-MODEL_PATH   = "model/model.pkl"
-ENCODER_PATH = "model/label_encoder.pkl"
 
-# All 24 features in the exact order used during training (must match train.py)
-ALL_FEATURES = [
-    "sebum_level",              # 0–100   | quiz Q1
-    "hydration_level",          # 0–100   | quiz Q2
-    "ph_level",                 # 4.0–7.5 | derived from sebum + hydration
-    "skin_temperature",         # 30–36.5 | derived from sensitivity
-    "pore_size",                # 0–100   | quiz Q4
-    "oil_shine",                # 0–10    | derived from sebum
-    "wrinkle_score",            # 0–10    | derived from hydration
-    "roughness_score",          # 0–100   | quiz Q6
-    "elasticity_score",         # 20–100  | derived from hydration + tightness
-    "sensitivity_score",        # 0–100   | quiz Q5
-    "redness_level",            # 0–10    | derived from sensitivity
-    "itchiness_score",          # 0–10    | derived from sensitivity + tightness
-    "pigmentation_level",       # 0–10    | baseline 3.0, NLP adjustable
-    "dark_spot_score",          # 0–10    | baseline 2.5, NLP adjustable
-    "uneven_tone_score",        # 0–10    | derived from roughness
-    "acne_frequency",           # 0–100   | quiz Q3
-    "blackhead_score",          # 0–10    | derived from sebum + pore_size
-    "whitehead_score",          # 0–10    | derived from acne + sebum
-    "tightness_score",          # 0–100   | quiz Q7
-    "flakiness_score",          # 0–10    | derived from tightness + hydration
-    "sun_exposure_hours",       # 0–10    | baseline 4.0, NLP adjustable
-    "pollution_exposure_index",  # 0–100  | baseline 50.0, NLP adjustable
-    "water_intake_liters",      # 0.5–5.0 | derived from hydration
-    "sleep_hours",              # 3–9     | baseline 7.0, NLP adjustable
-]
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logger = logging.getLogger("glowguide.ml_service")
 
-# Valid range for each feature — used to clamp values after derivation/NLP
-FEATURE_BOUNDS: Dict[str, Tuple[float, float]] = {
-    "sebum_level":              (0,    100),
-    "hydration_level":          (0,    100),
-    "ph_level":                 (4.0,  7.5),
-    "skin_temperature":         (30.0, 36.5),
-    "pore_size":                (0,    100),
-    "oil_shine":                (0,    10),
-    "wrinkle_score":            (0,    10),
-    "roughness_score":          (0,    100),
-    "elasticity_score":         (20,   100),
-    "sensitivity_score":        (0,    100),
-    "redness_level":            (0,    10),
-    "itchiness_score":          (0,    10),
-    "pigmentation_level":       (0,    10),
-    "dark_spot_score":          (0,    10),
-    "uneven_tone_score":        (0,    10),
-    "acne_frequency":           (0,    100),
-    "blackhead_score":          (0,    10),
-    "whitehead_score":          (0,    10),
-    "tightness_score":          (0,    100),
-    "flakiness_score":          (0,    10),
-    "sun_exposure_hours":       (0,    10),
-    "pollution_exposure_index":  (0,   100),
-    "water_intake_liters":      (0.5,  5.0),
-    "sleep_hours":              (3,    9),
+SKIN_MODEL = "dima806/skin_types_image_detection"
+ACNE_MODEL = "imfarzanansari/skintelligent-acne"
+MODEL_ROOT = os.path.join(os.path.dirname(__file__), "models")
+MAX_IMAGE_BYTES = 8 * 1024 * 1024
+MIN_IMAGE_DIMENSION = 480
+ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+MAGIC_BYTES = {
+    "image/jpeg": lambda data: data.startswith(b"\xff\xd8\xff"),
+    "image/png": lambda data: data.startswith(b"\x89PNG\r\n\x1a\n"),
+    "image/webp": lambda data: data.startswith(b"RIFF") and data[8:12] == b"WEBP",
 }
 
-
-def clamp(value: float, feature: str) -> float:
-    """Clamp value to that feature's valid dataset range."""
-    lo, hi = FEATURE_BOUNDS[feature]
-    return max(lo, min(hi, value))
-
-
-# ── NLP Keyword Map ───────────────────────────────────────────────────────────
-# Each keyword maps to (feature_name, adjustment) in that feature's own scale.
-# Adjustments are intentionally small — they nudge, not override, quiz answers.
-
-NLP_KEYWORD_MAP: Dict[str, List[Tuple[str, float]]] = {
-
-    # ── Wrinkles / Aging ─────────────────────────────────────────────────────
-    "wrinkle":           [("wrinkle_score", +3.0), ("elasticity_score", -15)],
-    "wrinkles":          [("wrinkle_score", +3.0), ("elasticity_score", -15)],
-    "fine lines":        [("wrinkle_score", +2.5), ("elasticity_score", -10)],
-    "crow's feet":       [("wrinkle_score", +3.0)],
-    "aging":             [("wrinkle_score", +2.0), ("elasticity_score", -10)],
-    "sagging":           [("elasticity_score", -20)],
-    "loose skin":        [("elasticity_score", -15)],
-
-    # ── Dark Spots / Pigmentation ─────────────────────────────────────────────
-    "dark spots":        [("dark_spot_score", +3.0), ("pigmentation_level", +2.5), ("uneven_tone_score", +2.5)],
-    "dark spot":         [("dark_spot_score", +3.0), ("pigmentation_level", +2.5)],
-    "hyperpigmentation": [("pigmentation_level", +3.5), ("dark_spot_score", +2.5), ("uneven_tone_score", +3.0)],
-    "melasma":           [("pigmentation_level", +3.5), ("dark_spot_score", +3.0)],
-    "discoloration":     [("pigmentation_level", +2.5), ("uneven_tone_score", +2.5)],
-    "uneven tone":       [("uneven_tone_score", +3.0), ("pigmentation_level", +2.0)],
-    "sun spots":         [("dark_spot_score", +3.0), ("pigmentation_level", +2.0), ("sun_exposure_hours", +1.5)],
-    "age spots":         [("dark_spot_score", +3.0), ("pigmentation_level", +2.0)],
-
-    # ── Redness / Sensitivity ─────────────────────────────────────────────────
-    "redness":           [("redness_level", +3.0), ("sensitivity_score", +15)],
-    "red":               [("redness_level", +2.5), ("sensitivity_score", +10)],
-    "rosacea":           [("redness_level", +4.0), ("sensitivity_score", +25)],
-    "flushing":          [("redness_level", +2.5), ("sensitivity_score", +15)],
-    "irritated":         [("redness_level", +2.0), ("sensitivity_score", +20)],
-    "stinging":          [("sensitivity_score", +25), ("redness_level", +2.0)],
-    "burning":           [("sensitivity_score", +25), ("redness_level", +2.5)],
-    "reactive":          [("sensitivity_score", +20)],
-
-    # ── Dryness / Flaking ─────────────────────────────────────────────────────
-    "flaky":             [("flakiness_score", +4.0), ("hydration_level", -20)],
-    "flaking":           [("flakiness_score", +4.0), ("hydration_level", -20)],
-    "peeling":           [("flakiness_score", +3.5), ("hydration_level", -15)],
-    "dry patches":       [("flakiness_score", +3.5), ("hydration_level", -20)],
-    "cracked":           [("flakiness_score", +4.0), ("hydration_level", -30)],
-    "dehydrated":        [("hydration_level", -25)],
-    "tight skin":        [("tightness_score", +20), ("hydration_level", -15)],
-
-    # ── Acne / Breakouts ──────────────────────────────────────────────────────
-    "breakout":          [("acne_frequency", +20), ("blackhead_score", +2.0)],
-    "breakouts":         [("acne_frequency", +20), ("blackhead_score", +2.0)],
-    "acne":              [("acne_frequency", +25), ("blackhead_score", +2.5), ("whitehead_score", +2.0)],
-    "pimple":            [("acne_frequency", +15)],
-    "pimples":           [("acne_frequency", +20)],
-    "blackhead":         [("blackhead_score", +3.5), ("pore_size", +15)],
-    "blackheads":        [("blackhead_score", +3.5), ("pore_size", +15)],
-    "whitehead":         [("whitehead_score", +3.5)],
-    "whiteheads":        [("whitehead_score", +3.5)],
-    "clogged pores":     [("blackhead_score", +2.0), ("whitehead_score", +2.0), ("pore_size", +10)],
-
-    # ── Oiliness ──────────────────────────────────────────────────────────────
-    "oily":              [("sebum_level", +20), ("oil_shine", +2.0)],
-    "greasy":            [("sebum_level", +25), ("oil_shine", +2.5)],
-    "shiny":             [("sebum_level", +20), ("oil_shine", +2.0)],
-    "glossy":            [("sebum_level", +15), ("oil_shine", +1.5)],
-
-    # ── Itching ───────────────────────────────────────────────────────────────
-    "itchy":             [("itchiness_score", +3.0), ("sensitivity_score", +15)],
-    "itching":           [("itchiness_score", +3.0), ("sensitivity_score", +15)],
-
-    # ── Texture / Scars ───────────────────────────────────────────────────────
-    "rough":             [("roughness_score", +20), ("uneven_tone_score", +2.0)],
-    "bumpy":             [("roughness_score", +20)],
-    "uneven texture":    [("roughness_score", +15), ("uneven_tone_score", +2.0)],
-    "scar":              [("uneven_tone_score", +2.5), ("roughness_score", +15)],
-    "scars":             [("uneven_tone_score", +2.5), ("roughness_score", +15)],
-    "acne scars":        [("uneven_tone_score", +3.0), ("roughness_score", +20)],
-
-    # ── Large Pores ───────────────────────────────────────────────────────────
-    "large pores":       [("pore_size", +25)],
-    "enlarged pores":    [("pore_size", +30)],
-    "visible pores":     [("pore_size", +20)],
-
-    # ── Sun / Pollution ───────────────────────────────────────────────────────
-    "sun damage":        [("sun_exposure_hours", +3.0), ("dark_spot_score", +2.0)],
-    "sun damaged":       [("sun_exposure_hours", +3.0), ("dark_spot_score", +2.0)],
-    "photodamage":       [("sun_exposure_hours", +4.0), ("dark_spot_score", +2.5)],
-    "pollution":         [("pollution_exposure_index", +20)],
-    "city skin":         [("pollution_exposure_index", +15)],
-
-    # ── Lifestyle ─────────────────────────────────────────────────────────────
-    "no sleep":          [("sleep_hours", -2.0)],
-    "stressed":          [("sensitivity_score", +10), ("acne_frequency", +10)],
-    "stress":            [("sensitivity_score", +10), ("acne_frequency", +10)],
-    "drink water":       [("water_intake_liters", +1.0)],
-    "not drinking":      [("water_intake_liters", -1.0), ("hydration_level", -10)],
-}
+ml_service_secret: Optional[str] = None
+skin_model_path: str = ""
+acne_model_path: str = ""
+skin_preprocessing: dict = {}
+acne_preprocessing: dict = {}
+skin_labels: list[str] = []
+acne_labels: list[str] = []
 
 
-# ── Feature Derivation: 7 quiz answers → all 24 features ─────────────────────
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    global ml_service_secret, skin_model_path, acne_model_path
+    global skin_preprocessing, acne_preprocessing, skin_labels, acne_labels
 
-def derive_all_features(quiz: Dict[str, float]) -> Dict[str, float]:
-    """
-    Takes 7 quiz answers (0-100 scale each) and returns a complete
-    dict of all 24 features using dermatological correlations.
-    """
-    s  = quiz["sebum_level"]        # oil production
-    h  = quiz["hydration_level"]    # hydration
-    a  = quiz["acne_frequency"]     # breakout frequency
-    p  = quiz["pore_size"]          # pore size
-    sn = quiz["sensitivity_score"]  # sensitivity
-    r  = quiz["roughness_score"]    # skin texture
-    t  = quiz["tightness_score"]    # tightness / dryness feel
+    ml_service_secret = os.getenv("ML_SERVICE_SECRET")
+    if not ml_service_secret:
+        raise RuntimeError("ML_SERVICE_SECRET must be set before starting the ML service")
 
-    f: Dict[str, float] = {}
+    skin_model_path, skin_preprocessing, skin_labels = load_model_metadata("skin_type", SKIN_MODEL)
+    acne_model_path, acne_preprocessing, acne_labels = load_model_metadata("acne_severity", ACNE_MODEL)
+    logger.info("Skin type model loaded with labels: %s", skin_labels)
+    logger.info("Acne severity model loaded with labels: %s", acne_labels)
+    logger.info("GlowGuide ML Service started")
+    yield
+    logger.info("GlowGuide ML Service stopped")
 
-    # 7 quiz features — direct copy
-    f["sebum_level"]       = s
-    f["hydration_level"]   = h
-    f["acne_frequency"]    = a
-    f["pore_size"]         = p
-    f["sensitivity_score"] = sn
-    f["roughness_score"]   = r
-    f["tightness_score"]   = t
-
-    # ph_level (4.0–7.5): oily → more acidic (low pH), dry → more alkaline (high pH)
-    f["ph_level"] = round(clamp(4.0 + 3.5 * (200 - s - h) / 200, "ph_level"), 2)
-
-    # skin_temperature (30–36.5°C): sensitive skin runs slightly warmer
-    f["skin_temperature"] = round(clamp(33.0 + (sn / 100) * 3.5, "skin_temperature"), 2)
-
-    # oil_shine (0–10): direct rescale of sebum from 0-100 → 0-10
-    f["oil_shine"] = round(clamp(s / 10, "oil_shine"), 2)
-
-    # wrinkle_score (0–10): lower hydration → slightly more fine lines
-    f["wrinkle_score"] = round(clamp(3.0 - (h - 50) / 50 * 1.5, "wrinkle_score"), 2)
-
-    # elasticity_score (20–100): good hydration + not tight → elastic skin
-    f["elasticity_score"] = round(clamp(20 + (h * 0.6 + (100 - t) * 0.4) * 0.8, "elasticity_score"), 2)
-
-    # redness_level (0–10): sensitive skin → prone to redness
-    f["redness_level"] = round(clamp(sn / 10, "redness_level"), 2)
-
-    # itchiness_score (0–10): sensitive + tight/dry skin → itchy
-    f["itchiness_score"] = round(clamp((sn * 0.5 + t * 0.5) / 10, "itchiness_score"), 2)
-
-    # pigmentation_level (0–10): baseline — NLP text can raise this
-    f["pigmentation_level"] = 3.0
-
-    # dark_spot_score (0–10): baseline — NLP text can raise this
-    f["dark_spot_score"] = 2.5
-
-    # uneven_tone_score (0–10): rough texture → uneven skin tone
-    f["uneven_tone_score"] = round(clamp(r / 10, "uneven_tone_score"), 2)
-
-    # blackhead_score (0–10): high sebum + large pores → blackheads
-    f["blackhead_score"] = round(clamp((s * 0.6 + p * 0.4) / 10, "blackhead_score"), 2)
-
-    # whitehead_score (0–10): high acne frequency + sebum → whiteheads
-    f["whitehead_score"] = round(clamp((a * 0.6 + s * 0.4) / 10, "whitehead_score"), 2)
-
-    # flakiness_score (0–10): tight + dehydrated → flaky skin
-    f["flakiness_score"] = round(clamp((t * 0.5 + (100 - h) * 0.5) / 10, "flakiness_score"), 2)
-
-    # sun_exposure_hours (0–10): baseline 4h/day — NLP adjustable
-    f["sun_exposure_hours"] = 4.0
-
-    # pollution_exposure_index (0–100): baseline 50 — NLP adjustable
-    f["pollution_exposure_index"] = 50.0
-
-    # water_intake_liters (0.5–5.0): more hydrated → likely drinks more water
-    f["water_intake_liters"] = round(clamp(0.5 + (h / 100) * 4.5, "water_intake_liters"), 2)
-
-    # sleep_hours (3–9): baseline 7h — NLP adjustable
-    f["sleep_hours"] = 7.0
-
-    return f
-
-
-# ── NLP Processor ─────────────────────────────────────────────────────────────
-
-def apply_nlp_adjustments(
-    features: Dict[str, float], text: str
-) -> Tuple[Dict[str, float], List[str]]:
-    """
-    Scans free text for skin-concern keywords.
-    Adjusts relevant feature values and returns updated features + matched keywords.
-    """
-    text_lower = text.lower().strip()
-    matched: List[str] = []
-
-    for keyword, adjustments in NLP_KEYWORD_MAP.items():
-        # Word-boundary match to avoid partial hits (e.g. "red" inside "already")
-        pattern = r'\b' + re.escape(keyword) + r'\b'
-        if re.search(pattern, text_lower):
-            matched.append(keyword)
-            for feat, delta in adjustments:
-                if feat in features:
-                    features[feat] = clamp(features[feat] + delta, feat)
-
-    return features, matched
-
-
-# ── Load Model ────────────────────────────────────────────────────────────────
-
-if not os.path.exists(MODEL_PATH) or not os.path.exists(ENCODER_PATH):
-    raise RuntimeError(
-        f"Model files not found.\n"
-        f"Run `python train.py` first to generate:\n"
-        f"  {MODEL_PATH}\n  {ENCODER_PATH}"
-    )
-
-model   = joblib.load(MODEL_PATH)
-encoder = joblib.load(ENCODER_PATH)
-
-print(f"✅ Model loaded — skin types: {list(encoder.classes_)}")
-print(f"   Total features: {len(ALL_FEATURES)} | Quiz features: 7 | Derived: 17")
-
-# ── FastAPI App ───────────────────────────────────────────────────────────────
 
 app = FastAPI(
     title="GlowGuide ML Service",
-    description="7 quiz answers → 24 features (derived) → RandomForest → skin type prediction",
-    version="2.0.0",
+    description="Fuses quiz scores with pretrained image classifiers for skin analysis",
+    version="3.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -305,96 +76,162 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Schemas ───────────────────────────────────────────────────────────────────
 
-class QuizAnswers(BaseModel):
-    """7 core features collected directly from the quiz (all 0–100 scale)."""
-    sebum_level:       float = Field(..., ge=0, le=100, description="Oil production level")
-    hydration_level:   float = Field(..., ge=0, le=100, description="Skin hydration")
-    acne_frequency:    float = Field(..., ge=0, le=100, description="Breakout frequency")
-    pore_size:         float = Field(..., ge=0, le=100, description="Visible pore size")
-    sensitivity_score: float = Field(..., ge=0, le=100, description="Skin sensitivity")
-    roughness_score:   float = Field(..., ge=0, le=100, description="Skin texture roughness")
-    tightness_score:   float = Field(..., ge=0, le=100, description="Skin tightness / dryness feel")
+def load_model_metadata(name: str, model_id: str):
+    model_dir = os.path.join(MODEL_ROOT, name)
+    with open(os.path.join(model_dir, "config.json"), encoding="utf-8") as handle:
+        config = json.load(handle)
+    with open(os.path.join(model_dir, "preprocessing.json"), encoding="utf-8") as handle:
+        preprocessing = json.load(handle)
+    labels = [str(config["id2label"][str(index)]) for index in range(len(config["id2label"]))]
+    return os.path.join(model_dir, "model.onnx"), preprocessing, labels
 
 
-class PredictRequest(BaseModel):
-    quiz_answers: QuizAnswers
-    # Optional free text — if provided, NLP adjusts feature values before prediction
-    skin_notes: Optional[str] = Field(default=None, max_length=500)
+def bad_request(message: str) -> HTTPException:
+    return HTTPException(status_code=400, detail=message)
 
 
-class PredictResponse(BaseModel):
-    skin_type:         str
-    confidence:        float             # top class probability
-    probabilities:     Dict[str, float]  # all skin types with their probabilities
-    skin_notes:        Optional[str]     # echoed back from request
-    concerns_detected: List[str]         # keywords found in skin_notes
-    features_total:    int               # always 24 — all features sent to the model
-    timestamp:         str
+async def validate_image(upload: Optional[UploadFile], field_name: str) -> Image.Image:
+    if upload is None:
+        raise bad_request(f"Missing image field: {field_name}")
 
+    content_type = (upload.content_type or "").lower()
+    if content_type not in ALLOWED_CONTENT_TYPES:
+        raise bad_request(f"Invalid image format for {field_name}; use jpg, jpeg, png, or webp")
 
-# ── Routes ────────────────────────────────────────────────────────────────────
-
-@app.get("/")
-def health_check():
-    """Service health check — confirms model is loaded and ready."""
-    return {
-        "status": "ok",
-        "service": "GlowGuide ML Service",
-        "version": "2.0.0",
-        "skin_types": list(encoder.classes_),
-        "total_features": len(ALL_FEATURES),
-        "quiz_features": 7,
-        "derived_features": 17,
-        "nlp_keywords": len(NLP_KEYWORD_MAP),
-    }
-
-
-@app.post("/predict", response_model=PredictResponse)
-def predict(body: PredictRequest):
-    """
-    Prediction pipeline:
-      Step 1 — Take 7 quiz answers
-      Step 2 — Derive 17 remaining features using dermatological correlations
-      Step 3 — If skin_notes provided, adjust features via NLP keyword matching
-      Step 4 — Feed all 24 features into RandomForest → return prediction
-    """
-    # Step 1 + 2: Build complete 24-feature dict from 7 quiz answers
-    features = derive_all_features(body.quiz_answers.dict())
-
-    # Step 3: NLP adjustments — only runs if user wrote something
-    matched_keywords: List[str] = []
-    if body.skin_notes and body.skin_notes.strip():
-        features, matched_keywords = apply_nlp_adjustments(features, body.skin_notes)
-
-    # Step 4: Build ordered numpy array and run model prediction
-    X = np.array([[features[feat] for feat in ALL_FEATURES]])
+    data = await upload.read()
+    if len(data) > MAX_IMAGE_BYTES:
+        raise bad_request(f"Image {field_name} exceeds the 8MB size limit")
+    if not MAGIC_BYTES[content_type](data):
+        raise bad_request(f"Invalid image format for {field_name}; content does not match its MIME type")
 
     try:
-        proba = model.predict_proba(X)[0]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+        image = Image.open(BytesIO(data))
+        image.load()
+    except (UnidentifiedImageError, OSError) as exc:
+        logger.info("Image validation failed for %s: %s", field_name, exc)
+        raise bad_request(f"Invalid image format for {field_name}") from exc
 
-    probabilities = {
-        label: round(float(prob), 4)
-        for label, prob in zip(encoder.classes_, proba)
-    }
+    if image.width < MIN_IMAGE_DIMENSION or image.height < MIN_IMAGE_DIMENSION:
+        raise bad_request(f"Image {field_name} must be at least 480x480 pixels")
 
-    top_skin_type  = max(probabilities, key=probabilities.get)
-    top_confidence = probabilities[top_skin_type]
-
-    return PredictResponse(
-        skin_type=top_skin_type,
-        confidence=top_confidence,
-        probabilities=probabilities,
-        skin_notes=body.skin_notes,
-        concerns_detected=matched_keywords,
-        features_total=len(ALL_FEATURES),   # always 24
-        timestamp=datetime.utcnow().isoformat() + "Z",
+    grayscale = cv2.cvtColor(np.array(image.convert("RGB")), cv2.COLOR_RGB2GRAY)
+    cascade = cv2.CascadeClassifier(
+        os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_default.xml")
     )
+    faces = cascade.detectMultiScale(grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80))
+    if len(faces) == 0:
+        raise bad_request(f"No face detected in {field_name}")
+    return image.convert("RGB")
+
+
+def run_classifier(session: onnxruntime.InferenceSession, image: Image.Image, preprocessing: dict, labels: list[str]) -> Dict[str, float]:
+    size = preprocessing["input_size"]
+    image_array = np.asarray(
+        image.resize((size["width"], size["height"]), Image.Resampling.BILINEAR),
+        dtype=np.float32,
+    ) / 255.0
+    image_array = (image_array - np.asarray(preprocessing["mean"], dtype=np.float32)) / np.asarray(
+        preprocessing["std"], dtype=np.float32
+    )
+    input_array = np.transpose(image_array, (2, 0, 1))[None, ...]
+    input_name = session.get_inputs()[0].name
+    input_type = session.get_inputs()[0].type
+    input_array = input_array.astype(np.float16 if input_type == "tensor(float16)" else np.float32)
+    logits = np.asarray(session.run(None, {input_name: input_array})[0], dtype=np.float32)[0]
+    probabilities = np.exp(logits - np.max(logits))
+    probabilities /= probabilities.sum()
+    return {label: float(probability) for label, probability in zip(labels, probabilities)}
+
+
+@app.post("/analyze", response_model=AnalyzeResponse)
+async def analyze(
+    front: Optional[UploadFile] = File(default=None),
+    left_profile: Optional[UploadFile] = File(default=None),
+    right_profile: Optional[UploadFile] = File(default=None),
+    forehead_closeup: Optional[UploadFile] = File(default=None),
+    left_cheek_closeup: Optional[UploadFile] = File(default=None),
+    right_cheek_closeup: Optional[UploadFile] = File(default=None),
+    quiz_scores: str = Form(...),
+    user_notes: Optional[str] = Form(default=None),
+    x_internal_secret: Optional[str] = Header(default=None, alias="X-Internal-Secret"),
+):
+    logger.info("Analyze request received")
+    if not secrets.compare_digest(x_internal_secret or "", ml_service_secret or ""):
+        logger.error("Analyze request rejected: unauthorized")
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if user_notes is not None and len(user_notes) > 500:
+        raise bad_request("user_notes must be 500 characters or fewer")
+
+    try:
+        parsed_quiz = json.loads(quiz_scores)
+        quiz = QuizScores.model_validate(parsed_quiz)
+    except json.JSONDecodeError as exc:
+        logger.error("Analyze request rejected: malformed quiz_scores JSON")
+        raise bad_request("Malformed quiz_scores JSON") from exc
+    except Exception as exc:
+        logger.error("Analyze request rejected: invalid quiz_scores: %s", exc)
+        raise bad_request(f"Invalid quiz_scores: {exc}") from exc
+
+    uploads = {
+        "front": front,
+        "left_profile": left_profile,
+        "right_profile": right_profile,
+        "forehead_closeup": forehead_closeup,
+        "left_cheek_closeup": left_cheek_closeup,
+        "right_cheek_closeup": right_cheek_closeup,
+    }
+    images: Dict[str, Image.Image] = {}
+    for field_name, upload in uploads.items():
+        images[field_name] = await validate_image(upload, field_name)
+
+    try:
+        skin_started = time.perf_counter()
+        skin_session = onnxruntime.InferenceSession(skin_model_path, providers=["CPUExecutionProvider"])
+        try:
+            skin_results = [
+                run_classifier(skin_session, images[name], skin_preprocessing, skin_labels)
+                for name in ("front", "left_profile", "right_profile")
+            ]
+        finally:
+            logger.info("Skin type model load+inference took %.3fs", time.perf_counter() - skin_started)
+            del skin_session
+            gc.collect()
+
+        acne_started = time.perf_counter()
+        acne_session = onnxruntime.InferenceSession(acne_model_path, providers=["CPUExecutionProvider"])
+        try:
+            acne_results = [
+                run_classifier(acne_session, images[name], acne_preprocessing, acne_labels)
+                for name in ("forehead_closeup", "left_cheek_closeup", "right_cheek_closeup")
+            ]
+        finally:
+            logger.info("Acne severity model load+inference took %.3fs", time.perf_counter() - acne_started)
+            del acne_session
+            gc.collect()
+
+        fused = fuse_scores(quiz, skin_results, acne_results)
+        skin_type = predict_skin_type(fused["final_scores"])
+    except Exception as exc:
+        logger.exception("Model inference failed")
+        raise HTTPException(status_code=500, detail=f"Model inference failed: {exc}") from exc
+
+    response = AnalyzeResponse(
+        skin_type=skin_type,
+        sensitive=fused["final_scores"]["sensitivity_score"] >= 60,
+        confidence=fused["confidence"],
+        disagreement=fused["disagreement"],
+        final_scores=fused["final_scores"],
+        raw_debug=fused["raw_debug"],
+        user_notes=user_notes,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+    )
+    logger.info("Analyze request completed: skin_type=%s confidence=%.3f", skin_type, response.confidence)
+    return response
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    uvicorn.run(app, host="0.0.0.0", port=7860)

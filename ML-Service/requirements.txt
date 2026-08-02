@@ -1,6 +1,8 @@
+optimum[onnxruntime]
+onnxconverter-common
 fastapi
 uvicorn[standard]
-scikit-learn
-numpy
-joblib
-pandas
+pillow
+opencv-python-headless>=4.10,<5
+python-multipart
+requests

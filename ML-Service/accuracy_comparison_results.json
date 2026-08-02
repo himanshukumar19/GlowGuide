@@ -1,0 +1,763 @@
+{
+  "timestamp": "2026-08-02T09:49:42.816405+00:00",
+  "test_image_folder": "/app/test_images",
+  "model_versions": {
+    "skin_type": {
+      "original": "dima806/skin_types_image_detection",
+      "quantized": "dynamic_int8_arm64"
+    },
+    "acne_severity": {
+      "original": "imfarzanansari/skintelligent-acne",
+      "quantized": "dynamic_int8_arm64"
+    }
+  },
+  "quantization": "dynamic INT8 via ORTQuantizer AutoQuantizationConfig.arm64",
+  "results": {
+    "skin_type": [
+      {
+        "image": "sample_baseline.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.40225958824157715,
+            "dry": 0.34618693590164185,
+            "oily": 0.2515535056591034
+          },
+          "confidence": 0.40225958824157715
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.35499611496925354,
+            "normal": 0.38183900713920593,
+            "oily": 0.2631648778915405
+          },
+          "confidence": 0.38183900713920593
+        },
+        "probability_deltas": {
+          "normal": -0.020420581102371216,
+          "dry": 0.008809179067611694,
+          "oily": 0.011611372232437134
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_bright.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.40745583176612854,
+            "dry": 0.34192389249801636,
+            "oily": 0.2506203055381775
+          },
+          "confidence": 0.40745583176612854
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.34270939230918884,
+            "normal": 0.3891941010951996,
+            "oily": 0.2680965065956116
+          },
+          "confidence": 0.3891941010951996
+        },
+        "probability_deltas": {
+          "normal": -0.018261730670928955,
+          "dry": 0.0007854998111724854,
+          "oily": 0.017476201057434082
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_contrast.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.4069421887397766,
+            "dry": 0.34126341342926025,
+            "oily": 0.25179436802864075
+          },
+          "confidence": 0.4069421887397766
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.3460387587547302,
+            "normal": 0.39291396737098694,
+            "oily": 0.26104724407196045
+          },
+          "confidence": 0.39291396737098694
+        },
+        "probability_deltas": {
+          "normal": -0.014028221368789673,
+          "dry": 0.004775345325469971,
+          "oily": 0.009252876043319702
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_crop.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.40225958824157715,
+            "dry": 0.34618693590164185,
+            "oily": 0.2515535056591034
+          },
+          "confidence": 0.40225958824157715
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.35499611496925354,
+            "normal": 0.38183900713920593,
+            "oily": 0.2631648778915405
+          },
+          "confidence": 0.38183900713920593
+        },
+        "probability_deltas": {
+          "normal": -0.020420581102371216,
+          "dry": 0.008809179067611694,
+          "oily": 0.011611372232437134
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_desaturated.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.38843974471092224,
+            "dry": 0.3566146194934845,
+            "oily": 0.25494563579559326
+          },
+          "confidence": 0.38843974471092224
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.3593054711818695,
+            "normal": 0.3732990622520447,
+            "oily": 0.26739540696144104
+          },
+          "confidence": 0.3732990622520447
+        },
+        "probability_deltas": {
+          "normal": -0.015140682458877563,
+          "dry": 0.0026908516883850098,
+          "oily": 0.012449771165847778
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_dim.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.3825947046279907,
+            "dry": 0.35466471314430237,
+            "oily": 0.2627406120300293
+          },
+          "confidence": 0.3825947046279907
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.35495665669441223,
+            "normal": 0.37514036893844604,
+            "oily": 0.26990294456481934
+          },
+          "confidence": 0.37514036893844604
+        },
+        "probability_deltas": {
+          "normal": -0.007454335689544678,
+          "dry": 0.0002919435501098633,
+          "oily": 0.007162332534790039
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_low_contrast.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.3824537694454193,
+            "dry": 0.3545415997505188,
+            "oily": 0.2630046010017395
+          },
+          "confidence": 0.3824537694454193
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.3666190505027771,
+            "normal": 0.3698449730873108,
+            "oily": 0.2635360062122345
+          },
+          "confidence": 0.3698449730873108
+        },
+        "probability_deltas": {
+          "normal": -0.01260879635810852,
+          "dry": 0.0120774507522583,
+          "oily": 0.0005314052104949951
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_rotate_left.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.39884695410728455,
+            "dry": 0.36510565876960754,
+            "oily": 0.23604735732078552
+          },
+          "confidence": 0.39884695410728455
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.36295315623283386,
+            "normal": 0.3944949209690094,
+            "oily": 0.24255187809467316
+          },
+          "confidence": 0.3944949209690094
+        },
+        "probability_deltas": {
+          "normal": -0.0043520331382751465,
+          "dry": -0.0021525025367736816,
+          "oily": 0.006504520773887634
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_rotate_right.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.38505908846855164,
+            "dry": 0.3744739890098572,
+            "oily": 0.2404668927192688
+          },
+          "confidence": 0.38505908846855164
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.3572869300842285,
+            "normal": 0.39603766798973083,
+            "oily": 0.24667535722255707
+          },
+          "confidence": 0.39603766798973083
+        },
+        "probability_deltas": {
+          "normal": 0.0109785795211792,
+          "dry": -0.017187058925628662,
+          "oily": 0.006208464503288269
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_sharp.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.4010842442512512,
+            "dry": 0.3478839099407196,
+            "oily": 0.2510318160057068
+          },
+          "confidence": 0.4010842442512512
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.36030852794647217,
+            "normal": 0.3733379542827606,
+            "oily": 0.26635345816612244
+          },
+          "confidence": 0.3733379542827606
+        },
+        "probability_deltas": {
+          "normal": -0.0277462899684906,
+          "dry": 0.012424618005752563,
+          "oily": 0.01532164216041565
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_soft.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.40369895100593567,
+            "dry": 0.34528735280036926,
+            "oily": 0.25101369619369507
+          },
+          "confidence": 0.40369895100593567
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.3497256338596344,
+            "normal": 0.3875938355922699,
+            "oily": 0.2626805603504181
+          },
+          "confidence": 0.3875938355922699
+        },
+        "probability_deltas": {
+          "normal": -0.01610511541366577,
+          "dry": 0.004438281059265137,
+          "oily": 0.011666864156723022
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_warm.jpg",
+        "float32": {
+          "label": "normal",
+          "probabilities": {
+            "normal": 0.40445640683174133,
+            "dry": 0.3471033275127411,
+            "oily": 0.2484401911497116
+          },
+          "confidence": 0.40445640683174133
+        },
+        "int8": {
+          "label": "normal",
+          "probabilities": {
+            "dry": 0.362656831741333,
+            "normal": 0.3815355896949768,
+            "oily": 0.25580763816833496
+          },
+          "confidence": 0.3815355896949768
+        },
+        "probability_deltas": {
+          "normal": -0.022920817136764526,
+          "dry": 0.015553504228591919,
+          "oily": 0.007367447018623352
+        },
+        "label_mismatch": false
+      }
+    ],
+    "acne_severity": [
+      {
+        "image": "sample_baseline.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8802146315574646,
+            "level 1": 0.04341789707541466,
+            "level 0": 0.033833760768175125,
+            "level 2": 0.021740952506661415,
+            "level 3": 0.02079281024634838
+          },
+          "confidence": 0.8802146315574646
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8738311529159546,
+            "level 0": 0.034216344356536865,
+            "level 1": 0.0474369041621685,
+            "level 2": 0.024237193167209625,
+            "level 3": 0.020278451964259148
+          },
+          "confidence": 0.8738311529159546
+        },
+        "probability_deltas": {
+          "level -1": -0.00638347864151001,
+          "level 1": 0.004019007086753845,
+          "level 0": 0.0003825835883617401,
+          "level 2": 0.00249624066054821,
+          "level 3": -0.0005143582820892334
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_bright.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.9347087144851685,
+            "level 1": 0.02881443500518799,
+            "level 0": 0.015105378814041615,
+            "level 3": 0.011294077150523663,
+            "level 2": 0.010077500715851784
+          },
+          "confidence": 0.9347087144851685
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.9455897212028503,
+            "level 0": 0.01368730328977108,
+            "level 1": 0.020543240010738373,
+            "level 2": 0.010137664154171944,
+            "level 3": 0.010042152367532253
+          },
+          "confidence": 0.9455897212028503
+        },
+        "probability_deltas": {
+          "level -1": 0.010881006717681885,
+          "level 1": -0.008271194994449615,
+          "level 0": -0.0014180755242705345,
+          "level 3": -0.0012519247829914093,
+          "level 2": 6.016343832015991e-05
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_contrast.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.9404825568199158,
+            "level 1": 0.021105514839291573,
+            "level 0": 0.01787431910634041,
+            "level 3": 0.010553074069321156,
+            "level 2": 0.009984539821743965
+          },
+          "confidence": 0.9404825568199158
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.9255449175834656,
+            "level 0": 0.021264253184199333,
+            "level 1": 0.024903487414121628,
+            "level 2": 0.015009944327175617,
+            "level 3": 0.013277322985231876
+          },
+          "confidence": 0.9255449175834656
+        },
+        "probability_deltas": {
+          "level -1": -0.014937639236450195,
+          "level 1": 0.0037979725748300552,
+          "level 0": 0.003389934077858925,
+          "level 3": 0.002724248915910721,
+          "level 2": 0.005025404505431652
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_crop.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8802146315574646,
+            "level 1": 0.04341789707541466,
+            "level 0": 0.033833760768175125,
+            "level 2": 0.021740952506661415,
+            "level 3": 0.02079281024634838
+          },
+          "confidence": 0.8802146315574646
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8738311529159546,
+            "level 0": 0.034216344356536865,
+            "level 1": 0.0474369041621685,
+            "level 2": 0.024237193167209625,
+            "level 3": 0.020278451964259148
+          },
+          "confidence": 0.8738311529159546
+        },
+        "probability_deltas": {
+          "level -1": -0.00638347864151001,
+          "level 1": 0.004019007086753845,
+          "level 0": 0.0003825835883617401,
+          "level 2": 0.00249624066054821,
+          "level 3": -0.0005143582820892334
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_desaturated.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8538954854011536,
+            "level 1": 0.056947555392980576,
+            "level 0": 0.04434433951973915,
+            "level 2": 0.025487886741757393,
+            "level 3": 0.019324639812111855
+          },
+          "confidence": 0.8538954854011536
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8580098748207092,
+            "level 0": 0.04232529550790787,
+            "level 1": 0.05451403930783272,
+            "level 2": 0.0269846823066473,
+            "level 3": 0.018166115507483482
+          },
+          "confidence": 0.8580098748207092
+        },
+        "probability_deltas": {
+          "level -1": 0.004114389419555664,
+          "level 1": -0.0024335160851478577,
+          "level 0": -0.0020190440118312836,
+          "level 2": 0.0014967955648899078,
+          "level 3": -0.0011585243046283722
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_dim.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8500574827194214,
+            "level 1": 0.05381275713443756,
+            "level 0": 0.04490041360259056,
+            "level 3": 0.029103703796863556,
+            "level 2": 0.022125564515590668
+          },
+          "confidence": 0.8500574827194214
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8686813116073608,
+            "level 0": 0.04038549214601517,
+            "level 1": 0.044426530599594116,
+            "level 2": 0.01973053067922592,
+            "level 3": 0.02677614986896515
+          },
+          "confidence": 0.8686813116073608
+        },
+        "probability_deltas": {
+          "level -1": 0.018623828887939453,
+          "level 1": -0.009386226534843445,
+          "level 0": -0.004514921456575394,
+          "level 3": -0.002327553927898407,
+          "level 2": -0.002395033836364746
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_low_contrast.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8309224247932434,
+            "level 1": 0.06243188679218292,
+            "level 0": 0.0452757328748703,
+            "level 3": 0.03154153749346733,
+            "level 2": 0.0298283901065588
+          },
+          "confidence": 0.8309224247932434
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8456486463546753,
+            "level 0": 0.04259196296334267,
+            "level 1": 0.05509498715400696,
+            "level 2": 0.029773076996207237,
+            "level 3": 0.026891326531767845
+          },
+          "confidence": 0.8456486463546753
+        },
+        "probability_deltas": {
+          "level -1": 0.014726221561431885,
+          "level 1": -0.007336899638175964,
+          "level 0": -0.0026837699115276337,
+          "level 3": -0.004650210961699486,
+          "level 2": -5.53131103515625e-05
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_rotate_left.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.9684707522392273,
+            "level 1": 0.010875841602683067,
+            "level 0": 0.010415506549179554,
+            "level 2": 0.005623598583042622,
+            "level 3": 0.004614288918673992
+          },
+          "confidence": 0.9684707522392273
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.9723878502845764,
+            "level 0": 0.008218172006309032,
+            "level 1": 0.009453912265598774,
+            "level 2": 0.005782564170658588,
+            "level 3": 0.004157466813921928
+          },
+          "confidence": 0.9723878502845764
+        },
+        "probability_deltas": {
+          "level -1": 0.003917098045349121,
+          "level 1": -0.0014219293370842934,
+          "level 0": -0.0021973345428705215,
+          "level 2": 0.0001589655876159668,
+          "level 3": -0.00045682210475206375
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_rotate_right.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8999672532081604,
+            "level 1": 0.048058949410915375,
+            "level 0": 0.02567417174577713,
+            "level 2": 0.017228737473487854,
+            "level 3": 0.00907097477465868
+          },
+          "confidence": 0.8999672532081604
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8999015688896179,
+            "level 0": 0.0224953293800354,
+            "level 1": 0.047891873866319656,
+            "level 2": 0.019132103770971298,
+            "level 3": 0.010579093359410763
+          },
+          "confidence": 0.8999015688896179
+        },
+        "probability_deltas": {
+          "level -1": -6.568431854248047e-05,
+          "level 1": -0.00016707554459571838,
+          "level 0": -0.0031788423657417297,
+          "level 2": 0.0019033662974834442,
+          "level 3": 0.0015081185847520828
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_sharp.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8795061111450195,
+            "level 1": 0.04424417018890381,
+            "level 0": 0.034411583095788956,
+            "level 2": 0.021726883947849274,
+            "level 3": 0.02011123113334179
+          },
+          "confidence": 0.8795061111450195
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8676960468292236,
+            "level 0": 0.03597157076001167,
+            "level 1": 0.04546728357672691,
+            "level 2": 0.029334742575883865,
+            "level 3": 0.021530302241444588
+          },
+          "confidence": 0.8676960468292236
+        },
+        "probability_deltas": {
+          "level -1": -0.011810064315795898,
+          "level 1": 0.0012231133878231049,
+          "level 0": 0.0015599876642227173,
+          "level 2": 0.007607858628034592,
+          "level 3": 0.0014190711081027985
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_soft.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8892979621887207,
+            "level 1": 0.03883057460188866,
+            "level 0": 0.030827797949314117,
+            "level 3": 0.021220006048679352,
+            "level 2": 0.019823607057332993
+          },
+          "confidence": 0.8892979621887207
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.8900018334388733,
+            "level 0": 0.029909729957580566,
+            "level 1": 0.037868939340114594,
+            "level 2": 0.022862626239657402,
+            "level 3": 0.019356848672032356
+          },
+          "confidence": 0.8900018334388733
+        },
+        "probability_deltas": {
+          "level -1": 0.0007038712501525879,
+          "level 1": -0.0009616352617740631,
+          "level 0": -0.000918067991733551,
+          "level 3": -0.0018631573766469955,
+          "level 2": 0.0030390191823244095
+        },
+        "label_mismatch": false
+      },
+      {
+        "image": "sample_warm.jpg",
+        "float32": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.9225921034812927,
+            "level 1": 0.02667856402695179,
+            "level 0": 0.02242877148091793,
+            "level 3": 0.015657491981983185,
+            "level 2": 0.012643025256693363
+          },
+          "confidence": 0.9225921034812927
+        },
+        "int8": {
+          "label": "level -1",
+          "probabilities": {
+            "level -1": 0.9214712381362915,
+            "level 0": 0.021551795303821564,
+            "level 1": 0.027333805337548256,
+            "level 2": 0.013436408713459969,
+            "level 3": 0.01620670035481453
+          },
+          "confidence": 0.9214712381362915
+        },
+        "probability_deltas": {
+          "level -1": -0.0011208653450012207,
+          "level 1": 0.0006552413105964661,
+          "level 0": -0.0008769761770963669,
+          "level 3": 0.0005492083728313446,
+          "level 2": 0.0007933834567666054
+        },
+        "label_mismatch": false
+      }
+    ]
+  },
+  "summary": {
+    "skin_type": {
+      "total_images": 12,
+      "label_mismatches": 0,
+      "mismatch_percentage": 0.0,
+      "average_absolute_probability_delta": 0.011044373528824912,
+      "maximum_absolute_probability_delta": 0.0277462899684906,
+      "maximum_delta_image": "sample_sharp.jpg",
+      "maximum_delta_class": "normal",
+      "verdict": "PASS"
+    },
+    "acne_severity": {
+      "total_images": 12,
+      "label_mismatches": 0,
+      "mismatch_percentage": 0.0,
+      "average_absolute_probability_delta": 0.0034557984676212073,
+      "maximum_absolute_probability_delta": 0.018623828887939453,
+      "maximum_delta_image": "sample_dim.jpg",
+      "maximum_delta_class": "level -1",
+      "verdict": "PASS"
+    }
+  }
+}

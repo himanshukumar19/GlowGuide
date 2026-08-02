@@ -15,6 +15,8 @@ export {
   analysisResultSchema,
   detectedConcernSchema,
   routineRecommendationSchema,
+  userProfileSchema,
+  rawScoresSchema,
   skinTypeEnum,
   analysisSourceEnum,
 } from "./analysis";
@@ -24,6 +26,8 @@ export type {
   DetectedConcern,
   RoutineRecommendation,
   RoutineStep,
+  UserProfile,
+  RawScores,
   SkinType,
   AnalysisSource,
 } from "./analysis";

@@ -28,7 +28,11 @@ async function uploadProductImage(
   }
 
   try {
-    const url = await uploadImageFile(filePath, productId);
+    const url = await uploadImageFile(
+      filePath,
+      `glowguide/products/${productId}`,
+      productId
+    );
     console.log(`  ✓ Uploaded: ${url}`);
     return url;
   } catch (err: any) {

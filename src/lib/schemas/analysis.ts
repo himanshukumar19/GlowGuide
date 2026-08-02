@@ -34,6 +34,28 @@ export const routineRecommendationSchema = z.object({
 
 export type RoutineRecommendation = z.infer<typeof routineRecommendationSchema>;
 
+export const userProfileSchema = z.object({
+  age_range: z.string().nullable(),
+  gender: z.string().nullable(),
+  pregnant_or_breastfeeding: z.boolean().nullable(),
+  fragrance_preference: z.string().nullable(),
+  budget_range: z.string().nullable(),
+  allergies: z.string().nullable(),
+});
+
+export type UserProfile = z.infer<typeof userProfileSchema>;
+
+export const rawScoresSchema = z.object({
+  quiz_oiliness: z.number(),
+  image_oiliness: z.number(),
+  final_oiliness: z.number(),
+  quiz_acne: z.number(),
+  image_acne: z.number(),
+  final_acne: z.number(),
+});
+
+export type RawScores = z.infer<typeof rawScoresSchema>;
+
 export const analysisResultSchema = z.object({
   skinType: skinTypeEnum,
   concerns: z.array(detectedConcernSchema),
@@ -41,6 +63,16 @@ export const analysisResultSchema = z.object({
   confidence: z.number().min(0).max(1),
   probabilities: z.record(z.string(), z.number().min(0).max(1)),
   routine: routineRecommendationSchema,
+  sensitive: z.boolean().default(false),
+  disagreement: z.boolean().default(false),
+  rawScores: rawScoresSchema.default({
+    quiz_oiliness: 0,
+    image_oiliness: 0,
+    final_oiliness: 0,
+    quiz_acne: 0,
+    image_acne: 0,
+    final_acne: 0,
+  }),
 });
 
 export type AnalysisResult = z.infer<typeof analysisResultSchema>;
@@ -55,6 +87,14 @@ export const analysisSchema = z.object({
   quizAnswers: z.record(z.string(), z.number()),
   skinNotes: z.string().nullable(),
   photoUrls: z.array(z.string()),
+  userProfile: userProfileSchema.default({
+    age_range: null,
+    gender: null,
+    pregnant_or_breastfeeding: null,
+    fragrance_preference: null,
+    budget_range: null,
+    allergies: null,
+  }),
   result: analysisResultSchema,
   source: analysisSourceEnum,
   createdAt: z.string(),

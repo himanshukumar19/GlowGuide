@@ -49,7 +49,7 @@ export async function PUT(
     if (imageFile && imageFile.size > 0) {
       const bytes = await imageFile.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      const imageUrl = await uploadImageBuffer(buffer, params.id);
+      const imageUrl = await uploadImageBuffer(buffer, `glowguide/products/${params.id}`, params.id);
       updateData.image = imageUrl;
       updateData.images = [imageUrl];
     }

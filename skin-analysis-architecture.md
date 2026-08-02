@@ -208,9 +208,12 @@ group by subcategory, take top 1-2 per subcategory (ensures full routine coverag
 
 ## 14. Deployment
 
-- **Platform:** HuggingFace Spaces (Docker SDK), public visibility, free CPU tier (cold starts ~20-30s accepted for now).
-- **Repo structure:** monorepo — `ML-Service/` is a subfolder of the main GlowGuide repo, pushed to the HF Space's separate git remote (not the main GitHub repo) via git subtree or similar.
-- **Setup:** manual, user creates the Space on HF website, OpenCode assists interactively with git remote setup and push.
+- **Platform:** Render (free tier, 512MB RAM) — switched from the original HF Spaces plan because HF Spaces now requires a PRO subscription for Docker SDK. Render's free tier requires no credit card and was confirmed sufficient after memory optimization (see below).
+- **Live URL:** `https://glowguide-ml-service.onrender.com` — deployed and verified working (Phase 1a complete).
+- **Memory optimization journey:** initial float32 image was 2.83GB with 952MB peak RAM (too large for 512MB free tier). Applied ONNX conversion + float16, then sequential model loading, then INT8 quantization on both models — final result: 909MB image, 242MB peak RAM, well under the 512MB target. Accuracy verified stable throughout via `compare_accuracy.py` (0 label mismatches, small probability deltas).
+- **Repo structure:** monorepo — `ML-Service/` is a subfolder of the main GlowGuide repo. Render is configured with Root Directory `ML-Service`, connects directly to the GitHub repo (private), auto-deploys on push to `main`.
+- **Setup:** completed manually via Render's dashboard (New Web Service → connect GitHub → configure → add `ML_SERVICE_SECRET` env var → deploy).
+- **Health check:** `GET /` endpoint added (no auth required) for Render's health checks and quick manual verification — returns `{"status": "ok", "service": "GlowGuide ML Service", "version": "3.0.0"}`.
 
 ---
 

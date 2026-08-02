@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     if (imageFile && imageFile.size > 0) {
       const bytes = await imageFile.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      imageUrl = await uploadImageBuffer(buffer, id);
+      imageUrl = await uploadImageBuffer(buffer, `glowguide/products/${id}`, id);
     }
 
     const now = new Date().toISOString();

@@ -5,10 +5,12 @@ import { analysisSchema, type Analysis } from "@/lib/schemas/analysis";
 const COLLECTION = "analyses";
 
 export async function createAnalysis(
-  data: Omit<Analysis, "id">
+  data: Omit<Analysis, "id" | "createdAt"> & { id?: string }
 ): Promise<Analysis> {
   const now = new Date().toISOString();
-  const docRef = db.collection(COLLECTION).doc();
+  const docRef = data.id
+    ? db.collection(COLLECTION).doc(data.id)
+    : db.collection(COLLECTION).doc();
 
   const analysis = validate(analysisSchema, {
     ...data,

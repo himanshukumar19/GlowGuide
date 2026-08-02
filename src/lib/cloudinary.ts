@@ -9,13 +9,14 @@ cloudinary.config({
 
 export async function uploadImageBuffer(
   buffer: Buffer,
-  productId: string
+  folderPath: string,
+  publicId: string
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
-        folder: `glowguide/products/${productId}`,
-        public_id: productId,
+        folder: folderPath,
+        public_id: publicId,
         overwrite: true,
         resource_type: "image",
       },
@@ -30,17 +31,18 @@ export async function uploadImageBuffer(
 
 export async function uploadImageFile(
   filePath: string,
-  productId: string
+  folderPath: string,
+  publicId: string
 ): Promise<string> {
   const result = await cloudinary.uploader.upload(filePath, {
-    folder: `glowguide/products/${productId}`,
-    public_id: productId,
+    folder: folderPath,
+    public_id: publicId,
     overwrite: true,
     resource_type: "image",
   });
   return result.secure_url;
 }
 
-export async function deleteImage(productId: string): Promise<void> {
-  await cloudinary.uploader.destroy(`glowguide/products/${productId}/${productId}`);
+export async function deleteImage(folderPath: string, publicId: string): Promise<void> {
+  await cloudinary.uploader.destroy(`${folderPath}/${publicId}`);
 }

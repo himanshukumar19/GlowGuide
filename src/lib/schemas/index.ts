@@ -19,6 +19,7 @@ export {
   rawScoresSchema,
   skinTypeEnum,
   analysisSourceEnum,
+  analysisStatusEnum,
 } from "./analysis";
 export type {
   Analysis,
@@ -30,6 +31,7 @@ export type {
   RawScores,
   SkinType,
   AnalysisSource,
+  AnalysisStatus,
 } from "./analysis";
 
 export {

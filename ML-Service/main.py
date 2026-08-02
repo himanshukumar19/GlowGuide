@@ -4,6 +4,7 @@ import logging
 import os
 import secrets
 import time
+import threading
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from io import BytesIO
@@ -12,8 +13,10 @@ from typing import Dict, Optional
 import cv2
 import numpy as np
 import onnxruntime
-from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
+import requests as http_requests
+from fastapi import BackgroundTasks, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from PIL import Image, UnidentifiedImageError
 
 from fusion import fuse_scores, predict_skin_type
@@ -34,6 +37,10 @@ MAGIC_BYTES = {
     "image/png": lambda data: data.startswith(b"\x89PNG\r\n\x1a\n"),
     "image/webp": lambda data: data.startswith(b"RIFF") and data[8:12] == b"WEBP",
 }
+
+CALLBACK_RETRY_COUNT = 3
+CALLBACK_RETRY_DELAY_SECONDS = 2
+BACKGROUND_TASK_TIMEOUT_SECONDS = 90
 
 ml_service_secret: Optional[str] = None
 skin_model_path: str = ""
@@ -65,7 +72,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title="GlowGuide ML Service",
     description="Fuses quiz scores with pretrained image classifiers for skin analysis",
-    version="3.0.0",
+    version="3.1.0",
     lifespan=lifespan,
 )
 
@@ -79,7 +86,7 @@ app.add_middleware(
 
 @app.get("/")
 def health_check():
-    return {"status": "ok", "service": "GlowGuide ML Service", "version": "3.0.0"}
+    return {"status": "ok", "service": "GlowGuide ML Service", "version": "3.1.0"}
 
 
 def load_model_metadata(name: str, model_id: str):
@@ -149,47 +156,70 @@ def run_classifier(session: onnxruntime.InferenceSession, image: Image.Image, pr
     return {label: float(probability) for label, probability in zip(labels, probabilities)}
 
 
-@app.post("/analyze", response_model=AnalyzeResponse)
-async def analyze(
-    front: Optional[UploadFile] = File(default=None),
-    left_profile: Optional[UploadFile] = File(default=None),
-    right_profile: Optional[UploadFile] = File(default=None),
-    forehead_closeup: Optional[UploadFile] = File(default=None),
-    left_cheek_closeup: Optional[UploadFile] = File(default=None),
-    right_cheek_closeup: Optional[UploadFile] = File(default=None),
-    quiz_scores: str = Form(...),
-    user_notes: Optional[str] = Form(default=None),
-    x_internal_secret: Optional[str] = Header(default=None, alias="X-Internal-Secret"),
-):
-    logger.info("Analyze request received")
-    if not secrets.compare_digest(x_internal_secret or "", ml_service_secret or ""):
-        logger.error("Analyze request rejected: unauthorized")
-        raise HTTPException(status_code=401, detail="Unauthorized")
+def _post_callback(callback_url: str, payload: dict, secret: str, analysis_id: str) -> None:
+    """POST the result to callback_url with retry logic."""
+    for attempt in range(1, CALLBACK_RETRY_COUNT + 1):
+        try:
+            resp = http_requests.post(
+                callback_url,
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Internal-Secret": secret,
+                },
+                timeout=15,
+            )
+            if resp.ok:
+                logger.info(
+                    "[%s] Callback POST succeeded on attempt %d (status %d)",
+                    analysis_id, attempt, resp.status_code,
+                )
+                return
+            else:
+                logger.warning(
+                    "[%s] Callback POST attempt %d/%d returned non-2xx status %d: %s",
+                    analysis_id, attempt, CALLBACK_RETRY_COUNT,
+                    resp.status_code, resp.text[:200],
+                )
+        except Exception as exc:
+            logger.warning(
+                "[%s] Callback POST attempt %d/%d failed with error: %s",
+                analysis_id, attempt, CALLBACK_RETRY_COUNT, exc,
+            )
 
-    if user_notes is not None and len(user_notes) > 500:
-        raise bad_request("user_notes must be 500 characters or fewer")
+        if attempt < CALLBACK_RETRY_COUNT:
+            time.sleep(CALLBACK_RETRY_DELAY_SECONDS)
 
-    try:
-        parsed_quiz = json.loads(quiz_scores)
-        quiz = QuizScores.model_validate(parsed_quiz)
-    except json.JSONDecodeError as exc:
-        logger.error("Analyze request rejected: malformed quiz_scores JSON")
-        raise bad_request("Malformed quiz_scores JSON") from exc
-    except Exception as exc:
-        logger.error("Analyze request rejected: invalid quiz_scores: %s", exc)
-        raise bad_request(f"Invalid quiz_scores: {exc}") from exc
+    logger.error(
+        "[%s] All %d callback POST attempts to %s failed — result is lost for this analysis",
+        analysis_id, CALLBACK_RETRY_COUNT, callback_url,
+    )
 
-    uploads = {
-        "front": front,
-        "left_profile": left_profile,
-        "right_profile": right_profile,
-        "forehead_closeup": forehead_closeup,
-        "left_cheek_closeup": left_cheek_closeup,
-        "right_cheek_closeup": right_cheek_closeup,
-    }
-    images: Dict[str, Image.Image] = {}
-    for field_name, upload in uploads.items():
-        images[field_name] = await validate_image(upload, field_name)
+
+def _run_inference_and_callback(
+    images: Dict[str, Image.Image],
+    quiz: QuizScores,
+    user_notes: Optional[str],
+    analysis_id: str,
+    callback_url: str,
+    secret: str,
+) -> None:
+    """Background task: run model inference + fusion, then POST result to callback_url."""
+    task_start = time.monotonic()
+
+    # Use a timer thread for timeout observability (warning only, not a hard kill)
+    timeout_fired = threading.Event()
+
+    def _timeout_warning():
+        timeout_fired.set()
+        logger.warning(
+            "[%s] Background task has been running for over %ds — possible hang",
+            analysis_id, BACKGROUND_TASK_TIMEOUT_SECONDS,
+        )
+
+    timer = threading.Timer(BACKGROUND_TASK_TIMEOUT_SECONDS, _timeout_warning)
+    timer.daemon = True
+    timer.start()
 
     try:
         skin_started = time.perf_counter()
@@ -218,22 +248,96 @@ async def analyze(
 
         fused = fuse_scores(quiz, skin_results, acne_results)
         skin_type = predict_skin_type(fused["final_scores"])
-    except Exception as exc:
-        logger.exception("Model inference failed")
-        raise HTTPException(status_code=500, detail=f"Model inference failed: {exc}") from exc
 
-    response = AnalyzeResponse(
-        skin_type=skin_type,
-        sensitive=fused["final_scores"]["sensitivity_score"] >= 60,
-        confidence=fused["confidence"],
-        disagreement=fused["disagreement"],
-        final_scores=fused["final_scores"],
-        raw_debug=fused["raw_debug"],
+        response = AnalyzeResponse(
+            analysis_id=analysis_id,
+            skin_type=skin_type,
+            sensitive=fused["final_scores"]["sensitivity_score"] >= 60,
+            confidence=fused["confidence"],
+            disagreement=fused["disagreement"],
+            final_scores=fused["final_scores"],
+            raw_debug=fused["raw_debug"],
+            user_notes=user_notes,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+        )
+        elapsed = time.monotonic() - task_start
+        logger.info(
+            "[%s] Inference completed in %.3fs: skin_type=%s confidence=%.3f",
+            analysis_id, elapsed, skin_type, response.confidence,
+        )
+
+        _post_callback(callback_url, response.model_dump(), secret, analysis_id)
+
+    except Exception:
+        elapsed = time.monotonic() - task_start
+        logger.exception("[%s] Background inference task failed after %.3fs", analysis_id, elapsed)
+    finally:
+        timer.cancel()
+
+
+@app.post("/analyze", status_code=202)
+async def analyze(
+    background_tasks: BackgroundTasks,
+    front: Optional[UploadFile] = File(default=None),
+    left_profile: Optional[UploadFile] = File(default=None),
+    right_profile: Optional[UploadFile] = File(default=None),
+    forehead_closeup: Optional[UploadFile] = File(default=None),
+    left_cheek_closeup: Optional[UploadFile] = File(default=None),
+    right_cheek_closeup: Optional[UploadFile] = File(default=None),
+    quiz_scores: str = Form(...),
+    user_notes: Optional[str] = Form(default=None),
+    analysis_id: str = Form(...),
+    callback_url: str = Form(...),
+    x_internal_secret: Optional[str] = Header(default=None, alias="X-Internal-Secret"),
+):
+    # ---------- synchronous validation (fail fast, before 202) ----------
+    logger.info("[%s] Analyze request received", analysis_id)
+
+    if not secrets.compare_digest(x_internal_secret or "", ml_service_secret or ""):
+        logger.error("[%s] Analyze request rejected: unauthorized", analysis_id)
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if user_notes is not None and len(user_notes) > 500:
+        raise bad_request("user_notes must be 500 characters or fewer")
+
+    try:
+        parsed_quiz = json.loads(quiz_scores)
+        quiz = QuizScores.model_validate(parsed_quiz)
+    except json.JSONDecodeError as exc:
+        logger.error("[%s] Analyze request rejected: malformed quiz_scores JSON", analysis_id)
+        raise bad_request("Malformed quiz_scores JSON") from exc
+    except Exception as exc:
+        logger.error("[%s] Analyze request rejected: invalid quiz_scores: %s", analysis_id, exc)
+        raise bad_request(f"Invalid quiz_scores: {exc}") from exc
+
+    uploads = {
+        "front": front,
+        "left_profile": left_profile,
+        "right_profile": right_profile,
+        "forehead_closeup": forehead_closeup,
+        "left_cheek_closeup": left_cheek_closeup,
+        "right_cheek_closeup": right_cheek_closeup,
+    }
+    images: Dict[str, Image.Image] = {}
+    for field_name, upload in uploads.items():
+        images[field_name] = await validate_image(upload, field_name)
+
+    # ---------- validation passed — schedule background inference ----------
+    background_tasks.add_task(
+        _run_inference_and_callback,
+        images=images,
+        quiz=quiz,
         user_notes=user_notes,
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        analysis_id=analysis_id,
+        callback_url=callback_url,
+        secret=ml_service_secret,
     )
-    logger.info("Analyze request completed: skin_type=%s confidence=%.3f", skin_type, response.confidence)
-    return response
+
+    logger.info("[%s] Validation passed, inference scheduled in background", analysis_id)
+    return JSONResponse(
+        status_code=202,
+        content={"status": "processing", "analysis_id": analysis_id},
+    )
 
 
 if __name__ == "__main__":

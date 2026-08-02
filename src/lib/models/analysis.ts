@@ -68,3 +68,17 @@ export async function countAnalysesByCustomer(customerId: string): Promise<numbe
     .get();
   return snapshot.data().count;
 }
+
+export async function updateAnalysis(
+  id: string,
+  data: Partial<Omit<Analysis, "id" | "createdAt">>
+): Promise<Analysis | null> {
+  const docRef = db.collection(COLLECTION).doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return null;
+
+  const existing = validate(analysisSchema, doc.data());
+  const updated = validate(analysisSchema, { ...existing, ...data });
+  await docRef.set(updated);
+  return updated;
+}

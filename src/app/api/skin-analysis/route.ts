@@ -121,25 +121,6 @@ function buildFallbackPrediction(answers: Record<string, number>): MLPrediction 
   };
 }
 
-function normalizeProbabilities(
-  probabilities: Record<string, number> | undefined,
-  skinType: SkinType
-): Record<string, number> {
-  if (!probabilities || Object.keys(probabilities).length === 0) {
-    return { [skinType]: 0.85 };
-  }
-
-  const normalized: Record<string, number> = {};
-  for (const [key, value] of Object.entries(probabilities)) {
-    normalized[key] = Math.max(0, Math.min(1, Number(value)));
-  }
-  return normalized;
-}
-
-function isValidSkinType(value: string): value is SkinType {
-  return ["oily", "dry", "combination", "sensitive", "normal"].includes(value);
-}
-
 function defaultUserProfile(): UserProfile {
   return {
     age_range: null,
@@ -248,6 +229,17 @@ async function clearOlderAnalysisPhotos(customerId: string, currentAnalysisId: s
   }
 }
 
+function buildCallbackUrl(request: NextRequest, analysisId: string): string {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (siteUrl) return `${siteUrl}/api/skin-analysis/callback`;
+
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  if (host) return `${proto}://${host}/api/skin-analysis/callback`;
+
+  return `http://localhost:3000/api/skin-analysis/callback`;
+}
+
 export async function POST(request: NextRequest) {
   const authCheck = await authorize(request, ["CUSTOMER"]);
   if ("error" in authCheck) return authCheck.error;
@@ -331,6 +323,113 @@ export async function POST(request: NextRequest) {
     buffers[field] = Buffer.from(await value.arrayBuffer());
   }
 
+  if (FORCE_FALLBACK) {
+    const prediction = buildFallbackPrediction(normalizedAnswers);
+    const skinType = fallbackClassify(normalizedAnswers);
+    const confidence = 0.85;
+    const probabilities = { [skinType]: 0.85 };
+    const rawScores = rawScoresFromPrediction(prediction, normalizedAnswers);
+    const concerns = deriveConcerns({ quizAnswers: normalizedAnswers, keywords: [], skinType });
+    const healthScore = calculateHealthScore(concerns, confidence);
+    const routine = generateRoutine({ skinType, concerns });
+
+    const analysisRef = db.collection("analyses").doc();
+    const photoUrls = await uploadAnalysisPhotos(files, buffers, analysisRef.id);
+
+    try {
+      const analysis = await createAnalysis({
+        id: analysisRef.id,
+        customerId: customer.uid,
+        quizAnswers: normalizedAnswers,
+        skinNotes,
+        photoUrls,
+        userProfile,
+        result: {
+          skinType,
+          concerns,
+          healthScore,
+          confidence,
+          probabilities,
+          routine,
+          sensitive: normalizedAnswers.sensitivity_score >= 60,
+          disagreement: false,
+          rawScores,
+        },
+        source: "fallback",
+        status: "completed",
+      });
+
+      await updateCustomer(customer.uid, {
+        analysisCount: (customer.analysisCount ?? 0) + 1,
+        skinProfile: { skinType, concerns: concerns.map((c) => c.name) },
+      });
+      await clearOlderAnalysisPhotos(customer.uid, analysis.id);
+
+      return NextResponse.json({
+        analysisId: analysis.id,
+        status: "completed",
+        skin_type: skinType,
+        confidence,
+        probabilities,
+        sensitive: normalizedAnswers.sensitivity_score >= 60,
+        disagreement: false,
+        rawScores,
+        concerns_detected: [],
+        healthScore,
+        concerns,
+        routine,
+        source: "fallback",
+      });
+    } catch (err) {
+      console.error("Failed to persist fallback analysis:", err);
+      return NextResponse.json(
+        { error: { code: "SAVE_FAILED", message: "Failed to save analysis result" } },
+        { status: 500 }
+      );
+    }
+  }
+
+  const analysisRef = db.collection("analyses").doc();
+  const analysisId = analysisRef.id;
+  const photoUrls = await uploadAnalysisPhotos(files, buffers, analysisId);
+
+  try {
+    await createAnalysis({
+      id: analysisId,
+      customerId: customer.uid,
+      quizAnswers: normalizedAnswers,
+      skinNotes,
+      photoUrls,
+      userProfile,
+      result: {
+        skinType: "normal",
+        concerns: [],
+        healthScore: 0,
+        confidence: 0,
+        probabilities: {},
+        routine: { morning: [], night: [] },
+        sensitive: false,
+        disagreement: false,
+        rawScores: {
+          quiz_oiliness: 0,
+          image_oiliness: 0,
+          final_oiliness: 0,
+          quiz_acne: 0,
+          image_acne: 0,
+          final_acne: 0,
+        },
+      },
+      source: "ml-service",
+      status: "pending",
+    });
+  } catch (err) {
+    console.error("Failed to create pending analysis:", err);
+    return NextResponse.json(
+      { error: { code: "SAVE_FAILED", message: "Failed to initialize analysis" } },
+      { status: 500 }
+    );
+  }
+
   const mlForm = new NodeFormData();
   for (const field of PHOTO_FIELDS) {
     mlForm.append(field, buffers[field], {
@@ -339,133 +438,89 @@ export async function POST(request: NextRequest) {
     });
   }
   mlForm.append("quiz_scores", JSON.stringify(normalizedAnswers));
+  mlForm.append("analysis_id", analysisId);
+  mlForm.append("callback_url", buildCallbackUrl(request, analysisId));
   if (skinNotes) mlForm.append("user_notes", skinNotes);
 
-  let prediction: MLPrediction;
-  let source: AnalysisSource = "ml-service";
-
-  if (FORCE_FALLBACK) {
-    prediction = buildFallbackPrediction(normalizedAnswers);
-    source = "fallback";
-  } else {
-    try {
-      const mlResponse = await axios.post<MLPrediction>(
-        `${ML_SERVICE_URL}/analyze`,
-        mlForm,
-        {
-          timeout: 60_000,
-          headers: {
-            ...mlForm.getHeaders(),
-            "X-Internal-Secret": process.env.ML_SERVICE_SECRET,
-          },
-        }
-      );
-      prediction = mlResponse.data;
-    } catch (error: any) {
-      const isMLError =
-        !error.response ||
-        error.response?.status >= 500 ||
-        error.response?.status === 429 ||
-        error.code === "ECONNABORTED";
-
-      if (isMLError) {
-        console.warn("ML Service unavailable, using fallback classifier:", error?.message);
-        prediction = buildFallbackPrediction(normalizedAnswers);
-        source = "fallback";
-      } else {
-        console.error("ML Service 4xx error:", error.message);
-        return NextResponse.json(
-          {
-            error: {
-              code: "ML_PREDICTION_FAILED",
-              message: "ML prediction failed",
-            },
-            detail: error.response?.data,
-          },
-          { status: error.response?.status || 500 }
-        );
-      }
-    }
-  }
-
-  const skinType = isValidSkinType(prediction.skin_type)
-    ? prediction.skin_type
-    : fallbackClassify(normalizedAnswers);
-  const confidence = Math.max(0, Math.min(1, prediction.confidence ?? 0.85));
-  const probabilities = normalizeProbabilities(
-    prediction.probabilities ?? prediction.raw_debug?.skin_type_probabilities,
-    skinType
-  );
-  const keywords = prediction.concerns_detected ?? [];
-  const sensitive = prediction.sensitive ?? skinType === "sensitive";
-  const disagreement = prediction.disagreement ?? false;
-  const rawScores = rawScoresFromPrediction(prediction, normalizedAnswers);
-
-  const concerns = deriveConcerns({
-    quizAnswers: normalizedAnswers,
-    keywords,
-    skinType,
-  });
-  const healthScore = calculateHealthScore(concerns, confidence);
-  const routine = generateRoutine({ skinType, concerns });
-  const analysisRef = db.collection("analyses").doc();
-  const photoUrls = await uploadAnalysisPhotos(files, buffers, analysisRef.id);
-
   try {
-    const analysis = await createAnalysis({
-      id: analysisRef.id,
-      customerId: customer.uid,
-      quizAnswers: normalizedAnswers,
-      skinNotes,
-      photoUrls,
-      userProfile,
-      result: {
-        skinType,
-        concerns,
-        healthScore,
-        confidence,
-        probabilities,
-        routine,
-        sensitive,
-        disagreement,
-        rawScores,
+    const mlResponse = await axios.post(`${ML_SERVICE_URL}/analyze`, mlForm, {
+      timeout: 15_000,
+      headers: {
+        ...mlForm.getHeaders(),
+        "X-Internal-Secret": process.env.ML_SERVICE_SECRET,
       },
-      source,
     });
 
-    await updateCustomer(customer.uid, {
-      analysisCount: (customer.analysisCount ?? 0) + 1,
-      skinProfile: {
-        skinType,
-        concerns: concerns.map((c) => c.name),
-      },
-    });
-    await clearOlderAnalysisPhotos(customer.uid, analysis.id);
+    if (mlResponse.status !== 202) {
+      console.warn(`[${analysisId}] ML service returned unexpected status ${mlResponse.status}`);
+    }
 
     return NextResponse.json({
-      analysisId: analysis.id,
-      skin_type: skinType,
-      confidence,
-      probabilities,
-      sensitive,
-      disagreement,
-      rawScores,
-      concerns_detected: keywords,
-      healthScore,
-      concerns,
-      routine,
-      source,
+      analysisId,
+      status: "processing",
     });
-  } catch (err) {
-    console.error("Failed to persist analysis:", err);
-    return NextResponse.json(
-      {
-        error: {
-          code: "SAVE_FAILED",
-          message: "Failed to save analysis result",
+  } catch (error: any) {
+    console.error(`[${analysisId}] ML service call failed, falling back to quiz-only:`, error?.message);
+
+    const prediction = buildFallbackPrediction(normalizedAnswers);
+    const skinType = fallbackClassify(normalizedAnswers);
+    const confidence = 0.85;
+    const probabilities = { [skinType]: 0.85 };
+    const rawScores = rawScoresFromPrediction(prediction, normalizedAnswers);
+    const concerns = deriveConcerns({ quizAnswers: normalizedAnswers, keywords: [], skinType });
+    const healthScore = calculateHealthScore(concerns, confidence);
+    const routine = generateRoutine({ skinType, concerns });
+
+    try {
+      const analysis = await createAnalysis({
+        id: analysisId,
+        customerId: customer.uid,
+        quizAnswers: normalizedAnswers,
+        skinNotes,
+        photoUrls,
+        userProfile,
+        result: {
+          skinType,
+          concerns,
+          healthScore,
+          confidence,
+          probabilities,
+          routine,
+          sensitive: normalizedAnswers.sensitivity_score >= 60,
+          disagreement: false,
+          rawScores,
         },
-      },
-      { status: 500 }
-    );
+        source: "fallback",
+        status: "completed",
+      });
+
+      await updateCustomer(customer.uid, {
+        analysisCount: (customer.analysisCount ?? 0) + 1,
+        skinProfile: { skinType, concerns: concerns.map((c) => c.name) },
+      });
+      await clearOlderAnalysisPhotos(customer.uid, analysis.id);
+
+      return NextResponse.json({
+        analysisId: analysis.id,
+        status: "completed",
+        skin_type: skinType,
+        confidence,
+        probabilities,
+        sensitive: normalizedAnswers.sensitivity_score >= 60,
+        disagreement: false,
+        rawScores,
+        concerns_detected: [],
+        healthScore,
+        concerns,
+        routine,
+        source: "fallback",
+      });
+    } catch (err) {
+      console.error("Failed to persist fallback analysis:", err);
+      return NextResponse.json(
+        { error: { code: "SAVE_FAILED", message: "Failed to save analysis result" } },
+        { status: 500 }
+      );
+    }
   }
 }

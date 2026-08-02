@@ -24,7 +24,8 @@ RUN pip install --no-cache-dir \
     pillow \
     numpy \
     'opencv-python-headless>=4.10,<5' \
-    python-multipart
+    python-multipart \
+    requests
 
 COPY --from=builder /app/models ./models
 COPY main.py fusion.py schemas.py ./

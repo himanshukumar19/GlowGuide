@@ -33,6 +33,7 @@ class RawDebug(BaseModel):
 
 
 class AnalyzeResponse(BaseModel):
+    analysis_id: str
     skin_type: str
     sensitive: bool
     confidence: float

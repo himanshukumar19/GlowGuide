@@ -81,6 +81,10 @@ export const analysisSourceEnum = z.enum(["ml-service", "fallback"]);
 
 export type AnalysisSource = z.infer<typeof analysisSourceEnum>;
 
+export const analysisStatusEnum = z.enum(["pending", "processing", "completed", "failed"]);
+
+export type AnalysisStatus = z.infer<typeof analysisStatusEnum>;
+
 export const analysisSchema = z.object({
   id: z.string(),
   customerId: z.string(),
@@ -97,6 +101,7 @@ export const analysisSchema = z.object({
   }),
   result: analysisResultSchema,
   source: analysisSourceEnum,
+  status: analysisStatusEnum.default("completed"),
   createdAt: z.string(),
 });
 

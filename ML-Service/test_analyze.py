@@ -32,6 +32,13 @@ IMAGE_FIELDS = (
     "left_cheek_closeup",
     "right_cheek_closeup",
 )
+IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
+CONTENT_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+}
 
 
 # ---------- tiny callback receiver ----------
@@ -96,13 +103,20 @@ def main() -> None:
     files = {}
     handles = []
     try:
+        # Case-insensitive lookup so front.JPG etc. work on case-sensitive filesystems
+        available = {p.name.lower(): p for p in sample_dir.iterdir() if p.is_file()}
         for field in IMAGE_FIELDS:
-            path = sample_dir / f"{field}.jpg"
-            if not path.exists():
-                raise SystemExit(f"Add a 480x480+ face image at {path}")
+            path = next(
+                (available[f"{field}{ext}"] for ext in IMAGE_EXTENSIONS if f"{field}{ext}" in available),
+                None,
+            )
+            if path is None:
+                raise SystemExit(
+                    f"Add a face image at {sample_dir}/{field}.[jpg|jpeg|png|webp]"
+                )
             handle = path.open("rb")
             handles.append(handle)
-            files[field] = (path.name, handle, "image/jpeg")
+            files[field] = (path.name, handle, CONTENT_TYPES[path.suffix.lower()])
 
         # Send the analyze request and measure response time
         start = time.perf_counter()
@@ -112,15 +126,15 @@ def main() -> None:
             files=files,
             data={
                 "quiz_scores": json.dumps({
-                    "sebum_level": 65,
-                    "hydration_level": 50,
-                    "acne_frequency": 45,
-                    "pore_size": 55,
-                    "sensitivity_score": 30,
-                    "roughness_score": 40,
-                    "tightness_score": 30,
+                    "sebum_level": 30,
+                    "hydration_level": 30,
+                    "acne_frequency": 20,
+                    "pore_size": 30,
+                    "sensitivity_score": 25,
+                    "roughness_score": 60,
+                    "tightness_score": 70,
                 }),
-                "user_notes": "Manual local smoke test",
+                "user_notes": "Dry skin smoke test",
                 "analysis_id": analysis_id,
                 "callback_url": callback_url,
             },

@@ -12,25 +12,25 @@ pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 7860
 ```
 
-The first local startup downloads the models unless they are already cached. Add six real face images to `sample_images/` using these names:
+The first local startup downloads the models unless they are already cached. Add six images to `sample_images/` using these names (any of jpg, jpeg, png, or webp — the test script detects the extension and sends the correct content type):
 
 ```text
-front.jpg
-left_profile.jpg
-right_profile.jpg
-forehead_closeup.jpg
-left_cheek_closeup.jpg
-right_cheek_closeup.jpg
+front
+left_profile
+right_profile
+forehead_closeup
+left_cheek_closeup
+right_cheek_closeup
 ```
 
-Each image must be a JPG, PNG, or WebP, at least 480x480, no larger than 8MB, and contain a detectable face. Export the same secret for the service and test script, then run:
+Each image must be a JPG, JPEG, PNG, or WebP, at least 480x480, and no larger than 8MB. The `front`, `left_profile`, and `right_profile` images must contain a detectable face; the three closeups are sent to the acne model and may focus on a forehead or cheek region. Export the same secret for the service and test script, then run:
 
 ```bash
 export ML_SERVICE_SECRET="a-local-secret"
 python test_analyze.py
 ```
 
-The test script spins up a tiny local HTTP server on port 9999 (configurable via `CALLBACK_PORT`) to receive the callback. It expects 202 back immediately, then waits for the callback POST to arrive with the full result. The test script and sample images are ignored by Git. Placeholder drawings will not pass face detection; use photographs or other genuine face images.
+The test script spins up a tiny local HTTP server on port 9999 (configurable via `CALLBACK_PORT`) to receive the callback. It expects 202 back immediately, then waits for the callback POST to arrive with the full result. The test script and sample images are ignored by Git. Use genuine face images for the three full-face fields; closeups should show the skin region being analyzed.
 
 ## API
 

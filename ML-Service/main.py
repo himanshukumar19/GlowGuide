@@ -33,6 +33,7 @@ MODEL_ROOT = os.path.join(os.path.dirname(__file__), "models")
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 MIN_IMAGE_DIMENSION = 480
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+FACE_REQUIRED_FIELDS = {"front", "left_profile", "right_profile"}
 MAGIC_BYTES = {
     "image/jpeg": lambda data: data.startswith(b"\xff\xd8\xff"),
     "image/png": lambda data: data.startswith(b"\x89PNG\r\n\x1a\n"),
@@ -132,7 +133,11 @@ def _validate_callback_url(callback_url: str) -> None:
         raise bad_request("callback_url must not point to a loopback address")
 
 
-async def validate_image(upload: Optional[UploadFile], field_name: str) -> Image.Image:
+async def validate_image(
+    upload: Optional[UploadFile],
+    field_name: str,
+    require_face: bool,
+) -> Image.Image:
     if upload is None:
         raise bad_request(f"Missing image field: {field_name}")
 
@@ -156,13 +161,14 @@ async def validate_image(upload: Optional[UploadFile], field_name: str) -> Image
     if image.width < MIN_IMAGE_DIMENSION or image.height < MIN_IMAGE_DIMENSION:
         raise bad_request(f"Image {field_name} must be at least 480x480 pixels")
 
-    grayscale = cv2.cvtColor(np.array(image.convert("RGB")), cv2.COLOR_RGB2GRAY)
-    cascade = cv2.CascadeClassifier(
-        os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_default.xml")
-    )
-    faces = cascade.detectMultiScale(grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80))
-    if len(faces) == 0:
-        raise bad_request(f"No face detected in {field_name}")
+    if require_face:
+        grayscale = cv2.cvtColor(np.array(image.convert("RGB")), cv2.COLOR_RGB2GRAY)
+        cascade = cv2.CascadeClassifier(
+            os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_default.xml")
+        )
+        faces = cascade.detectMultiScale(grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80))
+        if len(faces) == 0:
+            raise bad_request(f"No face detected in {field_name}")
     return image.convert("RGB")
 
 
@@ -351,7 +357,11 @@ async def analyze(
     }
     images: Dict[str, Image.Image] = {}
     for field_name, upload in uploads.items():
-        images[field_name] = await validate_image(upload, field_name)
+        images[field_name] = await validate_image(
+            upload,
+            field_name,
+            require_face=field_name in FACE_REQUIRED_FIELDS,
+        )
 
     # ---------- validation passed — schedule background inference ----------
     background_tasks.add_task(

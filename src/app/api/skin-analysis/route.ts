@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import NodeFormData from "form-data";
 import { authorize } from "@/lib/api-auth";
-import { getCustomerById, updateCustomer } from "@/lib/models";
-import { createAnalysis } from "@/lib/models";
+import { updateCustomer, createAnalysis } from "@/lib/models";
+import { validate } from "@/lib/validators";
+import { customerSchema, type Customer } from "@/lib/schemas";
 import { db } from "@/lib/firebase-admin";
 import { uploadImageBuffer, deleteImage } from "@/lib/cloudinary";
 import { calculateHealthScore } from "@/lib/analysis/health-score";
@@ -257,18 +258,37 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const customer = await getCustomerById(authCheck.uid);
-  if (!customer) {
+  const customerRef = db.collection("customers").doc(authCheck.uid);
+  const customer = await db.runTransaction<Customer | { limitReached: true } | null>(
+    async (tx) => {
+      const doc = await tx.get(customerRef);
+      if (!doc.exists) return null;
+
+      const data = doc.data() as Record<string, unknown>;
+      const tier = data.subscriptionTier;
+      const count = (data.analysisCount as number | undefined) ?? 0;
+
+      if (tier === "FREE" && count >= FREE_TIER_ANALYSIS_LIMIT) {
+        return { limitReached: true };
+      }
+
+      tx.update(customerRef, {
+        analysisCount: count + 1,
+        updatedAt: new Date().toISOString(),
+      });
+
+      return validate(customerSchema, data);
+    }
+  );
+
+  if (customer === null) {
     return NextResponse.json(
       { error: { code: "CUSTOMER_NOT_FOUND", message: "Customer not found" } },
       { status: 404 }
     );
   }
 
-  if (
-    customer.subscriptionTier === "FREE" &&
-    customer.analysisCount >= FREE_TIER_ANALYSIS_LIMIT
-  ) {
+  if ("limitReached" in customer) {
     return NextResponse.json(
       {
         error: {
@@ -360,7 +380,6 @@ export async function POST(request: NextRequest) {
       });
 
       await updateCustomer(customer.uid, {
-        analysisCount: (customer.analysisCount ?? 0) + 1,
         skinProfile: { skinType, concerns: concerns.map((c) => c.name) },
       });
       await clearOlderAnalysisPhotos(customer.uid, analysis.id);
@@ -495,7 +514,6 @@ export async function POST(request: NextRequest) {
       });
 
       await updateCustomer(customer.uid, {
-        analysisCount: (customer.analysisCount ?? 0) + 1,
         skinProfile: { skinType, concerns: concerns.map((c) => c.name) },
       });
       await clearOlderAnalysisPhotos(customer.uid, analysis.id);
@@ -517,6 +535,17 @@ export async function POST(request: NextRequest) {
       });
     } catch (err) {
       console.error("Failed to persist fallback analysis:", err);
+
+      try {
+        await db
+          .collection("analyses")
+          .doc(analysisId)
+          .update({ status: "failed" });
+        console.warn(`[${analysisId}] Pending analysis marked as failed`);
+      } catch (cleanupError) {
+        console.error(`[${analysisId}] Failed to mark pending analysis as failed:`, cleanupError);
+      }
+
       return NextResponse.json(
         { error: { code: "SAVE_FAILED", message: "Failed to save analysis result" } },
         { status: 500 }

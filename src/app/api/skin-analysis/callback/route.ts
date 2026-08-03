@@ -189,7 +189,6 @@ export async function POST(request: NextRequest) {
 
     if (updated) {
       await updateCustomer(existing.customerId, {
-        analysisCount: (existing.analysisCount as number ?? 0) + 1,
         skinProfile: {
           skinType,
           concerns: concerns.map((c) => c.name),

@@ -77,8 +77,7 @@ export async function updateAnalysis(
   const doc = await docRef.get();
   if (!doc.exists) return null;
 
-  const existing = validate(analysisSchema, doc.data());
-  const updated = validate(analysisSchema, { ...existing, ...data });
+  const updated = validate(analysisSchema, { ...doc.data(), ...data });
   await docRef.set(updated);
   return updated;
 }

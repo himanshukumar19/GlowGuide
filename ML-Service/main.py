@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from io import BytesIO
 from typing import Dict, Optional
+from urllib.parse import urlparse
 
 import cv2
 import numpy as np
@@ -101,6 +102,34 @@ def load_model_metadata(name: str, model_id: str):
 
 def bad_request(message: str) -> HTTPException:
     return HTTPException(status_code=400, detail=message)
+
+
+LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
+METADATA_HOSTS = {"169.254.169.254", "169.254.170.2", "metadata.google.internal", "metadata"}
+
+
+def _validate_callback_url(callback_url: str) -> None:
+    """Reject callback URLs that could be abused as an SSRF vector."""
+    try:
+        parsed = urlparse(callback_url)
+    except ValueError as exc:
+        raise bad_request("callback_url is not a valid URL") from exc
+
+    if parsed.scheme not in ("http", "https"):
+        raise bad_request("callback_url must use http or https")
+
+    host = (parsed.hostname or "").lower().rstrip(".")
+    if not host:
+        raise bad_request("callback_url must include a host")
+
+    if host in LOOPBACK_HOSTS:
+        raise bad_request("callback_url must not point to a loopback address")
+
+    if host in METADATA_HOSTS or host.endswith(".internal") and host != "host.docker.internal":
+        raise bad_request("callback_url must not point to a metadata or internal address")
+
+    if host.startswith("127."):
+        raise bad_request("callback_url must not point to a loopback address")
 
 
 async def validate_image(upload: Optional[UploadFile], field_name: str) -> Image.Image:
@@ -299,6 +328,8 @@ async def analyze(
 
     if user_notes is not None and len(user_notes) > 500:
         raise bad_request("user_notes must be 500 characters or fewer")
+
+    _validate_callback_url(callback_url)
 
     try:
         parsed_quiz = json.loads(quiz_scores)

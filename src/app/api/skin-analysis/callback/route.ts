@@ -67,10 +67,15 @@ async function clearOlderAnalysisPhotos(customerId: string, currentAnalysisId: s
     const snapshot = await db
       .collection("analyses")
       .where("customerId", "==", customerId)
-      .orderBy("createdAt", "desc")
       .get();
 
-    const previousAnalyses = snapshot.docs
+    const analyses = [...snapshot.docs].sort((a, b) => {
+      const createdAtDifference = String(b.data().createdAt ?? "").localeCompare(
+        String(a.data().createdAt ?? "")
+      );
+      return createdAtDifference || b.id.localeCompare(a.id);
+    });
+    const previousAnalyses = analyses
       .filter((doc) => doc.id !== currentAnalysisId)
       .slice(1);
 

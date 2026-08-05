@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { doc, onSnapshot } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ArrowRight, ArrowLeft, CheckCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { quizQuestions } from "@/data/quizData";
 import { LivePhotoCapture } from "@/components/analysis/LivePhotoCapture";
+import type { AnalysisPhotoFiles } from "@/components/analysis/LivePhotoCapture";
 import { AnalysisProcessing } from "@/components/analysis/AnalysisProcessing";
 import { analysisApi } from "@/api/analysis.api";
+import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 
 type DiagnosisStep = "intro" | "quiz" | "camera" | "processing";
@@ -24,9 +27,9 @@ const SkinQuiz = () => {
   // Optional skin notes
   const [freeText, setFreeText] = useState<string>("");
   const [showFreeText, setShowFreeText] = useState<boolean>(false);
-  
-  // Scans captured
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [processingAnalysisId, setProcessingAnalysisId] = useState<string | null>(null);
+  const [processingError, setProcessingError] = useState<string | null>(null);
+  const [processingTimedOut, setProcessingTimedOut] = useState(false);
   
   const router = useRouter();
 
@@ -46,9 +49,11 @@ const SkinQuiz = () => {
     setCurrentQuestion(0);
     setAnswers({});
     setSelectedOption(null);
-    setPhotos([]);
     setFreeText("");
     setShowFreeText(false);
+    setProcessingAnalysisId(null);
+    setProcessingError(null);
+    setProcessingTimedOut(false);
   };
 
   const handleOptionSelect = (questionId: string, value: number, index: number) => {
@@ -84,20 +89,25 @@ const SkinQuiz = () => {
     setStep("camera");
   };
 
-  const handleCameraComplete = async (capturedPhotos: string[]) => {
-    setPhotos(capturedPhotos);
+  const handleCameraComplete = async (capturedPhotos: AnalysisPhotoFiles) => {
     setStep("processing");
+    setProcessingError(null);
+    setProcessingTimedOut(false);
 
     try {
-      const data = await analysisApi.create({
-        answers: answers,
-        skinNotes: freeText || null,
-      });
+      const formData = new FormData();
+      for (const field of Object.keys(capturedPhotos) as Array<keyof AnalysisPhotoFiles>) {
+        formData.append(field, capturedPhotos[field]);
+      }
+      formData.append("quizAnswers", JSON.stringify(answers));
+      if (freeText.trim()) formData.append("skinNotes", freeText.trim());
 
-      // Allow the processing animation to play briefly, then redirect
-      setTimeout(() => {
+      const data = await analysisApi.createMultipart(formData);
+      setProcessingAnalysisId(data.analysisId);
+
+      if (data.status === "completed") {
         router.push(`/analysis/results/${data.analysisId}`);
-      }, 1500);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
       console.error("API Diagnostic failed:", message);
@@ -115,6 +125,51 @@ const SkinQuiz = () => {
         setStep("camera");
       }, 500);
     }
+  };
+
+  useEffect(() => {
+    if (step !== "processing" || !processingAnalysisId) return;
+
+    let unsubscribe = () => {};
+    let finished = false;
+    const timeoutId = window.setTimeout(() => {
+      if (!finished) setProcessingTimedOut(true);
+    }, 180_000);
+
+    unsubscribe = onSnapshot(
+      doc(db, "analyses", processingAnalysisId),
+      (snapshot) => {
+        if (!snapshot.exists()) return;
+        const status = snapshot.data().status;
+
+        if (status === "completed") {
+          finished = true;
+          window.clearTimeout(timeoutId);
+          unsubscribe();
+          router.push(`/analysis/results/${processingAnalysisId}`);
+        } else if (status === "failed") {
+          finished = true;
+          window.clearTimeout(timeoutId);
+          unsubscribe();
+          setProcessingError("The analysis could not be completed. Please try the photo step again.");
+        }
+      },
+      () => {
+        setProcessingError("We lost the live analysis status. Please try the photo step again.");
+      }
+    );
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      unsubscribe();
+    };
+  }, [processingAnalysisId, router, step]);
+
+  const retryProcessing = () => {
+    setProcessingAnalysisId(null);
+    setProcessingError(null);
+    setProcessingTimedOut(false);
+    setStep("camera");
   };
 
   return (
@@ -359,7 +414,31 @@ const SkinQuiz = () => {
             {/* Step 4: Loading progress */}
             {step === "processing" && (
               <motion.div key="processing" className="w-full">
-                <AnalysisProcessing />
+                {processingError ? (
+                  <div className="min-h-[50vh] flex items-center justify-center">
+                    <Card className="w-full max-w-md rounded-gg-lg border-0 shadow-elevated">
+                      <CardContent className="p-8 text-center space-y-5">
+                        <h2 className="font-heading text-2xl font-bold text-white">Analysis stopped</h2>
+                        <p className="text-sm text-white/75">{processingError}</p>
+                        <Button onClick={retryProcessing}>Retry photos</Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : processingTimedOut ? (
+                  <div className="min-h-[50vh] flex items-center justify-center">
+                    <Card className="w-full max-w-md rounded-gg-lg border-0 shadow-elevated">
+                      <CardContent className="p-8 text-center space-y-5">
+                        <h2 className="font-heading text-2xl font-bold text-white">Taking longer than expected</h2>
+                        <p className="text-sm text-white/75">The listener is still active. Keep this page open; retrying now could start a second analysis and use another quota slot.</p>
+                        <div className="flex justify-center">
+                          <Button variant="outline" className="border-white/30 text-white" onClick={() => setProcessingTimedOut(false)}>Keep waiting</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  <AnalysisProcessing statusText="Analyzing your skin..." />
+                )}
               </motion.div>
             )}
 

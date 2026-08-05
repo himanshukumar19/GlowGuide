@@ -14,14 +14,15 @@ export interface CreateAnalysisPayload {
 
 export interface CreateAnalysisResponse {
   analysisId: string;
-  skin_type: SkinType;
-  confidence: number;
-  probabilities: Record<string, number>;
-  concerns_detected: string[];
-  healthScore: number;
-  concerns: DetectedConcern[];
-  routine: RoutineRecommendation;
-  source: AnalysisSource;
+  status: "processing" | "completed";
+  skin_type?: SkinType;
+  confidence?: number;
+  probabilities?: Record<string, number>;
+  concerns_detected?: string[];
+  healthScore?: number;
+  concerns?: DetectedConcern[];
+  routine?: RoutineRecommendation;
+  source?: AnalysisSource;
 }
 
 export interface AnalysisHistoryItem {
@@ -45,6 +46,9 @@ export interface AnalysisHistoryResponse {
 export const analysisApi = {
   create: (payload: CreateAnalysisPayload) =>
     api.post<CreateAnalysisResponse>("/api/skin-analysis", payload),
+
+  createMultipart: (payload: FormData) =>
+    api.postMultipart<CreateAnalysisResponse>("/api/skin-analysis", payload),
 
   getHistory: (limit?: number) =>
     api.get<AnalysisHistoryResponse>(

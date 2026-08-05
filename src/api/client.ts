@@ -47,9 +47,33 @@ async function request<T>(
   return data as T;
 }
 
+async function requestMultipart<T>(path: string, body: FormData): Promise<T> {
+  const token = await getToken();
+  const res = await fetch(path, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new ApiError(
+      res.status,
+      data.error?.code || "UNKNOWN_ERROR",
+      data.error?.message || "Something went wrong"
+    );
+  }
+
+  return data as T;
+}
+
 export const api = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
+  postMultipart: <T>(path: string, body: FormData) => requestMultipart<T>(path, body),
   put: <T>(path: string, body?: unknown) => request<T>("PUT", path, body),
   patch: <T>(path: string, body?: unknown) => request<T>("PATCH", path, body),
   del: <T>(path: string) => request<T>("DELETE", path),

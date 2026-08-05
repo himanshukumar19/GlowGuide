@@ -159,4 +159,8 @@ Next.js                    ML-Service                 Next.js Callback
 5. Set the live URL as `ML_SERVICE_URL` in your Next.js environment variables.
 6. Set `ML_SERVICE_SECRET` to the same value in Vercel. Do not expose it as a `NEXT_PUBLIC_` variable.
 
+### Troubleshooting a down service
+
+The service requires `ML_SERVICE_SECRET` during startup. If it is missing in Render, Uvicorn exits before the health endpoint can respond and Render reports the service as down. Add the variable under the Render service's Environment settings, use the same value in Vercel, and redeploy.
+
 The free tier has 512MB RAM. The service is optimized (sequential model loading + INT8 quantization) to stay well under this limit (~242MB peak).

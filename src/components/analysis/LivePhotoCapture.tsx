@@ -1,522 +1,559 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, RefreshCw, CheckCircle, AlertTriangle, ChevronRight, RotateCcw } from "lucide-react";
-import { toast } from "sonner";
+import {
+  AlertTriangle,
+  Camera,
+  CheckCircle,
+  ChevronRight,
+  ImagePlus,
+  Loader2,
+  RefreshCw,
+  RotateCcw,
+} from "lucide-react";
+
+export const PHOTO_FIELDS = [
+  "front",
+  "left_profile",
+  "right_profile",
+  "forehead_closeup",
+  "left_cheek_closeup",
+  "right_cheek_closeup",
+] as const;
+
+export type PhotoField = (typeof PHOTO_FIELDS)[number];
+export type AnalysisPhotoFiles = Record<PhotoField, File>;
 
 interface LivePhotoCaptureProps {
-  onComplete: (photos: string[]) => void;
+  onComplete: (photos: AnalysisPhotoFiles) => void;
   onBack: () => void;
 }
 
-interface CaptureAngle {
-  id: string;
-  name: string;
+interface ShotDefinition {
+  id: PhotoField;
+  label: string;
   description: string;
-  guidePath: string; // SVG path or instruction description
+  yaw: [number, number];
+  closeup?: boolean;
 }
 
-const CAPTURE_ANGLES: CaptureAngle[] = [
+interface ValidationResult {
+  valid: boolean;
+  message: string;
+  yaw?: number;
+  fillRatio?: number;
+}
+
+const SHOTS: ShotDefinition[] = [
+  { id: "front", label: "Front", description: "Face the camera directly.", yaw: [-10, 10] },
   {
-    id: "front",
-    name: "Front Facing",
-    description: "Align your face directly with the center guide.",
-    // Center face oval
-    guidePath: "M12,4 C8.5,4 5.5,7 5.5,11 C5.5,15 8.5,19 12,19 C15.5,19 18.5,15 18.5,11 C18.5,7 15.5,4 12,4 Z"
+    id: "left_profile",
+    label: "Left profile",
+    description: "Turn right until your left profile is visible.",
+    yaw: [-50, -40],
   },
   {
-    id: "left-profile",
-    name: "Left Profile",
-    description: "Turn your face to the right (showing your left profile).",
-    // Left profile silhouette
-    guidePath: "M12,4 C9.5,4 7.5,6 7,8.5 C6.8,9.5 6,10 5,10 C4,10 3.5,11 3.5,12 C3.5,13 4.5,13.5 5,14 C5.5,14.5 6.5,15.5 7.5,17 C8.5,18.5 10.5,19 12,19 Z"
+    id: "right_profile",
+    label: "Right profile",
+    description: "Turn left until your right profile is visible.",
+    yaw: [40, 50],
   },
   {
-    id: "right-profile",
-    name: "Right Profile",
-    description: "Turn your face to the left (showing your right profile).",
-    // Right profile silhouette (flipped)
-    guidePath: "M12,4 C14.5,4 16.5,6 17,8.5 C17.2,9.5 18,10 19,10 C20,10 20.5,11 20.5,12 C20.5,13 19.5,13.5 19,14 C18.5,14.5 17.5,15.5 16.5,17 C15.5,18.5 13.5,19 12,19 Z"
+    id: "forehead_closeup",
+    label: "Forehead closeup",
+    description: "Face forward and move closer until your face fills the guide.",
+    yaw: [-10, 10],
+    closeup: true,
   },
   {
-    id: "tilt-left",
-    name: "Tilted Left",
-    description: "Tilt your head slightly up and to the left (showing jawline).",
-    guidePath: "M12,4 C8.5,4.5 6,7.5 6,11.5 C6,15 9,18.5 12,19 C14,19.2 17.5,16 18,12 C18.5,8 15.5,4 12,4 Z"
+    id: "left_cheek_closeup",
+    label: "Left cheek closeup",
+    description: "Face forward and bring your left cheek close to the camera.",
+    yaw: [-10, 10],
+    closeup: true,
   },
   {
-    id: "tilt-right",
-    name: "Tilted Right",
-    description: "Tilt your head slightly up and to the right (showing jawline).",
-    guidePath: "M12,4 C15.5,4.5 18,7.5 18,11.5 C18,15 15,18.5 12,19 C10,19.2 6.5,16 6,12 C5.5,8 8.5,4 12,4 Z"
-  }
+    id: "right_cheek_closeup",
+    label: "Right cheek closeup",
+    description: "Face forward and bring your right cheek close to the camera.",
+    yaw: [-10, 10],
+    closeup: true,
+  },
 ];
 
+const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MIN_IMAGE_DIMENSION = 480;
+const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
+const MODEL_PATH =
+  "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+
+function getYawAndFill(landmarks: Array<{ x: number; y: number }>) {
+  const nose = landmarks[1];
+  const leftEye = landmarks[33];
+  const rightEye = landmarks[263];
+  if (!nose || !leftEye || !rightEye) return null;
+
+  const eyeCenter = (leftEye.x + rightEye.x) / 2;
+  const eyeDistance = Math.max(Math.abs(rightEye.x - leftEye.x), 0.001);
+  const yaw = Math.atan2(nose.x - eyeCenter, eyeDistance) * (180 / Math.PI);
+  const xs = landmarks.map((landmark) => landmark.x);
+  const ys = landmarks.map((landmark) => landmark.y);
+  const fillRatio = (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys));
+
+  return { yaw, fillRatio };
+}
+
+function validateDetection(
+  result: any,
+  shot: ShotDefinition,
+  sourceLabel: string
+): ValidationResult {
+  const landmarks = result?.faceLandmarks?.[0];
+  if (!landmarks) {
+    return { valid: false, message: `${sourceLabel}: no face detected.` };
+  }
+
+  const pose = getYawAndFill(landmarks);
+  if (!pose) {
+    return { valid: false, message: `${sourceLabel}: keep your full face visible.` };
+  }
+
+  const [minYaw, maxYaw] = shot.yaw;
+  if (pose.yaw < minYaw || pose.yaw > maxYaw) {
+    return {
+      valid: false,
+      message: `${sourceLabel}: adjust your angle. Target ${minYaw}° to ${maxYaw}° yaw.`,
+      yaw: pose.yaw,
+      fillRatio: pose.fillRatio,
+    };
+  }
+
+  if (shot.closeup && pose.fillRatio < 0.6) {
+    return {
+      valid: false,
+      message: `${sourceLabel}: move closer until your face fills at least 60% of the frame.`,
+      yaw: pose.yaw,
+      fillRatio: pose.fillRatio,
+    };
+  }
+
+  return {
+    valid: true,
+    message: shot.closeup ? "Closeup framing is ready." : "Position is correct. Hold steady.",
+    yaw: pose.yaw,
+    fillRatio: pose.fillRatio,
+  };
+}
+
+function loadImage(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("The selected image could not be opened."));
+    };
+    image.src = objectUrl;
+  });
+}
+
+function canvasToFile(canvas: HTMLCanvasElement, name: string): Promise<File> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error("Could not capture the image."));
+          return;
+        }
+        resolve(new File([blob], `${name}.jpg`, { type: "image/jpeg" }));
+      },
+      "image/jpeg",
+      0.92
+    );
+  });
+}
+
+const PhotoPreview = ({ file, label }: { file: File; label: string }) => {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const nextUrl = URL.createObjectURL(file);
+    setUrl(nextUrl);
+    return () => URL.revokeObjectURL(nextUrl);
+  }, [file]);
+
+  if (!url) return <div className="w-full h-full bg-muted" aria-label={`Loading ${label}`} />;
+  return <img src={url} alt={label} className="w-full h-full object-cover" />;
+};
+
 export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) => {
+  const [consented, setConsented] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<Partial<AnalysisPhotoFiles>>({});
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [isLoadingModel, setIsLoadingModel] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [galleryError, setGalleryError] = useState<string | null>(null);
   const [reviewMode, setReviewMode] = useState(false);
+  const [alignment, setAlignment] = useState<ValidationResult>({
+    valid: false,
+    message: "Loading face guidance...",
+  });
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const landmarkerRef = useRef<FaceLandmarker | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const animationRef = useRef<number | null>(null);
+  const lastVideoTimestampRef = useRef(0);
+  const validatingFileRef = useRef(false);
 
-  const currentAngle = CAPTURE_ANGLES[currentStep];
-  const [alignmentState, setAlignmentState] = useState<"scanning" | "aligned">("scanning");
-  const [alignmentStatus, setAlignmentStatus] = useState<string>("Aligning face in guide...");
-  
-  const lastFrameDataRef = useRef<Uint8ClampedArray | null>(null);
-  const steadyFramesRef = useRef(0);
+  const currentShot = SHOTS[currentStep];
+  const hasAllPhotos = PHOTO_FIELDS.every((field) => photos[field]);
 
-  const startCamera = useCallback(async () => {
-    setCameraError(null);
-    try {
-      if (streamRef.current) {
-        stopCamera();
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user",
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        },
-        audio: false
-      });
-
-      streamRef.current = stream;
-      setIsCameraActive(true);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      console.warn("Camera access denied or unsupported, enabling demo mode:", message);
-      setCameraError(
-        "Could not access camera. Enabling interactive simulator to complete analysis."
-      );
-      setIsCameraActive(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    startCamera();
-    return () => stopCamera();
-  }, [startCamera]);
-
-  // 1. Real-time Optical Motion & Presence Analyzer (runs when camera is active)
-  useEffect(() => {
-    if (!isCameraActive || reviewMode || !videoRef.current) return;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 32;
-    canvas.height = 24;
-    const ctx = canvas.getContext("2d");
-
-    steadyFramesRef.current = 0;
-    lastFrameDataRef.current = null;
-    setAlignmentState("scanning");
-    setAlignmentStatus("Aligning face in guide...");
-
-    const intervalId = setInterval(() => {
-      if (!videoRef.current || !ctx || reviewMode) return;
-
-      try {
-        ctx.drawImage(videoRef.current, 0, 0, 32, 24);
-        const imgData = ctx.getImageData(0, 0, 32, 24);
-        const data = imgData.data;
-
-        let totalDiff = 0;
-        let avgBrightness = 0;
-        const lastData = lastFrameDataRef.current;
-
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i+1];
-          const b = data[i+2];
-          avgBrightness += (r + g + b) / 3;
-
-          if (lastData) {
-            totalDiff += Math.abs(r - lastData[i]) +
-                         Math.abs(g - lastData[i+1]) +
-                         Math.abs(b - lastData[i+2]);
-          }
-        }
-
-        const numPixels = data.length / 4;
-        avgBrightness = avgBrightness / numPixels;
-        const avgDiff = lastData ? totalDiff / (numPixels * 3) : 0;
-        lastFrameDataRef.current = data;
-
-        // Calculate spatial contrast variance to detect presence of features/human vs empty wall
-        let varianceSum = 0;
-        for (let i = 0; i < data.length; i += 4) {
-          const b = (data[i] + data[i+1] + data[i+2]) / 3;
-          varianceSum += Math.abs(b - avgBrightness);
-        }
-        const spatialVariance = varianceSum / numPixels;
-
-        // Block obstruction checks
-        if (avgBrightness < 18) {
-          setAlignmentState("scanning");
-          setAlignmentStatus("Feed too dark: Adjust lighting");
-          steadyFramesRef.current = 0;
-          return;
-        }
-        if (avgBrightness > 238) {
-          setAlignmentState("scanning");
-          setAlignmentStatus("Feed too bright: Adjust lighting");
-          steadyFramesRef.current = 0;
-          return;
-        }
-
-        // Flat surface detection (empty flat wall or covered camera has low spatial variance)
-        if (spatialVariance < 12) {
-          setAlignmentState("scanning");
-          setAlignmentStatus("Position face inside guide...");
-          steadyFramesRef.current = 0;
-          return;
-        }
-
-        // Evaluate motion differentials with tuned thresholds
-        if (avgDiff > 9.5) {
-          // Significant motion (user adjusting, shaking, or walking away)
-          setAlignmentState("scanning");
-          setAlignmentStatus("Shaking detected: Hold steady");
-          steadyFramesRef.current = 0;
-        } else if (avgDiff >= 0.85 && avgDiff <= 9.5) {
-          // Biological micro-movements (breathing, blinks, etc.) of a present user holding steady
-          steadyFramesRef.current += 1;
-          if (steadyFramesRef.current >= 4) {
-            setAlignmentState("aligned");
-            setAlignmentStatus("Position correct: Ready!");
-          } else {
-            setAlignmentStatus("Scanning... Hold steady");
-          }
-        } else {
-          // Under 0.85 -> Stillness (empty static background noise or camera left untouched)
-          setAlignmentState("scanning");
-          setAlignmentStatus("Position face inside guide...");
-          steadyFramesRef.current = 0;
-        }
-      } catch (err) {
-        // Suppress canvas errors on initial loading frames
-      }
-    }, 250);
-
-    return () => clearInterval(intervalId);
-  }, [isCameraActive, reviewMode, currentStep]);
-
-  // 2. Demo simulator timer (runs when device has no camera access)
-  useEffect(() => {
-    if (isCameraActive || reviewMode) return;
-
-    setAlignmentState("scanning");
-    setAlignmentStatus("Simulating face alignment...");
-
-    const timer = setTimeout(() => {
-      setAlignmentState("aligned");
-      setAlignmentStatus("Position correct: Ready!");
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [currentStep, reviewMode, isCameraActive]);
-
-  useEffect(() => {
-    if (isCameraActive && videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current;
-    }
-  }, [isCameraActive]);
-
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+    if (animationRef.current !== null) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
     setIsCameraActive(false);
-  };
+  }, []);
 
-  const capturePhoto = () => {
-    if (!isCameraActive) {
-      // Fallback Demo Mode: Generate a beautiful color canvas with angle labels
-      generateDemoPhoto();
-      return;
+  const loadLandmarker = useCallback(async () => {
+    if (landmarkerRef.current) return landmarkerRef.current;
+
+    setIsLoadingModel(true);
+    try {
+      const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
+      landmarkerRef.current = await FaceLandmarker.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: MODEL_PATH },
+        runningMode: "VIDEO",
+        numFaces: 1,
+        minFaceDetectionConfidence: 0.5,
+        minFacePresenceConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+      return landmarkerRef.current;
+    } finally {
+      setIsLoadingModel(false);
     }
+  }, []);
 
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (video && canvas) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        // Mirror the image for intuitive photo review
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Convert to dataUrl
-        const dataUrl = canvas.toDataURL("image/jpeg");
-        const updatedPhotos = [...photos];
-        updatedPhotos[currentStep] = dataUrl;
-        setPhotos(updatedPhotos);
+  const startCamera = useCallback(async () => {
+    setCameraError(null);
+    setGalleryError(null);
+    try {
+      await loadLandmarker();
+      stopCamera();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setIsCameraActive(true);
+      if (videoRef.current) videoRef.current.srcObject = stream;
+    } catch (error) {
+      setCameraError(
+        error instanceof Error
+          ? error.message
+          : "Could not access the camera. Choose a photo instead."
+      );
+      setIsCameraActive(false);
+    }
+  }, [loadLandmarker, stopCamera]);
 
-        advanceOrReview(updatedPhotos);
+  useEffect(() => {
+    if (!consented) return;
+    void startCamera();
+    return stopCamera;
+  }, [consented, startCamera, stopCamera]);
+
+  useEffect(() => {
+    if (!isCameraActive || !videoRef.current || !streamRef.current) return;
+
+    videoRef.current.srcObject = streamRef.current;
+    void videoRef.current.play().catch(() => {
+      setCameraError("The camera preview could not start. Please retry camera access.");
+    });
+  }, [isCameraActive]);
+
+  useEffect(() => {
+    if (!isCameraActive || reviewMode || !videoRef.current || !landmarkerRef.current) return;
+
+    const detect = () => {
+      const video = videoRef.current;
+      const landmarker = landmarkerRef.current;
+      if (
+        validatingFileRef.current ||
+        !video ||
+        !landmarker ||
+        video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA
+      ) {
+        animationRef.current = requestAnimationFrame(detect);
+        return;
       }
-    }
-  };
 
-  const generateDemoPhoto = () => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        canvas.width = 640;
-        canvas.height = 480;
+      const timestamp = Math.max(performance.now(), lastVideoTimestampRef.current + 1);
+      lastVideoTimestampRef.current = timestamp;
+      const result = landmarker.detectForVideo(video, timestamp);
+      setAlignment(validateDetection(result, currentShot, currentShot.label));
+      animationRef.current = requestAnimationFrame(detect);
+    };
 
-        // Draw a simulated face outline on canvas
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        gradient.addColorStop(0, "#BA94D1");
-        gradient.addColorStop(1, "#E8A0BF");
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animationRef.current = requestAnimationFrame(detect);
+    return () => {
+      if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    };
+  }, [currentShot, isCameraActive, reviewMode]);
 
-        // Grid
-        ctx.strokeStyle = "rgba(255,255,255,0.15)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(canvas.width / 2, canvas.height / 2, 100, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Label
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 24px Playfair Display, serif";
-        ctx.textAlign = "center";
-        ctx.fillText(`SIMULATED: ${currentAngle.name}`, canvas.width / 2, canvas.height / 2 - 20);
-
-        ctx.fillStyle = "#ffffff99";
-        ctx.font = "14px Inter, sans-serif";
-        ctx.fillText("Camera Permission Simulator Output", canvas.width / 2, canvas.height / 2 + 10);
-
-        const dataUrl = canvas.toDataURL("image/jpeg");
-        const updatedPhotos = [...photos];
-        updatedPhotos[currentStep] = dataUrl;
-        setPhotos(updatedPhotos);
-
-        advanceOrReview(updatedPhotos);
+  const validateFile = useCallback(
+    async (file: File): Promise<ValidationResult> => {
+      if (!ACCEPTED_TYPES.has(file.type)) {
+        return { valid: false, message: "Use a JPG, PNG, or WebP image." };
       }
-    }
-  };
+      if (file.size > MAX_IMAGE_BYTES) {
+        return { valid: false, message: "That image is larger than 8MB." };
+      }
 
-  const advanceOrReview = (updatedPhotos: string[]) => {
-    if (currentStep < CAPTURE_ANGLES.length - 1) {
-      setCurrentStep(currentStep + 1);
+      try {
+        const image = await loadImage(file);
+        if (image.width < MIN_IMAGE_DIMENSION || image.height < MIN_IMAGE_DIMENSION) {
+          return { valid: false, message: "Images must be at least 480×480 pixels." };
+        }
+
+        const landmarker = await loadLandmarker();
+        validatingFileRef.current = true;
+        await landmarker.setOptions({ runningMode: "IMAGE" });
+        const result = landmarker.detect(image);
+        return validateDetection(result, currentShot, currentShot.label);
+      } catch (error) {
+        return {
+          valid: false,
+          message: error instanceof Error ? error.message : "Could not validate that image.",
+        };
+      } finally {
+        if (landmarkerRef.current) {
+          await landmarkerRef.current.setOptions({ runningMode: "VIDEO" });
+        }
+        validatingFileRef.current = false;
+      }
+    },
+    [currentShot, loadLandmarker]
+  );
+
+  const savePhoto = (file: File) => {
+    setPhotos((previous) => ({ ...previous, [currentShot.id]: file }));
+    setGalleryError(null);
+    if (currentStep < SHOTS.length - 1) {
+      setCurrentStep((step) => step + 1);
     } else {
       stopCamera();
       setReviewMode(true);
     }
   };
 
-  const retakePhoto = (index: number) => {
-    setCurrentStep(index);
-    setReviewMode(false);
-    startCamera();
+  const capturePhoto = async () => {
+    if (!isCameraActive || !alignment.valid || !videoRef.current || !canvasRef.current) return;
+
+    setIsCapturing(true);
+    try {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Could not prepare the camera frame.");
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      savePhoto(await canvasToFile(canvas, currentShot.id));
+    } finally {
+      setIsCapturing(false);
+    }
   };
 
-  const handleConfirmSubmit = () => {
-    onComplete(photos);
+  const handleGalleryChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setGalleryError("Checking your photo...");
+    const validation = await validateFile(file);
+    if (!validation.valid) {
+      setGalleryError(`${validation.message} Choose a different photo or use the live camera instead.`);
+      return;
+    }
+    savePhoto(file);
   };
+
+  const retakePhoto = (index: number) => {
+    const field = SHOTS[index].id;
+    setPhotos((previous) => {
+      const next = { ...previous };
+      delete next[field];
+      return next;
+    });
+    setCurrentStep(index);
+    setGalleryError(null);
+    setReviewMode(false);
+    void startCamera();
+  };
+
+  const confirmSubmit = () => {
+    if (!hasAllPhotos) return;
+    onComplete(photos as AnalysisPhotoFiles);
+  };
+
+  if (!consented) {
+    return (
+      <div className="max-w-xl mx-auto">
+        <Card className="rounded-gg-lg overflow-hidden border-0 shadow-elevated">
+          <CardContent className="p-8 space-y-6">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                Before your scan
+              </span>
+              <h2 className="font-heading text-2xl font-bold">A clearer look at your skin</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                GlowGuide uses six photos and your quiz answers to provide cosmetic skincare guidance.
+                This is not a medical diagnosis and does not replace advice from a qualified clinician.
+              </p>
+            </div>
+            <label className="flex gap-3 items-start rounded-gg border border-border bg-muted/40 p-4 text-sm">
+              <input
+                type="checkbox"
+                checked={consented}
+                onChange={(event) => setConsented(event.target.checked)}
+                className="mt-1 h-4 w-4 accent-primary"
+              />
+              <span>I consent to capturing and processing these photos for my cosmetic skin analysis.</span>
+            </label>
+            <div className="flex justify-between gap-3">
+              <Button variant="outline" onClick={onBack}>Back to quiz</Button>
+              <Button disabled={!consented} onClick={() => setConsented(true)}>
+                Continue to camera <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (reviewMode) {
+    return (
+      <div className="space-y-6 max-w-3xl mx-auto">
+        <div className="text-center space-y-2">
+          <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Final review</span>
+          <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground">Review your six photos</h2>
+          <p className="text-sm text-muted-foreground">Retake any frame before sending your scan.</p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {SHOTS.map((shot, index) => (
+            <div key={shot.id} className="group relative rounded-gg border border-border overflow-hidden bg-muted aspect-[4/3]">
+              {photos[shot.id] && (
+                <PhotoPreview file={photos[shot.id]!} label={shot.label} />
+              )}
+              <div className="absolute inset-x-0 bottom-0 bg-foreground/75 p-2 flex items-center justify-between gap-2">
+                <span className="text-[10px] font-bold text-background uppercase tracking-wider">{shot.label}</span>
+                <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => retakePhoto(index)}>
+                  <RefreshCw className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-center">
+          <Button disabled={!hasAllPhotos} onClick={confirmSubmit} className="px-8">
+            Confirm & Continue <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Title */}
-      <div className="text-center">
+    <div className="space-y-6 max-w-3xl mx-auto">
+      <div className="text-center space-y-2">
         <span className="text-xs font-semibold text-secondary uppercase tracking-wider">
-          Step 2 — Vision Analysis
+          Step 2 — Vision analysis · {currentStep + 1} of {SHOTS.length}
         </span>
-        <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground mt-1">
-          {reviewMode ? "Review Profile Photos" : `Angle: ${currentAngle.name}`}
-        </h2>
-        <p className="text-muted-foreground text-sm max-w-md mx-auto mt-1">
-          {reviewMode
-            ? "Inspect your facial profiles below. You can retake any profile to ensure accuracy."
-            : currentAngle.description}
-        </p>
+        <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground">{currentShot.label}</h2>
+        <p className="text-sm text-muted-foreground">{currentShot.description}</p>
       </div>
 
-      <div className="max-w-2xl mx-auto">
-        {!reviewMode ? (
-          /* Capture Mode */
-          <Card className="rounded-gg-lg overflow-hidden relative border-0 shadow-elevated">
-            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-[8px]" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }} />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60" />
-            <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px]" />
-            <div className="relative z-10">
-              <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
-                {/* Video elements */}
-                {isCameraActive ? (
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full h-full object-cover scale-x-[-1]"
-                  />
-                ) : (
-                  <div className="p-8 text-center max-w-sm animate-pulse">
-                    <AlertTriangle className="h-10 w-10 text-warning mx-auto mb-3" />
-                    <p className="text-white font-semibold text-sm mb-1">
-                      Camera Simulator Active
-                    </p>
-                    <p className="text-xs text-white/70 leading-relaxed">
-                      {cameraError || "Capturing placeholder profile scans to evaluate skin parameters."}
-                    </p>
-                  </div>
-                )}
-
-                {/* Horizontal scanning bar overlay */}
-                {isCameraActive && alignmentState === "scanning" && (
-                  <div className="absolute inset-x-0 h-0.5 bg-amber-400/50 animate-bounce top-1/3 shadow-[0_0_8px_rgba(245,176,65,0.8)] pointer-events-none" />
-                )}
-
-                {/* Head Silhouette Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className={`w-40 h-40 transition-all duration-500 ${
-                      alignmentState === "scanning"
-                        ? "text-amber-400/20 stroke-amber-400 animate-pulse scale-100"
-                        : "text-success/20 stroke-success scale-105 drop-shadow-[0_0_10px_rgba(126,200,160,0.6)]"
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={alignmentState === "scanning" ? "0.8" : "1.2"}
-                  >
-                    <path d={currentAngle.guidePath} fill="currentColor" fillOpacity="0.08" />
-                  </svg>
-                </div>
-
-                {/* Position Guide Alert Banner */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full text-[10px] font-bold shadow-soft flex items-center gap-2 transition-all bg-card/95 backdrop-blur-sm border border-border pointer-events-none select-none">
-                  {alignmentState === "scanning" ? (
-                    <>
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                      <span className="text-amber-600 uppercase tracking-wider">Aligning face... Keep steady</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-3.5 w-3.5 text-success fill-success/20" />
-                      <span className="text-primary uppercase tracking-wider">Position correct: Ready!</span>
-                    </>
-                  )}
-                </div>
-
-                {/* Step indicator badge */}
-                <div className="absolute top-4 left-4 bg-foreground/75 text-background px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                  Step {currentStep + 1} of 5
-                </div>
-              </div>
-
-              {/* Video Action Bar */}
-              <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20">
-                <span className="text-xs text-white/70 font-medium text-center sm:text-left">
-                  Ensure good overhead lighting and avoid heavy shadows.
-                </span>
-                <div className="flex gap-3">
-                  <button onClick={onBack} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-white/30 bg-transparent text-white text-sm font-medium hover:bg-white/10 transition-colors cursor-pointer">
-                    Back
-                  </button>
-                  {cameraError && (
-                    <button onClick={startCamera} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-white/30 bg-transparent text-white text-sm font-medium hover:bg-white/10 transition-colors cursor-pointer">
-                      <RefreshCw className="h-4 w-4" />
-                      Retry Camera
-                    </button>
-                  )}
-                  <button
-                    onClick={capturePhoto}
-                    className={`inline-flex items-center justify-center gap-2 font-semibold px-6 rounded-full transition-all duration-300 ${
-                      alignmentState === "scanning"
-                        ? "bg-white/20 text-white/60 cursor-not-allowed border border-white/20"
-                        : "bg-white hover:bg-white/90 active:scale-95 text-foreground shadow-2xl"
-                    }`}
-                    disabled={alignmentState === "scanning"}
-                  >
-                    <Camera className="h-4 w-4" />
-                    {alignmentState === "scanning" ? "Aligning..." : "Snap Photo"}
-                  </button>
-                </div>
-              </CardContent>
+      <Card className={`rounded-gg-lg overflow-hidden border-2 shadow-elevated ${alignment.valid ? "border-success" : "border-destructive/70"}`}>
+        <div className="relative aspect-video bg-foreground/90 flex items-center justify-center overflow-hidden">
+          {isCameraActive ? (
+            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
+          ) : (
+            <div className="p-8 text-center max-w-sm space-y-3">
+              <AlertTriangle className="h-10 w-10 text-warning mx-auto" />
+              <p className="text-background font-semibold">Live camera unavailable</p>
+              <p className="text-sm text-background/70">Choose a photo from your device instead.</p>
             </div>
-          </Card>
-        ) : (
-          /* Review Mode Grid */
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {CAPTURE_ANGLES.map((angle, index) => (
-                <div
-                  key={angle.id}
-                  className="group relative aspect-[3/4] rounded-gg border border-border shadow-soft bg-muted overflow-hidden transition-all hover:shadow-card"
-                >
-                  <img
-                    src={photos[index]}
-                    alt={angle.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1.5 transition-opacity duration-300 p-2 text-center">
-                    <span className="text-[10px] font-bold text-background uppercase tracking-wider">
-                      {angle.name}
-                    </span>
-                    <Button
-                      onClick={() => retakePhoto(index)}
-                      size="icon"
-                      variant="secondary"
-                      className="h-8 w-8 rounded-full shadow-soft"
-                    >
-                      <RefreshCw className="h-3 w-3 text-foreground" />
-                    </Button>
-                  </div>
-                  <div className="absolute bottom-2 left-2 bg-foreground/70 text-background text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                    <CheckCircle className="h-2.5 w-2.5 text-success fill-success" />
-                    {angle.name.split(" ")[0]}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* CTA confirmation buttons */}
-            <div className="flex gap-4 justify-center">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setPhotos([]);
-                  setReviewMode(false);
-                  setCurrentStep(0);
-                  startCamera();
-                }}
-                className="border-border hover:bg-muted"
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Retake All
-              </Button>
-              <Button
-                onClick={handleConfirmSubmit}
-                className="bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground font-semibold px-8 shadow-primary rounded-gg-sm"
-              >
-                Analyze Skin Scans
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+          )}
+          <div className={`absolute inset-8 rounded-[35%] border-2 pointer-events-none ${alignment.valid ? "border-success shadow-[0_0_30px_rgba(126,200,160,0.6)]" : "border-destructive/80"}`} />
+          <div className="absolute top-4 left-4 rounded-full bg-foreground/75 text-background px-3 py-1 text-xs font-bold uppercase tracking-wider">
+            {currentStep + 1} / {SHOTS.length}
           </div>
-        )}
+          <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full px-4 py-2 text-xs font-bold shadow-soft ${alignment.valid ? "bg-success text-success-foreground" : "bg-background/95 text-destructive"}`}>
+            {alignment.valid ? <CheckCircle className="inline h-3.5 w-3.5 mr-1" /> : null}
+            {isLoadingModel ? "Loading face guidance..." : alignment.message}
+          </div>
+        </div>
+        <CardContent className="p-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-xs text-muted-foreground">
+            {currentShot.closeup ? "Keep your face forward and fill at least 60% of the frame." : "Good light, no filters, and keep steady."}
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button variant="outline" onClick={onBack}>Back</Button>
+            <Button variant="outline" onClick={() => inputRef.current?.click()}>
+              <ImagePlus className="mr-2 h-4 w-4" /> Choose photo
+            </Button>
+            <Button onClick={capturePhoto} disabled={!isCameraActive || !alignment.valid || isCapturing}>
+              {isCapturing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+              Capture
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleGalleryChange} className="hidden" />
+
+      {(cameraError || galleryError) && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="p-4 space-y-3 text-sm">
+            <p className="text-destructive">{galleryError || cameraError}</p>
+            {galleryError && (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => inputRef.current?.click()}>Choose Different Photo</Button>
+                <Button size="sm" variant="outline" onClick={() => { setGalleryError(null); void startCamera(); }}>Use Live Camera Instead</Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex justify-center gap-2">
+        {SHOTS.map((shot, index) => (
+          <div key={shot.id} className={`h-2 rounded-full transition-all ${photos[shot.id] ? "w-8 bg-success" : index === currentStep ? "w-8 bg-primary" : "w-2 bg-border"}`} aria-label={`${shot.label}: ${photos[shot.id] ? "complete" : "pending"}`} />
+        ))}
       </div>
-      
-      {/* Hidden canvas for screenshots */}
+
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );

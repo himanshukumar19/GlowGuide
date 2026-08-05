@@ -86,7 +86,7 @@ app.add_middleware(
 )
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "ok", "service": "GlowGuide ML Service", "version": "3.1.0"}
 

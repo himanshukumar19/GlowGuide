@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import NodeFormData from "form-data";
+import { imageSize } from "image-size";
 import { authorize } from "@/lib/api-auth";
 import { updateCustomer, createAnalysis } from "@/lib/models";
 import { validate } from "@/lib/validators";
@@ -15,6 +16,9 @@ import type { AnalysisSource, RawScores, SkinType, UserProfile } from "@/lib/sch
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "https://glowguide-ml-service.onrender.com";
 const FORCE_FALLBACK = process.env.FORCE_FALLBACK === "true";
 const FREE_TIER_ANALYSIS_LIMIT = 3;
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MIN_IMAGE_DIMENSION = 480;
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const PHOTO_FIELDS = [
   "front",
   "left_profile",
@@ -25,6 +29,44 @@ const PHOTO_FIELDS = [
 ] as const;
 
 type PhotoField = (typeof PHOTO_FIELDS)[number];
+
+async function readAndValidatePhoto(file: File, field: PhotoField): Promise<Buffer> {
+  const contentType = file.type.toLowerCase();
+  if (!ALLOWED_IMAGE_TYPES.has(contentType)) {
+    throw new Error(`${field} must be a JPG, PNG, or WebP image`);
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  if (buffer.length > MAX_IMAGE_BYTES) {
+    throw new Error(`${field} exceeds the 8MB size limit`);
+  }
+
+  const hasMagicBytes =
+    (contentType === "image/jpeg" && buffer.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))) ||
+    (contentType === "image/png" && buffer.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex"))) ||
+    (contentType === "image/webp" && buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP");
+
+  if (!hasMagicBytes) {
+    throw new Error(`${field} content does not match its MIME type`);
+  }
+
+  try {
+    const dimensions = imageSize(buffer);
+    if (
+      !dimensions.width ||
+      !dimensions.height ||
+      dimensions.width < MIN_IMAGE_DIMENSION ||
+      dimensions.height < MIN_IMAGE_DIMENSION
+    ) {
+      throw new Error(`${field} must be at least 480x480 pixels`);
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("must be at least")) throw error;
+    throw new Error(`${field} is not a valid readable image`);
+  }
+
+  return buffer;
+}
 
 interface MLPrediction {
   skin_type: string;
@@ -198,10 +240,15 @@ async function clearOlderAnalysisPhotos(customerId: string, currentAnalysisId: s
     const snapshot = await db
       .collection("analyses")
       .where("customerId", "==", customerId)
-      .orderBy("createdAt", "desc")
       .get();
 
-    const previousAnalyses = snapshot.docs
+    const analyses = [...snapshot.docs].sort((a, b) => {
+      const createdAtDifference = String(b.data().createdAt ?? "").localeCompare(
+        String(a.data().createdAt ?? "")
+      );
+      return createdAtDifference || b.id.localeCompare(a.id);
+    });
+    const previousAnalyses = analyses
       .filter((doc) => doc.id !== currentAnalysisId)
       .slice(1);
 
@@ -231,7 +278,7 @@ async function clearOlderAnalysisPhotos(customerId: string, currentAnalysisId: s
 }
 
 function buildCallbackUrl(request: NextRequest, analysisId: string): string {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const siteUrl = process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL;
   if (siteUrl) return `${siteUrl}/api/skin-analysis/callback`;
 
   const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
@@ -331,16 +378,28 @@ export async function POST(request: NextRequest) {
   const files = {} as Record<PhotoField, File>;
   const buffers = {} as Record<PhotoField, Buffer>;
 
-  for (const field of PHOTO_FIELDS) {
-    const value = formData.get(field);
-    if (!isUploadedFile(value) || value.size === 0) {
-      return NextResponse.json(
-        { error: { code: "MISSING_IMAGE", message: `Missing image field: ${field}` } },
-        { status: 400 }
-      );
+  try {
+    for (const field of PHOTO_FIELDS) {
+      const value = formData.get(field);
+      if (!isUploadedFile(value) || value.size === 0) {
+        return NextResponse.json(
+          { error: { code: "MISSING_IMAGE", message: `Missing image field: ${field}` } },
+          { status: 400 }
+        );
+      }
+      files[field] = value;
+      buffers[field] = await readAndValidatePhoto(value, field);
     }
-    files[field] = value;
-    buffers[field] = Buffer.from(await value.arrayBuffer());
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "INVALID_IMAGE",
+          message: error instanceof Error ? error.message : "Invalid image upload",
+        },
+      },
+      { status: 400 }
+    );
   }
 
   if (FORCE_FALLBACK) {

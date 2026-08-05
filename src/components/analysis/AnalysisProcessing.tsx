@@ -10,12 +10,11 @@ interface AnalysisProcessingProps {
 
 const STEPS = [
   "Aligning multi-angle facial scans...",
-  "Calibrating neural network nodes...",
-  "Calculating epidermal sebum levels...",
-  "Evaluating moisture retention factors...",
-  "Cross-referencing quiz answers with ML parameters...",
-  "Synthesizing customized skincare routines...",
-  "Assembling product matching indices..."
+  "Running skin type and concern models...",
+  "Cross-referencing quiz answers with image signals...",
+  "Calculating your skin health score...",
+  "Preparing your personalized routine...",
+  "Saving your analysis securely..."
 ];
 
 export const AnalysisProcessing = ({ statusText }: AnalysisProcessingProps) => {
@@ -64,7 +63,7 @@ export const AnalysisProcessing = ({ statusText }: AnalysisProcessingProps) => {
             <div className="flex items-center justify-center gap-2">
               <Loader2 className="h-4 w-4 text-primary animate-spin" />
               <span className="text-xs font-bold uppercase tracking-wider text-secondary">
-                ML Pipeline Running
+                 Skin analysis running
               </span>
             </div>
             
@@ -73,7 +72,7 @@ export const AnalysisProcessing = ({ statusText }: AnalysisProcessingProps) => {
             </h3>
             
             <p className="text-xs text-white/70 max-w-xs mx-auto leading-relaxed">
-              This process combines random forest scores and NLP evaluations to output a unified report.
+              The first analysis may take up to a minute while the service wakes up. You can keep this screen open while your result is prepared.
             </p>
           </div>
         </CardContent>

@@ -163,10 +163,25 @@ async def validate_image(
 
     if require_face:
         grayscale = cv2.cvtColor(np.array(image.convert("RGB")), cv2.COLOR_RGB2GRAY)
-        cascade = cv2.CascadeClassifier(
+        frontal_cascade = cv2.CascadeClassifier(
             os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_default.xml")
         )
-        faces = cascade.detectMultiScale(grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80))
+        faces = frontal_cascade.detectMultiScale(
+            grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80)
+        )
+
+        if len(faces) == 0 and field_name in {"left_profile", "right_profile"}:
+            profile_cascade = cv2.CascadeClassifier(
+                os.path.join(cv2.data.haarcascades, "haarcascade_profileface.xml")
+            )
+            faces = profile_cascade.detectMultiScale(
+                grayscale, scaleFactor=1.1, minNeighbors=4, minSize=(80, 80)
+            )
+            if len(faces) == 0:
+                faces = profile_cascade.detectMultiScale(
+                    cv2.flip(grayscale, 1), scaleFactor=1.1, minNeighbors=4, minSize=(80, 80)
+                )
+
         if len(faces) == 0:
             raise bad_request(f"No face detected in {field_name}")
     return image.convert("RGB")

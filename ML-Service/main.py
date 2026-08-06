@@ -167,7 +167,7 @@ async def validate_image(
             os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_default.xml")
         )
         faces = frontal_cascade.detectMultiScale(
-            grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80)
+            grayscale, scaleFactor=1.05, minNeighbors=3, minSize=(60, 60)
         )
 
         if len(faces) == 0 and field_name in {"left_profile", "right_profile"}:
@@ -175,11 +175,11 @@ async def validate_image(
                 os.path.join(cv2.data.haarcascades, "haarcascade_profileface.xml")
             )
             faces = profile_cascade.detectMultiScale(
-                grayscale, scaleFactor=1.1, minNeighbors=4, minSize=(80, 80)
+                grayscale, scaleFactor=1.05, minNeighbors=3, minSize=(60, 60)
             )
             if len(faces) == 0:
                 faces = profile_cascade.detectMultiScale(
-                    cv2.flip(grayscale, 1), scaleFactor=1.1, minNeighbors=4, minSize=(80, 80)
+                    cv2.flip(grayscale, 1), scaleFactor=1.05, minNeighbors=3, minSize=(60, 60)
                 )
 
         if len(faces) == 0:

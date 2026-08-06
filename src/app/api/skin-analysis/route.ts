@@ -15,6 +15,7 @@ import type { AnalysisSource, RawScores, SkinType, UserProfile } from "@/lib/sch
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "https://glowguide-ml-service.onrender.com";
 const FORCE_FALLBACK = process.env.FORCE_FALLBACK === "true";
+const ML_REQUEST_TIMEOUT_MS = 60_000;
 const FREE_TIER_ANALYSIS_LIMIT = 3;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MIN_IMAGE_DIMENSION = 480;
@@ -522,7 +523,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const mlResponse = await axios.post(`${ML_SERVICE_URL}/analyze`, mlForm, {
-      timeout: 15_000,
+      // Render may need to wake the ML service before it can accept the request.
+      // The service returns 202 before model inference starts.
+      timeout: ML_REQUEST_TIMEOUT_MS,
       headers: {
         ...mlForm.getHeaders(),
         "X-Internal-Secret": process.env.ML_SERVICE_SECRET,
@@ -537,8 +540,20 @@ export async function POST(request: NextRequest) {
       analysisId,
       status: "processing",
     });
-  } catch (error: any) {
-    console.error(`[${analysisId}] ML service call failed, falling back to quiz-only:`, error?.message);
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error(`[${analysisId}] ML service request failed`, {
+        url: `${ML_SERVICE_URL}/analyze`,
+        code: error.code,
+        status: error.response?.status,
+        response: error.response?.data,
+        message: error.message,
+      });
+    } else {
+      console.error(`[${analysisId}] ML service request failed:`, error);
+    }
+
+    console.warn(`[${analysisId}] Falling back to quiz-only analysis`);
 
     const prediction = buildFallbackPrediction(normalizedAnswers);
     const skinType = fallbackClassify(normalizedAnswers);

@@ -77,7 +77,7 @@ export const analysisResultSchema = z.object({
 
 export type AnalysisResult = z.infer<typeof analysisResultSchema>;
 
-export const analysisSourceEnum = z.enum(["ml-service", "fallback"]);
+export const analysisSourceEnum = z.enum(["ml-service", "fallback", "fallback-recovery"]);
 
 export type AnalysisSource = z.infer<typeof analysisSourceEnum>;
 
@@ -102,6 +102,7 @@ export const analysisSchema = z.object({
   result: analysisResultSchema,
   source: analysisSourceEnum,
   status: analysisStatusEnum.default("completed"),
+  recoveredAt: z.string().optional(),
   createdAt: z.string(),
 });
 

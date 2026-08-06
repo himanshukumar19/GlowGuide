@@ -1,6 +1,6 @@
 # GlowGuide — AI Skin Analysis Platform
 
-A full-stack AI-powered skincare analysis, e-commerce, and education platform. Customers complete a lifestyle quiz and live photo capture (5 angles) analyzed by a Vision Transformer model to receive personalized skin diagnostics, product recommendations, and a routine tracker.
+A full-stack AI-powered skincare analysis, e-commerce, and education platform. Customers complete a lifestyle quiz and live photo capture (6 angles) analyzed by a Vision Transformer model to receive personalized skin diagnostics, product recommendations, and a routine tracker.
 
 Built with **Next.js 14 App Router**, **Firebase Auth**, and a standalone **Python ML Service**.
 

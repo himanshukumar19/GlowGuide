@@ -8,10 +8,8 @@ import { validate } from "@/lib/validators";
 import { customerSchema, type Customer } from "@/lib/schemas";
 import { db } from "@/lib/firebase-admin";
 import { uploadImageBuffer, deleteImage } from "@/lib/cloudinary";
-import { calculateHealthScore } from "@/lib/analysis/health-score";
-import { deriveConcerns } from "@/lib/analysis/concerns";
-import { generateRoutine } from "@/lib/analysis/routine";
-import type { AnalysisSource, RawScores, SkinType, UserProfile } from "@/lib/schemas/analysis";
+import { buildQuizOnlyFallback } from "@/lib/analysis/fallbackClassifier";
+import type { UserProfile } from "@/lib/schemas/analysis";
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "https://glowguide-ml-service.onrender.com";
 const FORCE_FALLBACK = process.env.FORCE_FALLBACK === "true";
@@ -69,26 +67,6 @@ async function readAndValidatePhoto(file: File, field: PhotoField): Promise<Buff
   return buffer;
 }
 
-interface MLPrediction {
-  skin_type: string;
-  confidence?: number;
-  probabilities?: Record<string, number>;
-  sensitive?: boolean;
-  disagreement?: boolean;
-  final_scores?: {
-    sebum_level?: number;
-    acne_frequency?: number;
-  };
-  raw_debug?: {
-    quiz_oiliness?: number;
-    image_oiliness?: number;
-    quiz_acne?: number;
-    image_acne?: number;
-    skin_type_probabilities?: Record<string, number>;
-  };
-  concerns_detected?: string[];
-}
-
 function normalizeQuizAnswers(answers: Record<string, number>): Record<string, number> {
   return {
     sebum_level: Number(answers.sebum_level ?? 50),
@@ -98,70 +76,6 @@ function normalizeQuizAnswers(answers: Record<string, number>): Record<string, n
     sensitivity_score: Number(answers.sensitivity_score ?? 0),
     roughness_score: Number(answers.roughness_score ?? 0),
     tightness_score: Number(answers.tightness_score ?? 0),
-  };
-}
-
-function fallbackClassify(answers: Record<string, number>): SkinType {
-  const sebum = answers.sebum_level ?? 50;
-  const hydration = answers.hydration_level ?? 50;
-  const acne = answers.acne_frequency ?? 50;
-  const pore = answers.pore_size ?? 50;
-  const sensitivity = answers.sensitivity_score ?? 50;
-  const roughness = answers.roughness_score ?? 50;
-  const tightness = answers.tightness_score ?? 30;
-
-  if (sensitivity >= 60) return "sensitive";
-
-  let oilyScore = 0;
-  let dryScore = 0;
-
-  if (sebum >= 65) oilyScore += 3;
-  else if (sebum >= 55) oilyScore += 1.5;
-  else if (sebum <= 30) dryScore += 3;
-  else if (sebum <= 45) dryScore += 1.5;
-
-  if (hydration <= 36) dryScore += 3;
-  else if (hydration <= 45) dryScore += 1.5;
-
-  if (acne >= 70) oilyScore += 2;
-  else if (acne >= 55) oilyScore += 1;
-
-  if (pore >= 68) oilyScore += 2;
-  else if (pore >= 55) oilyScore += 1;
-
-  if (roughness <= 35) dryScore += 2;
-  else if (roughness <= 45) dryScore += 1;
-
-  if (tightness >= 70) dryScore += 3;
-  else if (tightness >= 50) dryScore += 1.5;
-
-  if (oilyScore >= 2.5 && dryScore >= 2.5) return "combination";
-  if (oilyScore >= 3) return "oily";
-  if (dryScore >= 3) return "dry";
-  if (oilyScore > dryScore) return "oily";
-  if (dryScore > oilyScore) return "dry";
-  return "normal";
-}
-
-function buildFallbackPrediction(answers: Record<string, number>): MLPrediction {
-  const skinType = fallbackClassify(answers);
-  return {
-    skin_type: skinType,
-    confidence: 0.85,
-    probabilities: { [skinType]: 0.85 },
-    sensitive: answers.sensitivity_score >= 60,
-    disagreement: false,
-    final_scores: {
-      sebum_level: answers.sebum_level,
-      acne_frequency: answers.acne_frequency,
-    },
-    raw_debug: {
-      quiz_oiliness: answers.sebum_level,
-      image_oiliness: 0,
-      quiz_acne: answers.acne_frequency,
-      image_acne: 0,
-    },
-    concerns_detected: [],
   };
 }
 
@@ -196,20 +110,6 @@ function parseUserProfile(value: FormDataEntryValue | null): UserProfile {
 
 function isUploadedFile(value: FormDataEntryValue | null): value is File {
   return value !== null && typeof value !== "string" && typeof value.arrayBuffer === "function";
-}
-
-function rawScoresFromPrediction(
-  prediction: MLPrediction,
-  answers: Record<string, number>
-): RawScores {
-  return {
-    quiz_oiliness: prediction.raw_debug?.quiz_oiliness ?? answers.sebum_level,
-    image_oiliness: prediction.raw_debug?.image_oiliness ?? 0,
-    final_oiliness: prediction.final_scores?.sebum_level ?? answers.sebum_level,
-    quiz_acne: prediction.raw_debug?.quiz_acne ?? answers.acne_frequency,
-    image_acne: prediction.raw_debug?.image_acne ?? 0,
-    final_acne: prediction.final_scores?.acne_frequency ?? answers.acne_frequency,
-  };
 }
 
 async function uploadAnalysisPhotos(
@@ -404,14 +304,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (FORCE_FALLBACK) {
-    const prediction = buildFallbackPrediction(normalizedAnswers);
-    const skinType = fallbackClassify(normalizedAnswers);
-    const confidence = 0.85;
-    const probabilities = { [skinType]: 0.85 };
-    const rawScores = rawScoresFromPrediction(prediction, normalizedAnswers);
-    const concerns = deriveConcerns({ quizAnswers: normalizedAnswers, keywords: [], skinType });
-    const healthScore = calculateHealthScore(concerns, confidence);
-    const routine = generateRoutine({ skinType, concerns });
+    const result = buildQuizOnlyFallback(normalizedAnswers, userProfile);
 
     const analysisRef = db.collection("analyses").doc();
     const photoUrls = await uploadAnalysisPhotos(files, buffers, analysisRef.id);
@@ -424,39 +317,29 @@ export async function POST(request: NextRequest) {
         skinNotes,
         photoUrls,
         userProfile,
-        result: {
-          skinType,
-          concerns,
-          healthScore,
-          confidence,
-          probabilities,
-          routine,
-          sensitive: normalizedAnswers.sensitivity_score >= 60,
-          disagreement: false,
-          rawScores,
-        },
+        result,
         source: "fallback",
         status: "completed",
       });
 
       await updateCustomer(customer.uid, {
-        skinProfile: { skinType, concerns: concerns.map((c) => c.name) },
+        skinProfile: { skinType: result.skinType, concerns: result.concerns.map((c) => c.name) },
       });
       await clearOlderAnalysisPhotos(customer.uid, analysis.id);
 
       return NextResponse.json({
         analysisId: analysis.id,
         status: "completed",
-        skin_type: skinType,
-        confidence,
-        probabilities,
-        sensitive: normalizedAnswers.sensitivity_score >= 60,
-        disagreement: false,
-        rawScores,
+        skin_type: result.skinType,
+        confidence: result.confidence,
+        probabilities: result.probabilities,
+        sensitive: result.sensitive,
+        disagreement: result.disagreement,
+        rawScores: result.rawScores,
         concerns_detected: [],
-        healthScore,
-        concerns,
-        routine,
+        healthScore: result.healthScore,
+        concerns: result.concerns,
+        routine: result.routine,
         source: "fallback",
       });
     } catch (err) {
@@ -555,14 +438,7 @@ export async function POST(request: NextRequest) {
 
     console.warn(`[${analysisId}] Falling back to quiz-only analysis`);
 
-    const prediction = buildFallbackPrediction(normalizedAnswers);
-    const skinType = fallbackClassify(normalizedAnswers);
-    const confidence = 0.85;
-    const probabilities = { [skinType]: 0.85 };
-    const rawScores = rawScoresFromPrediction(prediction, normalizedAnswers);
-    const concerns = deriveConcerns({ quizAnswers: normalizedAnswers, keywords: [], skinType });
-    const healthScore = calculateHealthScore(concerns, confidence);
-    const routine = generateRoutine({ skinType, concerns });
+    const result = buildQuizOnlyFallback(normalizedAnswers, userProfile);
 
     try {
       const analysis = await createAnalysis({
@@ -572,39 +448,29 @@ export async function POST(request: NextRequest) {
         skinNotes,
         photoUrls,
         userProfile,
-        result: {
-          skinType,
-          concerns,
-          healthScore,
-          confidence,
-          probabilities,
-          routine,
-          sensitive: normalizedAnswers.sensitivity_score >= 60,
-          disagreement: false,
-          rawScores,
-        },
+        result,
         source: "fallback",
         status: "completed",
       });
 
       await updateCustomer(customer.uid, {
-        skinProfile: { skinType, concerns: concerns.map((c) => c.name) },
+        skinProfile: { skinType: result.skinType, concerns: result.concerns.map((c) => c.name) },
       });
       await clearOlderAnalysisPhotos(customer.uid, analysis.id);
 
       return NextResponse.json({
         analysisId: analysis.id,
         status: "completed",
-        skin_type: skinType,
-        confidence,
-        probabilities,
-        sensitive: normalizedAnswers.sensitivity_score >= 60,
-        disagreement: false,
-        rawScores,
+        skin_type: result.skinType,
+        confidence: result.confidence,
+        probabilities: result.probabilities,
+        sensitive: result.sensitive,
+        disagreement: result.disagreement,
+        rawScores: result.rawScores,
         concerns_detected: [],
-        healthScore,
-        concerns,
-        routine,
+        healthScore: result.healthScore,
+        concerns: result.concerns,
+        routine: result.routine,
         source: "fallback",
       });
     } catch (err) {

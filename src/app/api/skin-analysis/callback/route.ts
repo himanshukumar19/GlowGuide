@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
-import { getCustomerById, updateAnalysis, updateCustomer } from "@/lib/models";
+import { updateCustomer } from "@/lib/models";
+import { validate } from "@/lib/validators";
 import { uploadImageBuffer, deleteImage } from "@/lib/cloudinary";
 import { calculateHealthScore } from "@/lib/analysis/health-score";
 import { deriveConcerns } from "@/lib/analysis/concerns";
 import { generateRoutine } from "@/lib/analysis/routine";
+import { analysisSchema } from "@/lib/schemas/analysis";
 import type { AnalysisSource, RawScores, SkinType } from "@/lib/schemas/analysis";
 
 const ML_SERVICE_SECRET = process.env.ML_SERVICE_SECRET;
@@ -174,25 +176,42 @@ export async function POST(request: NextRequest) {
   });
   const healthScore = calculateHealthScore(concerns, confidence);
   const routine = generateRoutine({ skinType, concerns });
+  const callbackResult = {
+    skinType,
+    concerns,
+    healthScore,
+    confidence,
+    probabilities,
+    routine,
+    sensitive: payload.sensitive ?? skinType === "sensitive",
+    disagreement: payload.disagreement ?? false,
+    rawScores,
+  };
 
   try {
-    const updated = await updateAnalysis(analysis_id, {
-      result: {
-        skinType,
-        concerns,
-        healthScore,
-        confidence,
-        probabilities,
-        routine,
-        sensitive: payload.sensitive ?? skinType === "sensitive",
-        disagreement: payload.disagreement ?? false,
-        rawScores,
-      },
-      source: "ml-service" as AnalysisSource,
-      status: "completed",
+    const applied = await db.runTransaction(async (transaction) => {
+      const currentSnapshot = await transaction.get(docRef);
+      if (!currentSnapshot.exists) return false;
+
+      const current = currentSnapshot.data()!;
+      if (current.status === "completed") {
+        console.warn(`[${analysis_id}] Late or duplicate ML callback ignored after completion`, {
+          callback: payload,
+        });
+        return false;
+      }
+
+      const updated = validate(analysisSchema, {
+        ...current,
+        result: callbackResult,
+        source: "ml-service" as AnalysisSource,
+        status: "completed",
+      });
+      transaction.set(docRef, updated);
+      return true;
     });
 
-    if (updated) {
+    if (applied) {
       await updateCustomer(existing.customerId, {
         skinProfile: {
           skinType,
@@ -201,6 +220,8 @@ export async function POST(request: NextRequest) {
       });
 
       await clearOlderAnalysisPhotos(existing.customerId, analysis_id);
+    } else {
+      return NextResponse.json({ ok: true });
     }
 
     console.log(`[${analysis_id}] Analysis completed: skin_type=${skinType} confidence=${confidence}`);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
+import { deleteImage } from "@/lib/cloudinary";
 import { buildQuizOnlyFallback } from "@/lib/analysis/fallbackClassifier";
 import type { UserProfile } from "@/lib/schemas/analysis";
 
@@ -8,6 +9,56 @@ const RECONCILE_THRESHOLD_MS = 3 * 60 * 1000;
 function isAuthorized(request: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET;
   return Boolean(cronSecret) && request.headers.get("authorization") === `Bearer ${cronSecret}`;
+}
+
+async function clearOlderAnalysisPhotos(
+  customerId: string,
+  currentAnalysisId: string
+): Promise<boolean> {
+  try {
+    const snapshot = await db
+      .collection("analyses")
+      .where("customerId", "==", customerId)
+      .get();
+
+    const analyses = [...snapshot.docs].sort((a, b) => {
+      const createdAtDifference = String(b.data().createdAt ?? "").localeCompare(
+        String(a.data().createdAt ?? "")
+      );
+      return createdAtDifference || b.id.localeCompare(a.id);
+    });
+    const previousAnalyses = analyses
+      .filter((doc) => doc.id !== currentAnalysisId)
+      .slice(1);
+
+    for (const document of previousAnalyses) {
+      const photoUrls = (document.data().photoUrls as string[] | undefined) ?? [];
+      if (photoUrls.length === 0) continue;
+
+      const folderPath = `glowguide/analyses/${document.id}`;
+      const deleteResults = await Promise.all(
+        photoUrls.map(async (photoUrl, photoIndex) => {
+          if (!photoUrl) return true;
+          try {
+            await deleteImage(folderPath, String(photoIndex));
+            return true;
+          } catch (error) {
+            console.error(
+              `Cloudinary delete failed for analysis ${document.id}, photo ${photoIndex}:`,
+              error
+            );
+            return false;
+          }
+        })
+      );
+      if (deleteResults.some((deleted) => !deleted)) return false;
+      await document.ref.update({ photoUrls: [] });
+    }
+    return true;
+  } catch (error) {
+    console.error("Failed to clean up older analysis photos:", error);
+    return false;
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -43,6 +94,9 @@ export async function GET(request: NextRequest) {
         .where("customerId", "==", customerId)
         .orderBy("createdAt", "desc")
         .limit(1);
+      if (!(await clearOlderAnalysisPhotos(customerId, analysisId))) {
+        throw new Error("Failed to clean up older analysis photos");
+      }
       const didRecover = await db.runTransaction(async (transaction) => {
         const currentSnapshot = await transaction.get(document.ref);
         const customerSnapshot = await transaction.get(customerRef);

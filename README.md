@@ -226,7 +226,12 @@ CLOUDINARY_API_SECRET=...
 
 # ML Service
 ML_SERVICE_URL=http://localhost:8000
+
+# Vercel Cron recovery job (server-only; set in Vercel Project Settings)
+CRON_SECRET=...
 ```
+
+Vercel Cron invokes `/api/analysis/reconcile` daily at 03:00 UTC using the schedule in `vercel.json`. The daily schedule is compatible with Vercel Hobby plans. When `CRON_SECRET` is configured, Vercel sends it as `Authorization: Bearer $CRON_SECRET`; the route rejects requests with a missing or invalid token. Set the same secret in the Vercel project environment for the Production deployment.
 
 ---
 

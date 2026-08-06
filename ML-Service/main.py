@@ -34,6 +34,7 @@ MAX_IMAGE_BYTES = 8 * 1024 * 1024
 MIN_IMAGE_DIMENSION = 480
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 FACE_REQUIRED_FIELDS = {"front", "left_profile", "right_profile"}
+PROFILE_FIELDS = {"left_profile", "right_profile"}
 MAGIC_BYTES = {
     "image/jpeg": lambda data: data.startswith(b"\xff\xd8\xff"),
     "image/png": lambda data: data.startswith(b"\x89PNG\r\n\x1a\n"),
@@ -166,21 +167,23 @@ async def validate_image(
         frontal_cascade = cv2.CascadeClassifier(
             os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_default.xml")
         )
-        faces = frontal_cascade.detectMultiScale(
-            grayscale, scaleFactor=1.05, minNeighbors=3, minSize=(60, 60)
+        profile_cascade = cv2.CascadeClassifier(
+            os.path.join(cv2.data.haarcascades, "haarcascade_profileface.xml")
         )
 
-        if len(faces) == 0 and field_name in {"left_profile", "right_profile"}:
-            profile_cascade = cv2.CascadeClassifier(
-                os.path.join(cv2.data.haarcascades, "haarcascade_profileface.xml")
-            )
-            faces = profile_cascade.detectMultiScale(
-                grayscale, scaleFactor=1.05, minNeighbors=3, minSize=(60, 60)
-            )
+        def detect(cascade: cv2.CascadeClassifier, source: np.ndarray):
+            return cascade.detectMultiScale(source, scaleFactor=1.05, minNeighbors=3, minSize=(60, 60))
+
+        if field_name in PROFILE_FIELDS:
+            # ProfileFace is the primary detector for the 40–50° profile shots.
+            faces = detect(profile_cascade, grayscale)
             if len(faces) == 0:
-                faces = profile_cascade.detectMultiScale(
-                    cv2.flip(grayscale, 1), scaleFactor=1.05, minNeighbors=3, minSize=(60, 60)
-                )
+                faces = detect(profile_cascade, cv2.flip(grayscale, 1))
+            # Keep the frontal cascade as a tolerant fallback for intermediate angles.
+            if len(faces) == 0:
+                faces = detect(frontal_cascade, grayscale)
+        else:
+            faces = detect(frontal_cascade, grayscale)
 
         if len(faces) == 0:
             raise bad_request(f"No face detected in {field_name}")

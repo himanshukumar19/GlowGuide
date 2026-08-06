@@ -152,7 +152,7 @@ export const AnalysisResults = ({
           Your Skincare Diagnostic Report
         </h1>
         <p className="text-muted-foreground text-sm max-w-xl mx-auto mt-2 leading-relaxed">
-          Our Random Forest Classifier and NLP pipeline evaluated your inputs to compile your skin properties.
+          Fused image and quiz analysis evaluated your inputs to compile your skin properties.
         </p>
       </div>
 
@@ -225,7 +225,7 @@ export const AnalysisResults = ({
             {concernsDetected && concernsDetected.length > 0 ? (
               <div className="space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
-                  Detected Concern Markers (via NLP)
+                  Detected Concern Markers
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {concernsDetected.map((concern) => (
@@ -242,10 +242,10 @@ export const AnalysisResults = ({
             ) : (
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
-                  Detected Concern Markers (via NLP)
+                  Detected Concern Markers
                 </span>
                 <span className="text-xs text-muted-foreground italic block">
-                  No active blemishes or concerns detected in text notes.
+                  No active blemishes or concerns detected.
                 </span>
               </div>
             )}

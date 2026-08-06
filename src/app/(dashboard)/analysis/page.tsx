@@ -15,14 +15,76 @@ import { AnalysisProcessing } from "@/components/analysis/AnalysisProcessing";
 import { analysisApi } from "@/api/analysis.api";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
+import type { UserProfile } from "@/lib/schemas/analysis";
 
-type DiagnosisStep = "intro" | "quiz" | "camera" | "processing";
+type DiagnosisStep = "intro" | "quiz" | "about-you" | "camera" | "processing";
+
+type AboutYouQuestionId = keyof UserProfile;
+
+interface AboutYouQuestion {
+  id: AboutYouQuestionId;
+  question: string;
+  emoji: string;
+  options?: string[];
+  skippable?: boolean;
+  skipValue?: string;
+  helpText?: string;
+}
+
+const aboutYouQuestions: AboutYouQuestion[] = [
+  {
+    id: "age_range",
+    question: "What is your age range?",
+    emoji: "🌿",
+    options: ["Teen (13-19)", "20s", "30s", "40s", "50+"],
+  },
+  {
+    id: "gender",
+    question: "How do you identify?",
+    emoji: "✨",
+    options: ["Male", "Female", "Prefer not to say"],
+    skippable: true,
+    skipValue: "",
+  },
+  {
+    id: "pregnant_or_breastfeeding",
+    question: "Are you currently pregnant or breastfeeding?",
+    emoji: "🤍",
+    options: ["Yes", "No", "Prefer not to say"],
+    helpText: "This helps us keep your product recommendations safe.",
+  },
+  {
+    id: "fragrance_preference",
+    question: "What is your fragrance preference?",
+    emoji: "🌸",
+    options: ["Fragrance-free only", "No preference"],
+    skippable: true,
+    skipValue: "No preference",
+  },
+  {
+    id: "budget_range",
+    question: "What is your preferred budget per product?",
+    emoji: "🛍️",
+    options: ["Under ₹500", "₹500-1500", "₹1500-3000", "No preference"],
+    skippable: true,
+    skipValue: "No preference",
+  },
+  {
+    id: "allergies",
+    question: "Any allergies or ingredients to avoid?",
+    emoji: "📝",
+    skippable: true,
+    skipValue: "",
+  },
+];
 
 const SkinQuiz = () => {
   const [step, setStep] = useState<DiagnosisStep>("intro");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [aboutYouQuestion, setAboutYouQuestion] = useState(0);
+  const [aboutYouAnswers, setAboutYouAnswers] = useState<Partial<Record<AboutYouQuestionId, string>>>({});
   
   // Optional skin notes
   const [freeText, setFreeText] = useState<string>("");
@@ -49,6 +111,8 @@ const SkinQuiz = () => {
     setCurrentQuestion(0);
     setAnswers({});
     setSelectedOption(null);
+    setAboutYouQuestion(0);
+    setAboutYouAnswers({});
     setFreeText("");
     setShowFreeText(false);
     setProcessingAnalysisId(null);
@@ -85,8 +149,50 @@ const SkinQuiz = () => {
   };
 
   const handleQuizSubmit = () => {
-    // Advanced step to live camera capture
-    setStep("camera");
+    setStep("about-you");
+    setAboutYouQuestion(0);
+    setAboutYouAnswers({});
+  };
+
+  const returnToPhysiologyQuiz = () => {
+    const lastQuestion = quizQuestions[quizQuestions.length - 1];
+    setStep("quiz");
+    setCurrentQuestion(quizQuestions.length - 1);
+    setSelectedOption(lastQuestion.options.findIndex((option) => answers[lastQuestion.id] === option.value));
+  };
+
+  const advanceAboutYou = () => {
+    if (aboutYouQuestion < aboutYouQuestions.length - 1) {
+      setAboutYouQuestion(aboutYouQuestion + 1);
+    } else {
+      setStep("camera");
+    }
+  };
+
+  const handleAboutYouSelect = (value: string) => {
+    const question = aboutYouQuestions[aboutYouQuestion];
+    setAboutYouAnswers((current) => ({ ...current, [question.id]: value }));
+    setTimeout(advanceAboutYou, 350);
+  };
+
+  const handleAboutYouSkip = () => {
+    const question = aboutYouQuestions[aboutYouQuestion];
+    setAboutYouAnswers((current) => ({ ...current, [question.id]: question.skipValue ?? "" }));
+    setTimeout(advanceAboutYou, 350);
+  };
+
+  const buildUserProfile = (): UserProfile => {
+    const pregnancyAnswer = aboutYouAnswers.pregnant_or_breastfeeding;
+
+    return {
+      age_range: aboutYouAnswers.age_range ?? null,
+      gender: aboutYouAnswers.gender || null,
+      pregnant_or_breastfeeding:
+        pregnancyAnswer === "Yes" ? true : pregnancyAnswer === "No" ? false : null,
+      fragrance_preference: aboutYouAnswers.fragrance_preference || "No preference",
+      budget_range: aboutYouAnswers.budget_range || "No preference",
+      allergies: aboutYouAnswers.allergies?.trim() || null,
+    };
   };
 
   const handleCameraComplete = async (capturedPhotos: AnalysisPhotoFiles) => {
@@ -100,6 +206,7 @@ const SkinQuiz = () => {
         formData.append(field, capturedPhotos[field]);
       }
       formData.append("quizAnswers", JSON.stringify(answers));
+      formData.append("userProfile", JSON.stringify(buildUserProfile()));
       if (freeText.trim()) formData.append("skinNotes", freeText.trim());
 
       const data = await analysisApi.createMultipart(formData);
@@ -194,7 +301,7 @@ const SkinQuiz = () => {
                     Unified Skin Analysis
                   </h1>
                   <p className="text-white/80 text-base max-w-lg mx-auto leading-relaxed drop-shadow">
-                    Identify your clinical skin type and get a personalized routine. This unified 2-step flow combines a lifestyle quiz with live multi-angle facial camera scans.
+                    Identify your clinical skin type and get a personalized routine. This unified 3-step flow combines a lifestyle quiz, a few personal details, and live multi-angle facial camera scans.
                   </p>
                 </div>
 
@@ -209,17 +316,20 @@ const SkinQuiz = () => {
                         <span className="font-bold block text-white text-base">Quiz Flow</span>
                         <span className="text-[10px] text-white/80 font-semibold block uppercase tracking-wider mt-1">Step 1 — 7 Questions</span>
                       </div>
-                      <div className="relative sm:border-x sm:border-white/15 sm:px-4">
-                        <div className="text-2xl mb-2">📷</div>
-                        <span className="font-bold block text-white text-base">Photo Scan</span>
-                        <span className="text-[10px] text-white/80 font-semibold block uppercase tracking-wider mt-1">Step 2 — 5 Angles</span>
-                      </div>
-                      <div className="relative">
-                        <div className="text-2xl mb-2">🧬</div>
-                        <span className="font-bold block text-white text-base">AI Diagnostic</span>
-                        <span className="text-[10px] text-white/80 font-semibold block uppercase tracking-wider mt-1">Random Forest + NLP</span>
-                      </div>
-                    </div>
+                       <div className="relative sm:border-x sm:border-white/15 sm:px-4">
+                         <div className="text-2xl mb-2">✨</div>
+                         <span className="font-bold block text-white text-base">A Few Quick Details</span>
+                         <span className="text-[10px] text-white/80 font-semibold block uppercase tracking-wider mt-1">Step 2 — 6 Questions</span>
+                       </div>
+                       <div className="relative">
+                         <div className="text-2xl mb-2">📷</div>
+                         <span className="font-bold block text-white text-base">Photo Scan</span>
+                         <span className="text-[10px] text-white/80 font-semibold block uppercase tracking-wider mt-1">Step 3 — 6 Angles</span>
+                       </div>
+                     </div>
+                     <p className="mt-5 text-[10px] text-white/75 font-semibold uppercase tracking-wider">
+                       AI Diagnostic — Fused Image + Quiz Analysis
+                     </p>
                   </CardContent>
                 </Card>
 
@@ -339,7 +449,7 @@ const SkinQuiz = () => {
                                 onClick={handleQuizSubmit}
                                 className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full border border-white/30 bg-transparent text-white text-sm font-bold tracking-wide hover:bg-white/10 active:scale-95 transition-all cursor-pointer group"
                               >
-                                Proceed to Face Camera Scans
+                                Continue
                                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                               </button>
 
@@ -395,7 +505,140 @@ const SkinQuiz = () => {
               </motion.div>
             )}
 
-            {/* Step 3: Camera capture */}
+            {/* Step 3: About You */}
+            {step === "about-you" && (
+               <motion.div
+                 key="about-you"
+                 initial={{ opacity: 0, y: 15 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 exit={{ opacity: 0, y: -15 }}
+                 className="max-w-2xl mx-auto space-y-6"
+               >
+                 <div className="text-center text-white">
+                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Step 2 of 2</p>
+                   <h2 className="font-heading text-3xl font-bold mt-2">A Few Quick Details</h2>
+                   <p className="text-sm text-white/75 mt-2">Almost done — these details help us tailor safer recommendations.</p>
+                 </div>
+
+                 <div className="mb-4">
+                   <div className="flex justify-between text-xs font-semibold text-white/80 uppercase mb-1.5">
+                     <span>Question {aboutYouQuestion + 1} of {aboutYouQuestions.length}</span>
+                     <span>{Math.round(((aboutYouQuestion + 1) / aboutYouQuestions.length) * 100)}% Complete</span>
+                   </div>
+                   <Progress value={((aboutYouQuestion + 1) / aboutYouQuestions.length) * 100} className="h-1.5 bg-white/20" />
+                 </div>
+
+                 <Card className="rounded-gg-lg overflow-hidden relative border-0 shadow-elevated">
+                   <div className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-[8px]" style={{ backgroundImage: 'url(/analysis-bg.jpg)' }} />
+                   <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60" />
+                   <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px]" />
+                   <CardContent className="p-8 relative z-10">
+                     <AnimatePresence mode="wait">
+                       <motion.div
+                         key={aboutYouQuestion}
+                         initial={{ opacity: 0, x: 15 }}
+                         animate={{ opacity: 1, x: 0 }}
+                         exit={{ opacity: 0, x: -15 }}
+                         transition={{ duration: 0.2 }}
+                       >
+                         <div className="flex items-center justify-center gap-2 mb-3">
+                           <span className="text-3xl">{aboutYouQuestions[aboutYouQuestion].emoji}</span>
+                         </div>
+                         <h3 className="font-heading text-2xl font-bold text-white text-center mb-2">
+                           {aboutYouQuestions[aboutYouQuestion].question}
+                         </h3>
+                         {aboutYouQuestions[aboutYouQuestion].helpText && (
+                           <p className="text-xs text-white/80 font-semibold text-center mb-6 max-w-md mx-auto">
+                             {aboutYouQuestions[aboutYouQuestion].helpText}
+                           </p>
+                         )}
+
+                         {aboutYouQuestions[aboutYouQuestion].options ? (
+                           <div className="flex flex-wrap justify-center gap-2.5 mt-6">
+                             {aboutYouQuestions[aboutYouQuestion].options.map((option) => {
+                               const isSelected = aboutYouAnswers[aboutYouQuestions[aboutYouQuestion].id] === option;
+                               return (
+                                 <motion.button
+                                   key={option}
+                                   onClick={() => handleAboutYouSelect(option)}
+                                   className={`inline-flex items-center gap-2 px-4 py-3 rounded-full border-2 text-sm font-semibold transition-all ${
+                                     isSelected
+                                       ? "border-primary bg-primary/20 text-white"
+                                       : "border-white/20 text-white hover:border-primary/40 hover:bg-white/10"
+                                   }`}
+                                   whileHover={{ scale: 1.02 }}
+                                   whileTap={{ scale: 0.98 }}
+                                 >
+                                   <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                     isSelected ? "border-primary bg-primary" : "border-white/40"
+                                   }`}>
+                                     {isSelected && <CheckCircle className="h-2.5 w-2.5 text-primary-foreground" />}
+                                   </span>
+                                   {option}
+                                 </motion.button>
+                               );
+                             })}
+                           </div>
+                         ) : (
+                           <div className="mt-6 space-y-2">
+                             <label htmlFor="allergies" className="block text-xs text-white/80 font-semibold">
+                               Optional — leave blank if none
+                             </label>
+                             <textarea
+                               id="allergies"
+                               value={aboutYouAnswers.allergies ?? ""}
+                               onChange={(event) => setAboutYouAnswers((current) => ({ ...current, allergies: event.target.value.slice(0, 200) }))}
+                               placeholder="Optional — leave blank if none"
+                               aria-label="Optional allergies or ingredients to avoid"
+                               rows={4}
+                               className="w-full rounded-gg border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+                             />
+                             <div className="text-[10px] text-white/80 font-semibold text-right">{(aboutYouAnswers.allergies ?? "").length}/200</div>
+                             <button
+                               type="button"
+                               onClick={advanceAboutYou}
+                               className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-white/30 bg-transparent text-white text-sm font-bold tracking-wide hover:bg-white/10 active:scale-95 transition-all cursor-pointer group"
+                             >
+                               Proceed to Face Camera Scans
+                               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                             </button>
+                           </div>
+                         )}
+
+                         {aboutYouQuestions[aboutYouQuestion].skippable && (
+                           <button
+                             type="button"
+                             onClick={handleAboutYouSkip}
+                             className="w-full mt-5 text-xs text-white/75 hover:text-white font-semibold transition-colors"
+                           >
+                             Skip
+                           </button>
+                         )}
+                       </motion.div>
+                     </AnimatePresence>
+                   </CardContent>
+                 </Card>
+
+                 <div className="flex justify-between items-center">
+                   <button
+                     onClick={() => aboutYouQuestion === 0 ? returnToPhysiologyQuiz() : setAboutYouQuestion(aboutYouQuestion - 1)}
+                     className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md border border-white/30 bg-transparent text-white text-xs font-semibold uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer"
+                   >
+                     <ArrowLeft className="h-4 w-4" />
+                     Previous
+                   </button>
+                   <button
+                     onClick={handleStart}
+                     className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md border border-white/30 bg-transparent text-white text-xs font-semibold uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer"
+                   >
+                     <RotateCcw className="h-4 w-4" />
+                     Restart
+                   </button>
+                 </div>
+               </motion.div>
+             )}
+
+            {/* Step 4: Camera capture */}
             {step === "camera" && (
               <motion.div
                 key="camera"
@@ -406,12 +649,12 @@ const SkinQuiz = () => {
               >
                 <LivePhotoCapture
                   onComplete={handleCameraComplete}
-                  onBack={() => setStep("quiz")}
+                  onBack={() => setStep("about-you")}
                 />
               </motion.div>
             )}
 
-            {/* Step 4: Loading progress */}
+            {/* Step 5: Loading progress */}
             {step === "processing" && (
               <motion.div key="processing" className="w-full">
                 {processingError ? (

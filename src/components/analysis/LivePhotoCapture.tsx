@@ -87,6 +87,9 @@ const SHOTS: ShotDefinition[] = [
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MIN_IMAGE_DIMENSION = 480;
+const MIN_CLOSEUP_FILL_RATIO = 0.6;
+const MAX_CLOSEUP_FILL_RATIO = 0.9;
+const AUTO_CAPTURE_HOLD_MS = 900;
 const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -124,18 +127,28 @@ function validateDetection(
 
   const [minYaw, maxYaw] = shot.yaw;
   if (pose.yaw < minYaw || pose.yaw > maxYaw) {
+    const direction = pose.yaw < minYaw ? "right" : "left";
     return {
       valid: false,
-      message: `${sourceLabel}: adjust your angle. Target ${minYaw}° to ${maxYaw}° yaw.`,
+      message: `${sourceLabel}: turn ${direction} a bit.`,
       yaw: pose.yaw,
       fillRatio: pose.fillRatio,
     };
   }
 
-  if (shot.closeup && pose.fillRatio < 0.6) {
+  if (shot.closeup && pose.fillRatio < MIN_CLOSEUP_FILL_RATIO) {
     return {
       valid: false,
-      message: `${sourceLabel}: move closer until your face fills at least 60% of the frame.`,
+      message: `${sourceLabel}: move closer.`,
+      yaw: pose.yaw,
+      fillRatio: pose.fillRatio,
+    };
+  }
+
+  if (shot.closeup && pose.fillRatio > MAX_CLOSEUP_FILL_RATIO) {
+    return {
+      valid: false,
+      message: `${sourceLabel}: move back a little.`,
       yaw: pose.yaw,
       fillRatio: pose.fillRatio,
     };
@@ -143,7 +156,7 @@ function validateDetection(
 
   return {
     valid: true,
-    message: shot.closeup ? "Closeup framing is ready." : "Position is correct. Hold steady.",
+    message: "Perfect! Hold still...",
     yaw: pose.yaw,
     fillRatio: pose.fillRatio,
   };
@@ -204,6 +217,7 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [galleryError, setGalleryError] = useState<string | null>(null);
   const [reviewMode, setReviewMode] = useState(false);
+  const [autoCaptureProgress, setAutoCaptureProgress] = useState(0);
   const [alignment, setAlignment] = useState<ValidationResult>({
     valid: false,
     message: "Loading face guidance...",
@@ -217,6 +231,11 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
   const animationRef = useRef<number | null>(null);
   const lastVideoTimestampRef = useRef(0);
   const validatingFileRef = useRef(false);
+  const alignmentHoldStartedAtRef = useRef<number | null>(null);
+  const autoCaptureTriggeredRef = useRef(false);
+  const isCapturingRef = useRef(false);
+  const capturePhotoRef = useRef<(() => Promise<void>) | null>(null);
+  const latestAlignmentRef = useRef<ValidationResult>(alignment);
 
   const currentShot = SHOTS[currentStep];
   const hasAllPhotos = PHOTO_FIELDS.every((field) => photos[field]);
@@ -310,7 +329,26 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
       const timestamp = Math.max(performance.now(), lastVideoTimestampRef.current + 1);
       lastVideoTimestampRef.current = timestamp;
       const result = landmarker.detectForVideo(video, timestamp);
-      setAlignment(validateDetection(result, currentShot, currentShot.label));
+      const nextAlignment = validateDetection(result, currentShot, currentShot.label);
+      latestAlignmentRef.current = nextAlignment;
+      setAlignment(nextAlignment);
+
+      if (!nextAlignment.valid || isCapturingRef.current || autoCaptureTriggeredRef.current) {
+        alignmentHoldStartedAtRef.current = null;
+        setAutoCaptureProgress(0);
+      } else {
+        alignmentHoldStartedAtRef.current ??= timestamp;
+        const holdProgress = Math.min(
+          (timestamp - alignmentHoldStartedAtRef.current) / AUTO_CAPTURE_HOLD_MS,
+          1
+        );
+        setAutoCaptureProgress(holdProgress);
+
+        if (holdProgress >= 1) {
+          autoCaptureTriggeredRef.current = true;
+          void capturePhotoRef.current?.();
+        }
+      }
       animationRef.current = requestAnimationFrame(detect);
     };
 
@@ -333,7 +371,7 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
       try {
         const image = await loadImage(file);
         if (image.width < MIN_IMAGE_DIMENSION || image.height < MIN_IMAGE_DIMENSION) {
-          return { valid: false, message: "Images must be at least 480×480 pixels." };
+          return { valid: false, message: "Choose a larger image with enough detail." };
         }
 
         const landmarker = await loadLandmarker();
@@ -359,6 +397,10 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
   const savePhoto = (file: File) => {
     setPhotos((previous) => ({ ...previous, [currentShot.id]: file }));
     setGalleryError(null);
+    latestAlignmentRef.current = { valid: false, message: "Loading face guidance..." };
+    alignmentHoldStartedAtRef.current = null;
+    autoCaptureTriggeredRef.current = false;
+    setAutoCaptureProgress(0);
     if (currentStep < SHOTS.length - 1) {
       setCurrentStep((step) => step + 1);
     } else {
@@ -368,8 +410,10 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
   };
 
   const capturePhoto = async () => {
-    if (!isCameraActive || !alignment.valid || !videoRef.current || !canvasRef.current) return;
+    if (!isCameraActive || !latestAlignmentRef.current.valid || !videoRef.current || !canvasRef.current) return;
 
+    autoCaptureTriggeredRef.current = true;
+    isCapturingRef.current = true;
     setIsCapturing(true);
     try {
       const video = videoRef.current;
@@ -381,9 +425,12 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
       savePhoto(await canvasToFile(canvas, currentShot.id));
     } finally {
+      isCapturingRef.current = false;
       setIsCapturing(false);
     }
   };
+
+  capturePhotoRef.current = capturePhoto;
 
   const handleGalleryChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -442,7 +489,7 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
               <span>I consent to capturing and processing these photos for my cosmetic skin analysis.</span>
             </label>
             <div className="flex justify-between gap-3">
-              <Button variant="outline" onClick={onBack}>Back to quiz</Button>
+              <Button variant="outline" onClick={onBack}>Back to details</Button>
               <Button disabled={!consented} onClick={() => setConsented(true)}>
                 Continue to camera <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
@@ -489,7 +536,7 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
     <div className="space-y-6 max-w-3xl mx-auto">
       <div className="text-center space-y-2">
         <span className="text-xs font-semibold text-secondary uppercase tracking-wider">
-          Step 2 — Vision analysis · {currentStep + 1} of {SHOTS.length}
+          Step 3 — Photo capture · {currentStep + 1} of {SHOTS.length}
         </span>
         <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground">{currentShot.label}</h2>
         <p className="text-sm text-muted-foreground">{currentShot.description}</p>
@@ -514,10 +561,25 @@ export const LivePhotoCapture = ({ onComplete, onBack }: LivePhotoCaptureProps) 
             {alignment.valid ? <CheckCircle className="inline h-3.5 w-3.5 mr-1" /> : null}
             {isLoadingModel ? "Loading face guidance..." : alignment.message}
           </div>
+          {alignment.valid && autoCaptureProgress > 0 && (
+            <div
+              className="absolute inset-x-8 bottom-0 h-1.5 overflow-hidden rounded-full bg-background/30"
+              aria-label="Hold still while the photo is captured"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={1}
+              aria-valuenow={autoCaptureProgress}
+            >
+              <div
+                className="h-full rounded-full bg-success transition-[width] duration-75"
+                style={{ width: `${autoCaptureProgress * 100}%` }}
+              />
+            </div>
+          )}
         </div>
         <CardContent className="p-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-xs text-muted-foreground">
-            {currentShot.closeup ? "Keep your face forward and fill at least 60% of the frame." : "Good light, no filters, and keep steady."}
+            {currentShot.closeup ? "Keep your face centered and hold still." : "Good light, no filters, and keep steady."}
           </div>
           <div className="flex flex-wrap justify-center gap-2">
             <Button variant="outline" onClick={onBack}>Back</Button>

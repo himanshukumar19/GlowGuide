@@ -9,6 +9,7 @@ import { customerSchema, type Customer } from "@/lib/schemas";
 import { db } from "@/lib/firebase-admin";
 import { uploadImageBuffer, deleteImage } from "@/lib/cloudinary";
 import { buildQuizOnlyFallback } from "@/lib/analysis/fallbackClassifier";
+import { matchRoutineWithProducts } from "@/lib/analysis/productMatching";
 import type { UserProfile } from "@/lib/schemas/analysis";
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "https://glowguide-ml-service.onrender.com";
@@ -304,7 +305,15 @@ export async function POST(request: NextRequest) {
   }
 
   if (FORCE_FALLBACK) {
-    const result = buildQuizOnlyFallback(normalizedAnswers, userProfile);
+    const fallbackResult = buildQuizOnlyFallback(normalizedAnswers, userProfile);
+    const result = {
+      ...fallbackResult,
+      routine: await matchRoutineWithProducts(
+        fallbackResult.routine,
+        fallbackResult.concerns as { name: string }[],
+        userProfile
+      ),
+    };
 
     const analysisRef = db.collection("analyses").doc();
     const photoUrls = await uploadAnalysisPhotos(files, buffers, analysisRef.id);
@@ -438,7 +447,15 @@ export async function POST(request: NextRequest) {
 
     console.warn(`[${analysisId}] Falling back to quiz-only analysis`);
 
-    const result = buildQuizOnlyFallback(normalizedAnswers, userProfile);
+    const fallbackResult = buildQuizOnlyFallback(normalizedAnswers, userProfile);
+    const result = {
+      ...fallbackResult,
+      routine: await matchRoutineWithProducts(
+        fallbackResult.routine,
+        fallbackResult.concerns as { name: string }[],
+        userProfile
+      ),
+    };
 
     try {
       const analysis = await createAnalysis({

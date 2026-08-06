@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
 import { deleteImage } from "@/lib/cloudinary";
 import { buildQuizOnlyFallback } from "@/lib/analysis/fallbackClassifier";
+import { matchRoutineWithProducts } from "@/lib/analysis/productMatching";
 import type { UserProfile } from "@/lib/schemas/analysis";
 
 const RECONCILE_THRESHOLD_MS = 3 * 60 * 1000;
@@ -85,7 +86,15 @@ export async function GET(request: NextRequest) {
     try {
       const quizAnswers = (data.quizAnswers ?? {}) as Record<string, number>;
       const userProfile = (data.userProfile ?? {}) as UserProfile;
-      const result = buildQuizOnlyFallback(quizAnswers, userProfile);
+      const fallbackResult = buildQuizOnlyFallback(quizAnswers, userProfile);
+      const result = {
+        ...fallbackResult,
+        routine: await matchRoutineWithProducts(
+          fallbackResult.routine,
+          fallbackResult.concerns as { name: string }[],
+          userProfile
+        ),
+      };
       const recoveredAt = new Date().toISOString();
       const stuckForMs = now - new Date(String(data.createdAt)).getTime();
       const customerRef = db.collection("customers").doc(customerId);

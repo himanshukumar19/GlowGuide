@@ -6,8 +6,9 @@ import { uploadImageBuffer, deleteImage } from "@/lib/cloudinary";
 import { calculateHealthScore } from "@/lib/analysis/health-score";
 import { deriveConcerns } from "@/lib/analysis/concerns";
 import { generateRoutine } from "@/lib/analysis/routine";
+import { matchRoutineWithProducts } from "@/lib/analysis/productMatching";
 import { analysisSchema } from "@/lib/schemas/analysis";
-import type { AnalysisSource, RawScores, SkinType } from "@/lib/schemas/analysis";
+import type { AnalysisSource, RawScores, SkinType, UserProfile } from "@/lib/schemas/analysis";
 
 const ML_SERVICE_SECRET = process.env.ML_SERVICE_SECRET;
 
@@ -140,6 +141,13 @@ export async function POST(request: NextRequest) {
   }
 
   const existing = doc.data()!;
+  if (existing.status === "completed") {
+    console.warn(`[${analysis_id}] Late or duplicate ML callback ignored after completion`, {
+      callback: payload,
+    });
+    return NextResponse.json({ ok: true });
+  }
+
   const quizAnswers = existing.quizAnswers as Record<string, number>;
   const normalizedAnswers = {
     sebum_level: Number(quizAnswers.sebum_level ?? 50),
@@ -175,7 +183,17 @@ export async function POST(request: NextRequest) {
     skinType,
   });
   const healthScore = calculateHealthScore(concerns, confidence);
-  const routine = generateRoutine({ skinType, concerns });
+  let routine;
+  try {
+    routine = await matchRoutineWithProducts(
+      generateRoutine({ skinType, concerns }),
+      concerns as { name: string }[],
+      existing.userProfile as UserProfile
+    );
+  } catch (error) {
+    console.error(`[${analysis_id}] Failed to match routine products:`, error);
+    return NextResponse.json({ error: "Failed to build routine recommendations" }, { status: 500 });
+  }
   const callbackResult = {
     skinType,
     concerns,

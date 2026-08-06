@@ -22,6 +22,7 @@ export type DetectedConcern = z.infer<typeof detectedConcernSchema>;
 export const routineStepSchema = z.object({
   productType: z.string(),
   description: z.string(),
+  concernContext: z.string().optional(),
   suggestedProducts: z.array(z.string()).optional(),
 });
 

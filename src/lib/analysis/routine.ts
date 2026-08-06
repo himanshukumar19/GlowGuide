@@ -24,11 +24,11 @@ const MOISTURIZER: Record<SkinType, string> = {
 const SUNSCREEN = "Broad-spectrum SPF 30+ sunscreen. Reapply every 2 hours outdoors.";
 
 function concernSteps(concerns: DetectedConcern[]): {
-  morning: { productType: string; description: string }[];
-  night: { productType: string; description: string }[];
+  morning: { productType: string; description: string; concernContext: string }[];
+  night: { productType: string; description: string; concernContext: string }[];
 } {
-  const morning: { productType: string; description: string }[] = [];
-  const night: { productType: string; description: string }[] = [];
+  const morning: { productType: string; description: string; concernContext: string }[] = [];
+  const night: { productType: string; description: string; concernContext: string }[] = [];
 
   const names = new Set(concerns.map((c) => c.name));
 
@@ -36,10 +36,12 @@ function concernSteps(concerns: DetectedConcern[]): {
     morning.push({
       productType: "Spot Treatment",
       description: "Optional benzoyl peroxide or tea tree spot treatment on active breakouts.",
+      concernContext: "Acne",
     });
     night.push({
       productType: "Exfoliant",
       description: "2% salicylic acid or BHA exfoliant 2–3 nights per week.",
+      concernContext: "Acne",
     });
   }
 
@@ -47,10 +49,12 @@ function concernSteps(concerns: DetectedConcern[]): {
     morning.push({
       productType: "Antioxidant Serum",
       description: "Vitamin C serum to brighten and protect against free radicals.",
+      concernContext: "Aging",
     });
     night.push({
       productType: "Retinoid",
       description: "Introduce a gentle retinoid 2–3 nights per week to boost collagen.",
+      concernContext: "Aging",
     });
   }
 
@@ -58,10 +62,12 @@ function concernSteps(concerns: DetectedConcern[]): {
     morning.push({
       productType: "Brightening Serum",
       description: "Vitamin C or niacinamide serum to fade dark spots over time.",
+      concernContext: "Pigmentation",
     });
     night.push({
       productType: "Exfoliant / Tone Corrector",
       description: "Gentle AHA or tranexamic acid treatment to even skin tone.",
+      concernContext: "Pigmentation",
     });
   }
 
@@ -69,10 +75,12 @@ function concernSteps(concerns: DetectedConcern[]): {
     morning.push({
       productType: "Hydrating Serum",
       description: "Hyaluronic acid serum on damp skin before moisturizer.",
+      concernContext: "Dryness",
     });
     night.push({
       productType: "Facial Oil / Sleeping Mask",
       description: "Seal in moisture with a lightweight facial oil or overnight hydrating mask.",
+      concernContext: "Dryness",
     });
   }
 
@@ -80,10 +88,12 @@ function concernSteps(concerns: DetectedConcern[]): {
     morning.push({
       productType: "Soothing Serum",
       description: "Centella asiatica or azelaic acid to calm redness.",
+      concernContext: "Sensitivity",
     });
     night.push({
       productType: "Barrier Repair",
       description: "Peptide or ceramide-rich treatment to strengthen skin barrier.",
+      concernContext: "Sensitivity",
     });
   }
 
@@ -91,10 +101,12 @@ function concernSteps(concerns: DetectedConcern[]): {
     morning.push({
       productType: "Mattifying Primer / Toner",
       description: "Niacinamide toner or mattifying primer to control shine.",
+      concernContext: "Oiliness",
     });
     night.push({
       productType: "Clay Mask",
       description: "Clay mask 1–2 times per week to absorb excess oil.",
+      concernContext: "Oiliness",
     });
   }
 
@@ -102,6 +114,7 @@ function concernSteps(concerns: DetectedConcern[]): {
     night.push({
       productType: "Exfoliant",
       description: "Gentle AHA/BHA exfoliant 2–3 nights per week to smooth texture.",
+      concernContext: "Uneven Texture",
     });
   }
 

@@ -36,12 +36,22 @@ import { api } from "@/api/client";
 import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
 import type { Ingredient } from "@/lib/schemas";
 
-const emptyForm: Omit<Ingredient, "id" | "createdAt" | "updatedAt"> = {
+interface FormState {
+  name: string;
+  description: string;
+  benefitsText: string;
+  sideEffectsText: string;
+  suitableSkinTypesText: string;
+  category: string;
+  safetyRating?: "safe" | "moderate" | "caution";
+}
+
+const emptyForm: FormState = {
   name: "",
   description: "",
-  benefits: [],
-  sideEffects: [],
-  suitableSkinTypes: [],
+  benefitsText: "",
+  sideEffectsText: "",
+  suitableSkinTypesText: "",
   category: "",
   safetyRating: undefined,
 };
@@ -51,7 +61,7 @@ const AdminIngredients = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<typeof emptyForm>(emptyForm);
+  const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -80,11 +90,11 @@ const AdminIngredients = () => {
     setEditingId(ingredient.id);
     setForm({
       name: ingredient.name,
-      description: ingredient.description,
-      benefits: ingredient.benefits,
-      sideEffects: ingredient.sideEffects,
-      suitableSkinTypes: ingredient.suitableSkinTypes,
-      category: ingredient.category,
+      description: ingredient.description || "",
+      benefitsText: (ingredient.benefits || []).join(", "),
+      sideEffectsText: (ingredient.sideEffects || []).join(", "),
+      suitableSkinTypesText: (ingredient.suitableSkinTypes || []).join(", "),
+      category: ingredient.category || "",
       safetyRating: ingredient.safetyRating,
     });
     setDialogOpen(true);
@@ -92,32 +102,65 @@ const AdminIngredients = () => {
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.category.trim()) {
-      toast({ title: "Validation Error", description: "Name and category are required.", variant: "destructive" });
+      toast({
+        title: "Validation Error",
+        description: "Name and category are required.",
+        variant: "destructive",
+      });
       return;
     }
+
+    const payload = {
+      name: form.name.trim(),
+      description: form.description.trim(),
+      category: form.category.trim(),
+      safetyRating: form.safetyRating,
+      benefits: form.benefitsText
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      sideEffects: form.sideEffectsText
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      suitableSkinTypes: form.suitableSkinTypesText
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    };
 
     setSaving(true);
     try {
       if (editingId) {
         const data = await api.put<{ success: boolean; ingredient: Ingredient }>(
           `/api/admin/ingredients/${editingId}`,
-          form
+          payload
         );
         setIngredients((prev) =>
           prev.map((i) => (i.id === editingId ? data.ingredient : i))
         );
-        toast({ title: "Ingredient Updated", description: `${form.name} has been updated.` });
+        toast({
+          title: "Ingredient Updated",
+          description: `${form.name} has been updated.`,
+        });
       } else {
         const data = await api.post<{ success: boolean; ingredient: Ingredient }>(
           "/api/admin/ingredients",
-          form
+          payload
         );
         setIngredients((prev) => [...prev, data.ingredient]);
-        toast({ title: "Ingredient Added", description: `${form.name} has been added.` });
+        toast({
+          title: "Ingredient Added",
+          description: `${form.name} has been added.`,
+        });
       }
       setDialogOpen(false);
     } catch {
-      toast({ title: "Save Failed", description: "Could not save ingredient.", variant: "destructive" });
+      toast({
+        title: "Save Failed",
+        description: "Could not save ingredient.",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
@@ -128,16 +171,19 @@ const AdminIngredients = () => {
     try {
       await api.del(`/api/admin/ingredients/${id}`);
       setIngredients((prev) => prev.filter((i) => i.id !== id));
-      toast({ title: "Ingredient Deleted", description: `${name} has been removed.` });
+      toast({
+        title: "Ingredient Deleted",
+        description: `${name} has been removed.`,
+      });
     } catch {
-      toast({ title: "Delete Failed", description: "Could not delete ingredient.", variant: "destructive" });
+      toast({
+        title: "Delete Failed",
+        description: "Could not delete ingredient.",
+        variant: "destructive",
+      });
     } finally {
       setDeleting(null);
     }
-  };
-
-  const setFormField = (field: keyof typeof emptyForm, value: unknown) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   if (loading) {
@@ -174,7 +220,10 @@ const AdminIngredients = () => {
             <TableBody>
               {ingredients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-10 text-muted-foreground"
+                  >
                     No ingredients yet. Click "Add Ingredient" to create one.
                   </TableCell>
                 </TableRow>
@@ -205,7 +254,7 @@ const AdminIngredients = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {ing.suitableSkinTypes.map((st) => (
+                        {(ing.suitableSkinTypes || []).map((st) => (
                           <Badge key={st} variant="outline" className="text-xs">
                             {st}
                           </Badge>
@@ -214,7 +263,11 @@ const AdminIngredients = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(ing)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEdit(ing)}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
@@ -243,7 +296,9 @@ const AdminIngredients = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Ingredient" : "Add Ingredient"}</DialogTitle>
+            <DialogTitle>
+              {editingId ? "Edit Ingredient" : "Add Ingredient"}
+            </DialogTitle>
             <DialogDescription>
               {editingId
                 ? "Update the ingredient details below."
@@ -253,20 +308,24 @@ const AdminIngredients = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Name *</Label>
                 <Input
                   id="name"
                   value={form.name}
-                  onChange={(e) => setFormField("name", e.target.value)}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   placeholder="e.g. Hyaluronic Acid"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">Category *</Label>
                 <Input
                   id="category"
                   value={form.category}
-                  onChange={(e) => setFormField("category", e.target.value)}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, category: e.target.value }))
+                  }
                   placeholder="e.g. Humectant"
                 />
               </div>
@@ -274,16 +333,22 @@ const AdminIngredients = () => {
             <div className="space-y-2">
               <Label htmlFor="safetyRating">Safety Rating</Label>
               <Select
-                value={form.safetyRating || ""}
+                value={form.safetyRating || "none"}
                 onValueChange={(val) =>
-                  setFormField("safetyRating", val || undefined)
+                  setForm((prev) => ({
+                    ...prev,
+                    safetyRating:
+                      val === "none"
+                        ? undefined
+                        : (val as "safe" | "moderate" | "caution"),
+                  }))
                 }
               >
                 <SelectTrigger id="safetyRating">
                   <SelectValue placeholder="Select safety rating (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="safe">Safe</SelectItem>
                   <SelectItem value="moderate">Moderate</SelectItem>
                   <SelectItem value="caution">Caution</SelectItem>
@@ -295,7 +360,9 @@ const AdminIngredients = () => {
               <Textarea
                 id="description"
                 value={form.description}
-                onChange={(e) => setFormField("description", e.target.value)}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, description: e.target.value }))
+                }
                 placeholder="Brief description of the ingredient..."
                 rows={3}
               />
@@ -304,9 +371,9 @@ const AdminIngredients = () => {
               <Label htmlFor="benefits">Benefits (comma-separated)</Label>
               <Input
                 id="benefits"
-                value={form.benefits.join(", ")}
+                value={form.benefitsText}
                 onChange={(e) =>
-                  setFormField("benefits", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))
+                  setForm((prev) => ({ ...prev, benefitsText: e.target.value }))
                 }
                 placeholder="Brightens skin, Fades spots, Boosts collagen"
               />
@@ -315,23 +382,28 @@ const AdminIngredients = () => {
               <Label htmlFor="sideEffects">Side Effects (comma-separated)</Label>
               <Input
                 id="sideEffects"
-                value={form.sideEffects.join(", ")}
+                value={form.sideEffectsText}
                 onChange={(e) =>
-                  setFormField("sideEffects", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))
+                  setForm((prev) => ({
+                    ...prev,
+                    sideEffectsText: e.target.value,
+                  }))
                 }
                 placeholder="Mild irritation, Sun sensitivity"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="skinTypes">Suitable Skin Types (comma-separated)</Label>
+              <Label htmlFor="skinTypes">
+                Suitable Skin Types (comma-separated)
+              </Label>
               <Input
                 id="skinTypes"
-                value={form.suitableSkinTypes.join(", ")}
+                value={form.suitableSkinTypesText}
                 onChange={(e) =>
-                  setFormField(
-                    "suitableSkinTypes",
-                    e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
-                  )
+                  setForm((prev) => ({
+                    ...prev,
+                    suitableSkinTypesText: e.target.value,
+                  }))
                 }
                 placeholder="Oily, Dry, Combination, Normal, Sensitive"
               />

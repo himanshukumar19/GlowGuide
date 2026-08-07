@@ -193,9 +193,7 @@ const AdminLogin = () => {
               </form>
             </Form>
 
-            <p className="text-xs text-center text-muted-foreground mt-4">
-              Admin: admin@glowguide.com / adminpassword
-            </p>
+
           </div>
         </div>
       </motion.div>

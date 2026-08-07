@@ -21,9 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Eye, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Eye, Download, Loader2 } from "lucide-react";
 import { api } from "@/api/client";
-import type { Order, OrderStatus } from "@/lib/schemas";
+import type { Order } from "@/lib/schemas";
 
 const statusColorMap: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -37,6 +38,7 @@ const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchOrders() {
@@ -57,12 +59,63 @@ const AdminOrders = () => {
     return orders.filter((o) => o.status === statusFilter);
   }, [orders, statusFilter]);
 
+  const handleExportCSV = () => {
+    if (filteredOrders.length === 0) {
+      toast({ title: "No orders to export", variant: "destructive" });
+      return;
+    }
+
+    const headers = [
+      "Order ID",
+      "Date",
+      "Customer Name",
+      "Email",
+      "Phone",
+      "Items Count",
+      "Subtotal",
+      "Tax",
+      "Total",
+      "Status",
+    ];
+
+    const rows = filteredOrders.map((order) => [
+      order.id,
+      new Date(order.createdAt).toISOString().split("T")[0],
+      `"${(order.shippingAddress?.fullName || "N/A").replace(/"/g, '""')}"`,
+      `"${(order.shippingAddress?.email || "N/A").replace(/"/g, '""')}"`,
+      `"${(order.shippingAddress?.phone || "N/A").replace(/"/g, '""')}"`,
+      order.items?.length || 0,
+      order.subtotal || 0,
+      order.tax || 0,
+      order.total || 0,
+      order.status,
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `glowguide_orders_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Orders Exported",
+      description: `Successfully exported ${filteredOrders.length} orders to CSV.`,
+    });
+  };
+
   return (
     <AdminLayout title="Orders">
       <Card className="shadow-card">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>All Orders</CardTitle>
-          <div className="flex items-center gap-3">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <CardTitle>All Orders ({filteredOrders.length})</CardTitle>
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-44">
                 <SelectValue placeholder="Filter by status" />
@@ -76,6 +129,11 @@ const AdminOrders = () => {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
+
+            <Button variant="outline" onClick={handleExportCSV}>
+              <Download className="h-4 w-4 mr-1.5" />
+              Export CSV
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">

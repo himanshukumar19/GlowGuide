@@ -5,6 +5,8 @@ import {
   createIngredient,
 } from "@/lib/models/ingredient";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     const authCheck = await authorize(request, ["ADMIN"]);

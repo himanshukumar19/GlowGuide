@@ -9,6 +9,7 @@ interface ConcernInput {
 interface ConcernRule {
   name: string;
   description: string;
+  keywordBoost: number;
   score: (input: ConcernInput) => number;
 }
 
@@ -16,132 +17,95 @@ function scale(value: number, min: number, max: number): number {
   return Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
 }
 
-function hasKeyword(keywords: string[], ...needles: string[]): boolean {
-  return needles.some((needle) =>
-    keywords.some((k) => k.toLowerCase().includes(needle.toLowerCase()))
-  );
+export const CONCERN_KEYWORD_MAP: Record<string, string[]> = {
+  Acne: ["acne", "breakout", "breakouts", "pimple", "pimples", "zit", "zits", "blackhead", "blackheads", "whitehead", "whiteheads"],
+  Oiliness: ["oily", "oiliness", "greasy", "shiny", "shine"],
+  Dryness: ["dry", "dryness", "flaky", "flaking", "tight", "tightness", "dehydrated", "dehydration"],
+  Sensitivity: ["sensitive", "sensitivity", "redness", "red", "irritated", "irritation", "reactive", "burning", "stinging"],
+  "Uneven Texture": ["rough", "texture", "bumpy", "uneven"],
+  Pigmentation: ["dark spots", "spots", "pigmentation", "hyperpigmentation", "discoloration", "uneven tone"],
+  Aging: ["wrinkle", "wrinkles", "fine line", "fine lines", "aging", "sagging", "elasticity"],
+};
+
+export function extractConcernKeywords(text: string | null | undefined): string[] {
+  if (!text) return [];
+  const lowerText = text.toLowerCase();
+  const matched: string[] = [];
+
+  for (const [concernName, keywords] of Object.entries(CONCERN_KEYWORD_MAP)) {
+    if (keywords.some((keyword) => lowerText.includes(keyword))) {
+      matched.push(concernName);
+    }
+  }
+
+  return matched;
 }
 
 const CONCERN_RULES: ConcernRule[] = [
   {
     name: "Acne",
     description: "Frequency and severity of breakouts including pimples, blackheads, and whiteheads.",
-    score: ({ quizAnswers, keywords }) => {
+    keywordBoost: 15,
+    score: ({ quizAnswers }) => {
       const base = scale(quizAnswers.acne_frequency ?? 0, 0, 100);
-      const keywordBoost = hasKeyword(keywords, "acne", "pimple", "breakout", "blackhead", "whitehead", "clogged")
-        ? 15
-        : 0;
-      return Math.min(100, base + keywordBoost);
+      return base;
     },
   },
   {
     name: "Oiliness",
     description: "Excess sebum production leading to shine and greasy texture.",
-    score: ({ quizAnswers, keywords }) => {
+    keywordBoost: 15,
+    score: ({ quizAnswers }) => {
       const base = scale(quizAnswers.sebum_level ?? 50, 0, 100);
-      const keywordBoost = hasKeyword(keywords, "oily", "greasy", "shiny", "glossy") ? 15 : 0;
-      return Math.min(100, base + keywordBoost);
+      return base;
     },
   },
   {
     name: "Dryness",
     description: "Lack of hydration causing tightness, flakiness, or rough patches.",
-    score: ({ quizAnswers, keywords }) => {
+    keywordBoost: 15,
+    score: ({ quizAnswers }) => {
       const hydration = quizAnswers.hydration_level ?? 50;
       const tightness = quizAnswers.tightness_score ?? 50;
       const base = (scale(100 - hydration, 0, 100) + scale(tightness, 0, 100)) / 2;
-      const keywordBoost = hasKeyword(
-        keywords,
-        "dry",
-        "flaky",
-        "dehydrated",
-        "tight",
-        "peeling",
-        "cracked"
-      )
-        ? 15
-        : 0;
-      return Math.min(100, base + keywordBoost);
+      return base;
     },
   },
   {
     name: "Sensitivity",
     description: "Reactivity, redness, stinging, or irritation in response to products or environment.",
-    score: ({ quizAnswers, keywords }) => {
+    keywordBoost: 15,
+    score: ({ quizAnswers }) => {
       const base = scale(quizAnswers.sensitivity_score ?? 0, 0, 100);
-      const keywordBoost = hasKeyword(
-        keywords,
-        "red",
-        "sensitive",
-        "rosacea",
-        "irritated",
-        "stinging",
-        "burning",
-        "reactive",
-        "itchy"
-      )
-        ? 15
-        : 0;
-      return Math.min(100, base + keywordBoost);
+      return base;
     },
   },
   {
     name: "Uneven Texture",
     description: "Rough, bumpy skin texture, visible pores, and uneven surface.",
-    score: ({ quizAnswers, keywords }) => {
+    keywordBoost: 15,
+    score: ({ quizAnswers }) => {
       const base = scale(quizAnswers.roughness_score ?? 0, 0, 100);
-      const keywordBoost = hasKeyword(
-        keywords,
-        "rough",
-        "bumpy",
-        "uneven texture",
-        "scar",
-        "pores"
-      )
-        ? 15
-        : 0;
-      return Math.min(100, base + keywordBoost);
+      return base;
     },
   },
   {
     name: "Pigmentation",
     description: "Dark spots, sun damage, melasma, or uneven skin tone.",
-    score: ({ quizAnswers, keywords }) => {
+    keywordBoost: 35,
+    score: ({ quizAnswers }) => {
       const base = scale(quizAnswers.roughness_score ?? 0, 20, 80) * 0.4;
-      const keywordBoost = hasKeyword(
-        keywords,
-        "dark spot",
-        "hyperpigmentation",
-        "melasma",
-        "discoloration",
-        "sun spot",
-        "age spot",
-        "uneven tone",
-        "photodamage",
-        "pigmentation"
-      )
-        ? 35
-        : 0;
-      return Math.min(100, base + keywordBoost);
+      return base;
     },
   },
   {
     name: "Aging",
     description: "Fine lines, wrinkles, loss of elasticity, and sagging.",
-    score: ({ quizAnswers, keywords }) => {
+    keywordBoost: 35,
+    score: ({ quizAnswers }) => {
       const hydration = quizAnswers.hydration_level ?? 50;
       const base = scale(100 - hydration, 20, 100) * 0.5;
-      const keywordBoost = hasKeyword(
-        keywords,
-        "wrinkle",
-        "fine line",
-        "aging",
-        "sagging",
-        "elasticity"
-      )
-        ? 35
-        : 0;
-      return Math.min(100, base + keywordBoost);
+      return base;
     },
   },
 ];
@@ -158,7 +122,10 @@ export function deriveConcerns(input: ConcernInput): DetectedConcern[] {
   const scored = CONCERN_RULES.map((rule) => ({
     name: rule.name,
     description: rule.description,
-    severity: rule.score(input),
+    severity: Math.min(
+      100,
+      rule.score(input) + (input.keywords.includes(rule.name) ? rule.keywordBoost : 0)
+    ),
   }))
     .filter((c) => c.severity > 0)
     .sort((a, b) => b.severity - a.severity);

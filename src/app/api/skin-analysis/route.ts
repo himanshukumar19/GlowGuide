@@ -305,7 +305,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (FORCE_FALLBACK) {
-    const fallbackResult = buildQuizOnlyFallback(normalizedAnswers, userProfile);
+    const fallbackResult = buildQuizOnlyFallback(normalizedAnswers, userProfile, skinNotes);
     const result = {
       ...fallbackResult,
       routine: await matchRoutineWithProducts(
@@ -448,7 +448,7 @@ export async function POST(request: NextRequest) {
 
     console.warn(`[${analysisId}] Falling back to quiz-only analysis`);
 
-    const fallbackResult = buildQuizOnlyFallback(normalizedAnswers, userProfile);
+    const fallbackResult = buildQuizOnlyFallback(normalizedAnswers, userProfile, skinNotes);
     const result = {
       ...fallbackResult,
       routine: await matchRoutineWithProducts(

@@ -4,7 +4,7 @@ import { updateCustomer } from "@/lib/models";
 import { validate } from "@/lib/validators";
 import { uploadImageBuffer, deleteImage } from "@/lib/cloudinary";
 import { calculateHealthScore } from "@/lib/analysis/health-score";
-import { deriveConcerns } from "@/lib/analysis/concerns";
+import { deriveConcerns, extractConcernKeywords } from "@/lib/analysis/concerns";
 import { generateRoutine } from "@/lib/analysis/routine";
 import { matchRoutineWithProducts } from "@/lib/analysis/productMatching";
 import { analysisSchema } from "@/lib/schemas/analysis";
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
 
   const concerns = deriveConcerns({
     quizAnswers: normalizedAnswers,
-    keywords: [],
+    keywords: extractConcernKeywords(existing.skinNotes),
     skinType,
   });
   const healthScore = calculateHealthScore(concerns, confidence);

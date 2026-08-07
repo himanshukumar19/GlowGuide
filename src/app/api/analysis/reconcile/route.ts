@@ -86,7 +86,11 @@ export async function GET(request: NextRequest) {
     try {
       const quizAnswers = (data.quizAnswers ?? {}) as Record<string, number>;
       const userProfile = (data.userProfile ?? {}) as UserProfile;
-      const fallbackResult = buildQuizOnlyFallback(quizAnswers, userProfile);
+      const fallbackResult = buildQuizOnlyFallback(
+        quizAnswers,
+        userProfile,
+        (data.skinNotes as string | null | undefined) ?? null
+      );
       const result = {
         ...fallbackResult,
         routine: await matchRoutineWithProducts(

@@ -1,5 +1,5 @@
 import type { AnalysisResult, UserProfile } from "@/lib/schemas/analysis";
-import { deriveConcerns } from "@/lib/analysis/concerns";
+import { deriveConcerns, extractConcernKeywords } from "@/lib/analysis/concerns";
 import { calculateHealthScore } from "@/lib/analysis/health-score";
 import { generateRoutine } from "@/lib/analysis/routine";
 import type { SkinType } from "@/lib/schemas/analysis";
@@ -67,13 +67,14 @@ function classify(answers: Record<string, number>): SkinType {
  */
 export function buildQuizOnlyFallback(
   answers: Record<string, number>,
-  _userProfile?: UserProfile
+  _userProfile?: UserProfile,
+  skinNotes?: string | null
 ): AnalysisResult {
   const normalizedAnswers = normalizeAnswers(answers);
   const skinType = classify(normalizedAnswers);
   const concerns = deriveConcerns({
     quizAnswers: normalizedAnswers,
-    keywords: [],
+    keywords: extractConcernKeywords(skinNotes),
     skinType,
   });
   const rawScores = {

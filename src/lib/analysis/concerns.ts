@@ -2,7 +2,7 @@ import type { DetectedConcern, SkinType } from "@/lib/schemas/analysis";
 
 interface ConcernInput {
   quizAnswers: Record<string, number>;
-  keywords: string[];
+  keywords: Record<string, number>;
   skinType: SkinType;
 }
 
@@ -27,14 +27,45 @@ export const CONCERN_KEYWORD_MAP: Record<string, string[]> = {
   Aging: ["wrinkle", "wrinkles", "fine line", "fine lines", "aging", "sagging", "elasticity"],
 };
 
-export function extractConcernKeywords(text: string | null | undefined): string[] {
-  if (!text) return [];
+const NEGATION_TRIGGERS = [
+  "not", "isn't", "is not", "aren't", "are not", "doesn't", "does not",
+  "don't", "do not", "didn't", "did not", "never", "no", "without", "n't",
+];
+
+const INTENSITY_MULTIPLIERS: { phrases: string[]; multiplier: number }[] = [
+  { phrases: ["extremely", "very", "really", "severely"], multiplier: 1.5 },
+  { phrases: ["noticeably", "quite"], multiplier: 1.2 },
+  { phrases: ["slightly", "a little", "mildly", "somewhat"], multiplier: 0.6 },
+  { phrases: ["barely", "hardly"], multiplier: 0.3 },
+];
+
+function getClauseIntensity(clause: string): number {
+  const matches = INTENSITY_MULTIPLIERS.flatMap(({ phrases, multiplier }) =>
+    phrases.some((phrase) => clause.includes(phrase)) ? [multiplier] : []
+  );
+  if (matches.length === 0) return 1;
+
+  const boostingMatches = matches.filter((multiplier) => multiplier > 1);
+  if (boostingMatches.length > 0) return Math.max(...boostingMatches);
+
+  return Math.min(...matches);
+}
+
+export function extractConcernKeywords(text: string | null | undefined): Record<string, number> {
+  if (!text) return {};
   const lowerText = text.toLowerCase();
-  const matched: string[] = [];
+  const matched: Record<string, number> = {};
+  const clauses = lowerText.split(/[.!?,]|\s+\b(?:but|however|although|though)\b\s+/i);
 
   for (const [concernName, keywords] of Object.entries(CONCERN_KEYWORD_MAP)) {
-    if (keywords.some((keyword) => lowerText.includes(keyword))) {
-      matched.push(concernName);
+    const intensities = clauses.flatMap((clause) => {
+      const hasKeywordMatch = keywords.some((keyword) => clause.includes(keyword));
+      const hasNegation = NEGATION_TRIGGERS.some((trigger) => clause.includes(trigger));
+      return hasKeywordMatch && !hasNegation ? [getClauseIntensity(clause)] : [];
+    });
+
+    if (intensities.length > 0) {
+      matched[concernName] = Math.max(...intensities);
     }
   }
 
@@ -124,7 +155,10 @@ export function deriveConcerns(input: ConcernInput): DetectedConcern[] {
     description: rule.description,
     severity: Math.min(
       100,
-      rule.score(input) + (input.keywords.includes(rule.name) ? rule.keywordBoost : 0)
+      rule.score(input) +
+        (input.keywords[rule.name] !== undefined
+          ? Math.round(rule.keywordBoost * input.keywords[rule.name])
+          : 0)
     ),
   }))
     .filter((c) => c.severity > 0)

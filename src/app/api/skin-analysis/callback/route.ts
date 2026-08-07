@@ -188,7 +188,8 @@ export async function POST(request: NextRequest) {
     routine = await matchRoutineWithProducts(
       generateRoutine({ skinType, concerns }),
       concerns as { name: string }[],
-      existing.userProfile as UserProfile
+      existing.userProfile as UserProfile,
+      skinType
     );
   } catch (error) {
     console.error(`[${analysis_id}] Failed to match routine products:`, error);

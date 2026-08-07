@@ -48,7 +48,13 @@ function searchableProductText(product: Product): string {
   return `${product.ingredients.join(" ")} ${product.name}`.toLowerCase();
 }
 
-function matchStep(step: RoutineStep, concerns: { name: string }[], userProfile: UserProfile, allProducts: Product[]): RoutineStep {
+function matchStep(
+  step: RoutineStep,
+  concerns: { name: string }[],
+  userProfile: UserProfile,
+  allProducts: Product[],
+  skinType: SkinType
+): RoutineStep {
   const mapping = PRODUCT_TYPE_MAP[step.productType];
   if (!mapping) {
     console.warn(`[productMatching] Unknown product type "${step.productType}"`);
@@ -56,13 +62,19 @@ function matchStep(step: RoutineStep, concerns: { name: string }[], userProfile:
   }
 
   const keywordMatches = new Map<string, boolean>();
-  const excludesChildren = ["20s", "30s", "40s", "50+"].includes(userProfile.age_range ?? "");
+  const excludedCategories = userProfile.age_range === "Teen (13-19)"
+    ? ["senior"]
+    : ["20s", "30s", "40s"].includes(userProfile.age_range ?? "")
+      ? ["children", "senior"]
+      : userProfile.age_range === "50+"
+        ? ["children"]
+        : [];
   let candidates = allProducts.filter((product) => {
     const text = searchableProductText(product);
     const matchesKeyword = mapping.keywords.length === 0 || mapping.keywords.some((keyword) => text.includes(keyword));
     if (matchesKeyword) keywordMatches.set(product.id, mapping.keywords.length > 0);
-    return mapping.subcategories.includes(product.subcategory ?? "") && matchesKeyword &&
-      (!excludesChildren || product.category !== "children");
+    return product.stockCount > 0 && mapping.subcategories.includes(product.subcategory ?? "") && matchesKeyword &&
+      !excludedCategories.includes(product.category);
   });
 
   if (userProfile.pregnant_or_breastfeeding === true) {
@@ -77,6 +89,15 @@ function matchStep(step: RoutineStep, concerns: { name: string }[], userProfile:
       const ingredients = product.ingredients.join(" ").toLowerCase();
       return !allergies.some((term) => ingredients.includes(term));
     });
+  }
+
+  const beforeSkinType = candidates;
+  candidates = candidates.filter((product) =>
+    product.skinTypes.some((type) => type.trim().toLowerCase() === skinType.toLowerCase())
+  );
+  if (candidates.length === 0) {
+    console.warn(`[productMatching] Relaxing skin-type filter for step "${step.productType}" — no candidates tagged for skin type "${skinType}"`);
+    candidates = beforeSkinType;
   }
 
   if (userProfile.fragrance_preference === "Fragrance-free only") {
@@ -125,25 +146,28 @@ export function matchProductsToRoutine(
   routine: { morning: RoutineStep[]; night: RoutineStep[] },
   concerns: { name: string }[],
   userProfile: UserProfile,
-  allProducts: Product[]
+  allProducts: Product[],
+  skinType: SkinType
 ): { morning: RoutineStep[]; night: RoutineStep[] } {
   return {
-    morning: routine.morning.map((step) => matchStep(step, concerns, userProfile, allProducts)),
-    night: routine.night.map((step) => matchStep(step, concerns, userProfile, allProducts)),
+    morning: routine.morning.map((step) => matchStep(step, concerns, userProfile, allProducts, skinType)),
+    night: routine.night.map((step) => matchStep(step, concerns, userProfile, allProducts, skinType)),
   };
 }
 
 export async function matchRoutineWithProducts(
   routine: RoutineRecommendation,
   concerns: { name: string }[],
-  userProfile: UserProfile
+  userProfile: UserProfile,
+  skinType: SkinType
 ): Promise<RoutineRecommendation> {
   const { getAllProducts } = await import("@/lib/models/product");
   return matchProductsToRoutine(
     routine as { morning: RoutineStep[]; night: RoutineStep[] },
     concerns,
     userProfile,
-    await getAllProducts()
+    await getAllProducts(),
+    skinType
   ) as RoutineRecommendation;
 }
 
@@ -154,6 +178,7 @@ export async function buildRoutineWithProducts(
   return matchRoutineWithProducts(
     generateRoutine(context),
     context.concerns as { name: string }[],
-    userProfile
+    userProfile,
+    context.skinType
   );
 }

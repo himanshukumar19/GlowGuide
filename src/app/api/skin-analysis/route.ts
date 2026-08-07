@@ -311,7 +311,8 @@ export async function POST(request: NextRequest) {
       routine: await matchRoutineWithProducts(
         fallbackResult.routine,
         fallbackResult.concerns as { name: string }[],
-        userProfile
+        userProfile,
+        fallbackResult.skinType
       ),
     };
 
@@ -453,7 +454,8 @@ export async function POST(request: NextRequest) {
       routine: await matchRoutineWithProducts(
         fallbackResult.routine,
         fallbackResult.concerns as { name: string }[],
-        userProfile
+        userProfile,
+        fallbackResult.skinType
       ),
     };
 

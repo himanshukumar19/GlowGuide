@@ -25,7 +25,7 @@ import {
 import { 
   Sparkles, Calendar, User, Phone, Zap, ArrowRight, LogOut, 
   CheckCircle, History, Settings, Flame, ShieldAlert, Award, 
-  Lock, BookOpen, Clock, PlayCircle, Loader2, Sun, Moon, ListOrdered
+  Lock, BookOpen, Clock, PlayCircle, Loader2, Sun, Moon, ListOrdered, ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { analysisApi, type AnalysisHistoryItem } from "@/api/analysis.api";
@@ -389,37 +389,42 @@ const Dashboard = () => {
 
                 <div className="space-y-3">
                   {visibleHistory.map((item) => (
-                    <Card key={item.id} className="border border-border shadow-soft bg-card rounded-gg p-5 hover:shadow-card transition-all">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-start gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${getScoreColor(item.healthScore)}`}>
-                            {item.healthScore}
+                    <Link key={item.id} href={`/analysis/results/${item.id}`} className="block group">
+                      <Card className="border border-border shadow-soft bg-card rounded-gg p-5 hover:shadow-md hover:border-primary/40 transition-all cursor-pointer">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${getScoreColor(item.healthScore)}`}>
+                              {item.healthScore}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-heading text-base font-bold text-foreground capitalize group-hover:text-primary transition-colors">
+                                  {item.skinType} Skin Diagnosis
+                                </span>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                              </div>
+                              <span className="text-[10px] text-muted-foreground block font-medium mt-0.5">
+                                Analyzed: {new Date(item.date).toLocaleDateString()} — {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
                           </div>
-                          <div>
-                            <span className="font-heading text-base font-bold text-foreground capitalize">
-                              {item.skinType} Skin Diagnosis
-                            </span>
-                            <span className="text-[10px] text-muted-foreground block font-medium mt-0.5">
-                              Analyzed: {new Date(item.date).toLocaleDateString()} — {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
+
+                          <div className="flex flex-wrap gap-1.5">
+                            {item.concerns.map((c) => (
+                              <Badge key={c.name} variant="outline" className="border-border text-[9px] font-bold uppercase rounded-full py-0.5 px-2">
+                                {c.name.replace("_", " ")}: {c.severity}%
+                              </Badge>
+                            ))}
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-1.5">
-                          {item.concerns.map((c) => (
-                            <Badge key={c.name} variant="outline" className="border-border text-[9px] font-bold uppercase rounded-full py-0.5 px-2">
-                              {c.name.replace("_", " ")}: {c.severity}%
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      {item.notes && (
-                        <div className="mt-3.5 p-3 rounded-gg-sm bg-muted/30 border border-border/40 text-xs text-foreground/80 leading-relaxed italic">
-                          "{item.notes}"
-                        </div>
-                      )}
-                    </Card>
+                        {item.notes && (
+                          <div className="mt-3.5 p-3 rounded-gg-sm bg-muted/30 border border-border/40 text-xs text-foreground/80 leading-relaxed italic">
+                            "{item.notes}"
+                          </div>
+                        )}
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               </div>

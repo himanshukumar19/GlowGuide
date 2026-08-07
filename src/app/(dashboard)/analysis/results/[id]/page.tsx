@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { analysisApi, type AnalysisHistoryItem } from "@/api/analysis.api";
 import { AnalysisComparison } from "@/components/analysis/AnalysisComparison";
 import { DashboardErrorBoundary } from "@/components/analysis/DashboardErrorBoundary";
+import { RecommendedProducts } from "@/components/analysis/RecommendedProducts";
 import type { Analysis } from "@/lib/schemas/analysis";
 
 function toHistoryItem(analysis: Analysis): AnalysisHistoryItem {
@@ -165,6 +166,37 @@ const AnalysisResultsPage = () => {
             </CardContent>
           </Card>
         </div>
+
+        <section className="mb-8">
+          <h2 className="font-heading text-2xl font-bold mb-4">Your Routine</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {([
+              { title: "Morning Routine", steps: analysis.result.routine.morning },
+              { title: "Night Routine", steps: analysis.result.routine.night },
+            ] as const).map(({ title, steps }) => (
+              <Card key={title} className="shadow-card">
+                <CardContent className="p-6">
+                  <h3 className="font-heading text-xl font-semibold mb-5">{title}</h3>
+                  <ol className="space-y-5">
+                    {steps.map((step, index) => (
+                      <li key={`${step.productType}-${index}`} className="flex items-start gap-3">
+                        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                          {index + 1}
+                        </span>
+                        <div className="space-y-1">
+                          <p className="font-semibold text-foreground">{step.productType}</p>
+                          <p className="text-sm leading-relaxed text-muted-foreground">{step.description}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <RecommendedProducts routine={analysis.result.routine} />
 
         {analysis.skinNotes && (
           <Card className="shadow-card mb-8">

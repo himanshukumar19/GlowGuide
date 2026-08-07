@@ -17,6 +17,12 @@ function scale(value: number, min: number, max: number): number {
   return Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
 }
 
+function containsWholeWord(text: string, phrase: string): boolean {
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`\\b${escaped}\\b`, "i");
+  return regex.test(text);
+}
+
 export const CONCERN_KEYWORD_MAP: Record<string, string[]> = {
   Acne: ["acne", "breakout", "breakouts", "pimple", "pimples", "zit", "zits", "blackhead", "blackheads", "whitehead", "whiteheads"],
   Oiliness: ["oily", "oiliness", "greasy", "shiny", "shine"],
@@ -41,7 +47,7 @@ const INTENSITY_MULTIPLIERS: { phrases: string[]; multiplier: number }[] = [
 
 function getClauseIntensity(clause: string): number {
   const matches = INTENSITY_MULTIPLIERS.flatMap(({ phrases, multiplier }) =>
-    phrases.some((phrase) => clause.includes(phrase)) ? [multiplier] : []
+    phrases.some((phrase) => containsWholeWord(clause, phrase)) ? [multiplier] : []
   );
   if (matches.length === 0) return 1;
 
@@ -59,8 +65,8 @@ export function extractConcernKeywords(text: string | null | undefined): Record<
 
   for (const [concernName, keywords] of Object.entries(CONCERN_KEYWORD_MAP)) {
     const intensities = clauses.flatMap((clause) => {
-      const hasKeywordMatch = keywords.some((keyword) => clause.includes(keyword));
-      const hasNegation = NEGATION_TRIGGERS.some((trigger) => clause.includes(trigger));
+      const hasKeywordMatch = keywords.some((keyword) => containsWholeWord(clause, keyword));
+      const hasNegation = NEGATION_TRIGGERS.some((trigger) => containsWholeWord(clause, trigger));
       return hasKeywordMatch && !hasNegation ? [getClauseIntensity(clause)] : [];
     });
 

@@ -103,7 +103,8 @@ const Dashboard = () => {
 
   // History is already tier-gated by the backend; free users see last 3, paid users see 12 months
   const visibleHistory = history;
-  const latestAnalysis = visibleHistory[visibleHistory.length - 1];
+  // The API returns history newest first, so the first item is the current result.
+  const latestAnalysis = visibleHistory[0];
 
   const handleLogout = async () => {
     await logout();

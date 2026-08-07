@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from "react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend } from "recharts";
 import { SkinAnalysisHistoryItem } from "@/data/analysisHistory";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,7 +10,49 @@ interface HealthTrendChartsProps {
   history: SkinAnalysisHistoryItem[];
 }
 
+const concernColors = ["#C58A7F", "#E8D4C0", "#7EC8A0", "#8EA8C3", "#B49ACB"];
+
+function concernKey(name: string): string {
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
+}
+
+function concernLabel(name: string): string {
+  return name.replace(/[_-]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 export const HealthTrendCharts = ({ history }: HealthTrendChartsProps) => {
+  const concernSeries = Array.from(
+    new Map(
+      history.flatMap((item) =>
+        item.concerns.map((concern) => [concernKey(concern.name), concern.name] as const)
+      )
+    )
+  ).map(([key, name], index) => ({
+    key,
+    name: concernLabel(name),
+    color: concernColors[index % concernColors.length],
+  }));
+  const concernKeys = concernSeries.map(({ key }) => key).join(",");
+  const [selectedConcernKeys, setSelectedConcernKeys] = useState<string[]>(() =>
+    concernSeries.map(({ key }) => key)
+  );
+
+  useEffect(() => {
+    const availableKeys = new Set(concernSeries.map(({ key }) => key));
+    setSelectedConcernKeys((selected) => [
+      ...selected.filter((key) => availableKeys.has(key)),
+      ...concernSeries
+        .map(({ key }) => key)
+        .filter((key) => !selected.includes(key)),
+    ]);
+  }, [concernKeys]);
+
+  const toggleConcern = (key: string) => {
+    setSelectedConcernKeys((selected) =>
+      selected.includes(key) ? selected.filter((item) => item !== key) : [...selected, key]
+    );
+  };
+
   // Format dates for charts (e.g., "Jan 10")
   const chartData = [...history]
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -17,17 +60,15 @@ export const HealthTrendCharts = ({ history }: HealthTrendChartsProps) => {
       const date = new Date(item.date);
       const label = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
       
-      // Extract specific concern levels for the bar chart
-      const acne = item.concerns.find((c) => c.name === "acne")?.severity || 0;
-      const pores = item.concerns.find((c) => c.name === "pore_size")?.severity || 0;
-      const sebum = item.concerns.find((c) => c.name === "sebum_level")?.severity || 0;
-      
       return {
         label,
         "Health Score": item.healthScore,
-        "Acne Severity": acne,
-        "Pore Visibility": pores,
-        "Sebum Output": sebum,
+        ...Object.fromEntries(
+          concernSeries.map(({ key }) => [
+            key,
+            item.concerns.find((concern) => concernKey(concern.name) === key)?.severity ?? 0,
+          ])
+        ),
       };
     });
 
@@ -93,6 +134,20 @@ export const HealthTrendCharts = ({ history }: HealthTrendChartsProps) => {
           <CardDescription className="text-xs">
             Symptom index reduction over active months
           </CardDescription>
+          <div className="flex flex-wrap gap-x-3 gap-y-2 pt-3" aria-label="Concern markers">
+            {concernSeries.map(({ key, name, color }) => (
+              <label key={key} className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedConcernKeys.includes(key)}
+                  onChange={() => toggleConcern(key)}
+                  className="h-3.5 w-3.5 accent-primary"
+                />
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                {name} severity
+              </label>
+            ))}
+          </div>
         </CardHeader>
         <CardContent className="p-6 pt-4 h-64">
           <ResponsiveContainer width="100%" height="100%">
@@ -120,10 +175,16 @@ export const HealthTrendCharts = ({ history }: HealthTrendChartsProps) => {
                   fontSize: "12px"
                 }}
               />
-              <Legend iconSize={8} iconType="circle" wrapperStyle={{ fontSize: "10px", marginTop: "10px" }} />
-              <Bar dataKey="Acne Severity" fill="#C58A7F" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Pore Visibility" fill="#E8D4C0" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Sebum Output" fill="#7EC8A0" radius={[4, 4, 0, 0]} />
+              {selectedConcernKeys.length > 0 && (
+                <Legend
+                  iconSize={8}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: "10px", marginTop: "10px" }}
+                />
+              )}
+              {concernSeries.filter(({ key }) => selectedConcernKeys.includes(key)).map(({ key, name, color }) => (
+                <Bar key={key} dataKey={key} name={`${name} Severity`} fill={color} radius={[4, 4, 0, 0]} />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

@@ -97,11 +97,11 @@ def predict_skin_type(scores: Dict[str, float]) -> str:
     dry_score = 0.0
     if sebum >= 65:
         oily_score += 3
-    elif sebum >= 55:
+    elif sebum >= 60:
         oily_score += 1.5
     elif sebum <= 30:
         dry_score += 3
-    elif sebum <= 45:
+    elif sebum <= 35:
         dry_score += 1.5
     if hydration <= 36:
         dry_score += 3
@@ -121,7 +121,7 @@ def predict_skin_type(scores: Dict[str, float]) -> str:
         dry_score += 1
     if tightness >= 70:
         dry_score += 3
-    elif tightness >= 50:
+    elif tightness > 50:
         dry_score += 1.5
 
     if oily_score >= 2.5 and dry_score >= 2.5:

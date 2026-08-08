@@ -310,9 +310,9 @@ export const getSkinTypeFromAnswers = (answers: QuizAnswers): SkinType => {
 
   // sebum_level: high = oily, low = dry
   if (sebum >= 65) oilyScore += 3;
-  else if (sebum >= 55) oilyScore += 1.5;
+  else if (sebum >= 60) oilyScore += 1.5;
   else if (sebum <= 30) dryScore += 3;
-  else if (sebum <= 45) dryScore += 1.5;
+  else if (sebum <= 35) dryScore += 1.5;
 
   // hydration_level: low = dry signal
   if (hydration <= 36) dryScore += 3;
@@ -332,7 +332,7 @@ export const getSkinTypeFromAnswers = (answers: QuizAnswers): SkinType => {
 
   // tightness_score: high tightness = strong dry signal
   if (tightness >= 70) dryScore += 3;
-  else if (tightness >= 50) dryScore += 1.5;
+  else if (tightness > 50) dryScore += 1.5;
 
   // Combination: both oily and dry signals are strong
   if (oilyScore >= 2.5 && dryScore >= 2.5) return 'combination';

@@ -33,9 +33,9 @@ function classify(answers: Record<string, number>): SkinType {
   let dryScore = 0;
 
   if (sebum >= 65) oilyScore += 3;
-  else if (sebum >= 55) oilyScore += 1.5;
+  else if (sebum >= 60) oilyScore += 1.5;
   else if (sebum <= 30) dryScore += 3;
-  else if (sebum <= 45) dryScore += 1.5;
+  else if (sebum <= 35) dryScore += 1.5;
 
   if (hydration <= 36) dryScore += 3;
   else if (hydration <= 45) dryScore += 1.5;
@@ -50,7 +50,7 @@ function classify(answers: Record<string, number>): SkinType {
   else if (roughness <= 45) dryScore += 1;
 
   if (tightness >= 70) dryScore += 3;
-  else if (tightness >= 50) dryScore += 1.5;
+  else if (tightness > 50) dryScore += 1.5;
 
   if (oilyScore >= 2.5 && dryScore >= 2.5) return "combination";
   if (oilyScore >= 3) return "oily";

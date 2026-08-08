@@ -1,6 +1,6 @@
 # GlowGuide — AI Skin Analysis Platform
 
-A full-stack AI-powered skincare analysis, e-commerce, and education platform. Customers complete a lifestyle quiz and live photo capture (6 angles) analyzed by a Vision Transformer model to receive personalized skin diagnostics, product recommendations, and a routine tracker.
+A full-stack AI-powered skincare analysis, e-commerce, and education platform. Customers complete a lifestyle quiz and live photo capture (5 angles) analyzed by a Vision Transformer model to receive personalized skin diagnostics, product recommendations, and a routine tracker.
 
 Built with **Next.js 14 App Router**, **Firebase Auth**, and a standalone **Python ML Service**.
 
@@ -39,8 +39,10 @@ GlowGuide/
 │   │   │   ├── signup/page.tsx
 │   │   │   ├── pricing/page.tsx
 │   │   │   ├── about/page.tsx
-│   │   │   ├── ingredients/page.tsx
-│   │   │   ├── skin-types/...
+│   │   │   ├── ingredients/page.tsx       # Searchable ingredient index with expandable entries
+│   │   │   ├── glossary/page.tsx          # Skincare terminology glossary
+│   │   │   ├── skin-types/page.tsx        # Five-type visual index and comparison table
+│   │   │   ├── skin-types/[type]/page.tsx # Type-specific routines, ingredients, tips, and products
 │   │   │   └── page.tsx        # Home page (/) 
 │   │   ├── (dashboard)/        # Authenticated pages (auth-guard wrapped)
 │   │   │   ├── dashboard/page.tsx      # Customer dashboard
@@ -134,6 +136,8 @@ GlowGuide/
 - **My Routine** — Morning/Night routines with auto-tracked purchased products
 - **Chatbot** — AI assistant for product/skincare queries (10/day free, unlimited paid)
 - **Complete Profile** — Post-registration flow to collect phone, address, skin profile
+- **Skin Type Guides** — Visual index for oily, dry, combination, sensitive, and normal skin, with comparison, routines, ingredient guidance, myths, and product recommendations
+- **Ingredient Index** — Searchable and filterable public ingredient guide with safety notes, benefits, side effects, and suitable skin types
 
 ### For Admins
 - **Dashboard** — Sales stats, order/revenue charts, recent orders
@@ -147,6 +151,13 @@ GlowGuide/
 - **Session Cookies** — HTTP-only cookie for middleware route protection
 - **Free Tier** — 3 analysis limit, 10 chatbot queries/day
 - **Paid Tier** — 12-month history, unlimited queries, 5% extra discount
+
+### Public Education Surfaces
+- **About Skincare** (`/about`) — Editorial education page covering skin science, daily routines, common questions, and a guided next step
+- **Pricing** (`/pricing`) — Free versus Premium plan comparison with Razorpay checkout and an authenticated Premium-active state
+- **Skin Type Index** (`/skin-types`) — Image-led entry point with five type cards, comparison table, and universal habits
+- **Skin Type Detail** (`/skin-types/[type]`) — Guide for each supported type with morning/night routines, ingredient guidance, lifestyle tips, myths, pro tips, and matching products
+- **Ingredients** (`/ingredients`) — Live Firestore-backed index with search, role filters, letter navigation, expandable details, loading, error, and empty states
 
 ---
 
@@ -281,7 +292,9 @@ Vercel Cron invokes `/api/analysis/reconcile` daily at 03:00 UTC using the sched
 | `/pricing` | Public | Marketing | Subscription plans |
 | `/about` | Public | Marketing | About page |
 | `/ingredients` | Public | Marketing | Ingredient glossary |
-| `/skin-types` | Public | Marketing | Skin type education |
+| `/glossary` | Public | Marketing | Searchable skincare terminology glossary |
+| `/skin-types` | Public | Marketing | Visual skin type index and comparison |
+| `/skin-types/[type]` | Public | Marketing | Detailed guide for one skin type |
 | `/dashboard` | Auth | Dashboard | Customer dashboard |
 | `/analysis` | Auth | Dashboard | Skin analysis flow |
 | `/analysis/results/[id]` | Auth | Dashboard | Past analysis detail |
@@ -293,6 +306,8 @@ Vercel Cron invokes `/api/analysis/reconcile` daily at 03:00 UTC using the sched
 | `/admin` | Admin | Admin | Admin dashboard |
 | `/admin/products` | Admin | Admin | Product management |
 | `/admin/orders` | Admin | Admin | Order management |
+| `/admin/ingredients` | Admin | Admin | Ingredient CRUD management |
+| `/admin/skin-content` | Admin | Admin | Marketing and educational content management |
 
 ---
 

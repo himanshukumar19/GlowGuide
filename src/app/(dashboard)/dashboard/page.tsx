@@ -165,8 +165,8 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen py-12 bg-background gradient-hero">
-        <div className="container mx-auto px-4 max-w-5xl space-y-8">
+    <div className="min-h-screen py-12 bg-background gradient-hero overflow-x-clip">
+        <div className="container mx-auto w-full min-w-0 px-4 max-w-5xl space-y-8">
           
           {/* Pro Upgrade Nudge Banner */}
           {!isPro && (
@@ -193,11 +193,11 @@ const Dashboard = () => {
 
           {/* Profile Welcome Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="space-y-1">
+            <div className="min-w-0 space-y-1">
               <span className="text-[10px] font-bold text-secondary uppercase tracking-widest block">
                 Skincare Diagnostic Center
               </span>
-              <h1 className="font-heading text-3xl md:text-4xl font-extrabold text-foreground">
+              <h1 className="font-heading text-3xl md:text-4xl font-extrabold text-foreground break-words">
                 Welcome back, {customer?.displayName}
               </h1>
               <p className="text-muted-foreground text-xs">
@@ -206,7 +206,7 @@ const Dashboard = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {isPro ? (
                 <Badge className="bg-secondary text-secondary-foreground font-black text-[10px] uppercase tracking-wider py-1.5 px-3.5 border-0 rounded-full flex items-center gap-1">
                   <Award className="h-3 w-3 fill-secondary" />
@@ -230,27 +230,27 @@ const Dashboard = () => {
           </div>
 
           {/* Tab Navigation layout */}
-          <Tabs defaultValue="overview" className="w-full space-y-6">
-            <TabsList className="bg-muted/40 border border-border p-1 rounded-gg w-full flex overflow-x-auto md:grid md:grid-cols-5 md:max-w-xl">
-              <TabsTrigger value="overview" className="flex-shrink-0 rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <Tabs defaultValue="overview" className="w-full min-w-0 space-y-6">
+            <TabsList className="bg-muted/40 border border-border p-1 rounded-gg w-full !grid grid-cols-2 gap-1 h-auto md:grid-cols-5 md:max-w-xl">
+              <TabsTrigger value="overview" className="w-full min-w-0 rounded-gg-sm py-2 px-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="history" className="flex-shrink-0 rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="history" className="w-full min-w-0 rounded-gg-sm py-2 px-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 History & Compare
               </TabsTrigger>
-              <TabsTrigger value="routine" className="flex-shrink-0 rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="routine" className="w-full min-w-0 rounded-gg-sm py-2 px-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 My Routine
               </TabsTrigger>
-              <TabsTrigger value="orders" className="flex-shrink-0 rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="orders" className="w-full min-w-0 rounded-gg-sm py-2 px-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 Orders
               </TabsTrigger>
-              <TabsTrigger value="settings" className="flex-shrink-0 rounded-gg-sm py-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="settings" className="w-full min-w-0 rounded-gg-sm py-2 px-2 text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 Settings
               </TabsTrigger>
             </TabsList>
 
             {/* TAB CONTENT: OVERVIEW */}
-            <TabsContent value="overview" className="space-y-6 animate-fade-in outline-none">
+            <TabsContent value="overview" className="min-w-0 space-y-6 animate-fade-in outline-none">
               {/* Summary Cards */}
               <div className="grid md:grid-cols-3 gap-6">
                 {/* Health Score circle */}
@@ -358,15 +358,15 @@ const Dashboard = () => {
             </TabsContent>
 
             {/* TAB CONTENT: HISTORY & COMPARISON */}
-            <TabsContent value="history" className="space-y-6 animate-fade-in outline-none">
+            <TabsContent value="history" className="min-w-0 space-y-6 animate-fade-in outline-none">
               {/* History Gating Alert Banner */}
               {!isPro && (
-                <div className="p-3.5 bg-secondary/10 border border-secondary/20 rounded-gg-sm flex items-center justify-between text-xs text-secondary font-bold">
-                  <span className="flex items-center gap-2">
+                <div className="p-3.5 bg-secondary/10 border border-secondary/20 rounded-gg-sm flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-secondary font-bold">
+                  <span className="flex min-w-0 items-start gap-2">
                     <Lock className="h-4 w-4" />
                     Pro Gating Active: Displaying last 3 entries. Upgrade for 12 months of history.
                   </span>
-                  <Link href="/pricing" className="hover:underline">
+                  <Link href="/pricing" className="shrink-0 hover:underline">
                     Upgrade Now ➔
                   </Link>
                 </div>
@@ -432,7 +432,7 @@ const Dashboard = () => {
             </TabsContent>
 
             {/* TAB CONTENT: RECOMMENDED ROUTINE */}
-            <TabsContent value="routine" className="space-y-6 animate-fade-in outline-none">
+            <TabsContent value="routine" className="min-w-0 space-y-6 animate-fade-in outline-none">
               <div className="grid md:grid-cols-3 gap-6">
 
                 {/* Routine morning/night */}
@@ -540,7 +540,7 @@ const Dashboard = () => {
             </TabsContent>
 
             {/* TAB CONTENT: ORDERS */}
-            <TabsContent value="orders" className="space-y-6 animate-fade-in outline-none">
+            <TabsContent value="orders" className="min-w-0 space-y-6 animate-fade-in outline-none">
               <div className="flex items-center gap-2 border-b border-border/40 pb-2">
                 <ListOrdered className="h-5 w-5 text-primary" />
                 <h3 className="font-heading text-lg font-bold text-foreground">
@@ -551,7 +551,7 @@ const Dashboard = () => {
             </TabsContent>
 
             {/* TAB CONTENT: SETTINGS */}
-            <TabsContent value="settings" className="space-y-6 animate-fade-in outline-none">
+            <TabsContent value="settings" className="min-w-0 space-y-6 animate-fade-in outline-none">
               <div className="grid md:grid-cols-3 gap-6 items-start">
                 
                 {/* Account edit form */}

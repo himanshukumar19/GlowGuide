@@ -67,7 +67,7 @@ export function OrderHistoryList({ showHeading = true }: OrderHistoryListProps) 
       : orders.filter((o) => o.status === statusFilter);
 
   return (
-    <div className="max-w-4xl">
+    <div className="w-full max-w-4xl min-w-0">
       {showHeading && (
         <h1 className="font-heading text-3xl font-bold text-foreground mb-8">
           Order History
@@ -142,9 +142,9 @@ export function OrderHistoryList({ showHeading = true }: OrderHistoryListProps) 
                         setExpandedId(expandedId === order.id ? null : order.id)
                       }
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <CardTitle className="text-base">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-4">
+                          <CardTitle className="min-w-0 break-all text-base">
                             Order #{order.id}
                           </CardTitle>
                           <Badge
@@ -153,7 +153,7 @@ export function OrderHistoryList({ showHeading = true }: OrderHistoryListProps) 
                             {order.status}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex shrink-0 items-center gap-4 self-end sm:self-auto">
                           <span className="font-semibold text-foreground">
                             ₹{order.total.toLocaleString()}
                           </span>
@@ -181,15 +181,15 @@ export function OrderHistoryList({ showHeading = true }: OrderHistoryListProps) 
                             {order.items.map((item) => (
                               <div
                                 key={item.id}
-                                className="flex items-center gap-3"
+                                className="flex min-w-0 items-center gap-3"
                               >
                                 <img
                                   src={item.image}
                                   alt={item.name}
                                   className="h-12 w-12 rounded-md object-cover border"
                                 />
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium">
+                                <div className="min-w-0 flex-1">
+                                  <p className="break-words text-sm font-medium">
                                     {item.name}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
@@ -197,7 +197,7 @@ export function OrderHistoryList({ showHeading = true }: OrderHistoryListProps) 
                                     {item.price.toLocaleString()}
                                   </p>
                                 </div>
-                                <span className="text-sm font-semibold">
+                                <span className="shrink-0 text-sm font-semibold">
                                   ₹{(item.price * item.quantity).toLocaleString()}
                                 </span>
                               </div>

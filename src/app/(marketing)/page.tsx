@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, MotionConfig } from "framer-motion";
 import {
   Sparkles,
   Shield,
@@ -29,7 +29,6 @@ const skinNormal = "/images/skin-normal.png";
 const skincareProducts = "/images/skincare-products.png";
 const skincareLifestyle = "/images/skincare-lifestyle.png";
 const skinAnalysisTech = "/images/skin-analysis-tech.png";
-const skincareDroplet = "/images/skincare-droplet.jpg";
 
 const benefits = [
   {
@@ -96,19 +95,23 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 },
+    transition: { delayChildren: 0.08, staggerChildren: 0.08 },
   },
 };
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.38, ease: "easeOut" as const },
+  },
 };
 
-const headingWords = ["Discover", "Your", "Path", "to", "Healthy,", "Glowing", "Skin"];
+const headingWords = ["Read", "your", "skin.", "Build", "your", "glow."];
 
 const wordVariants = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 18 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
@@ -120,87 +123,20 @@ const staggerWords = {
 const Index = () => {
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
+      <>
     {/* Hero Section */}
-      <section className="relative min-h-screen py-24 lg:py-0 flex items-center overflow-hidden">
+      <section className="relative min-h-screen py-24 lg:py-0 flex items-center overflow-hidden bg-background">
         {/* Animated gradient background */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.07] via-background to-primary/[0.03] animate-gradient-shift" />
         
-        {/* Dot pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.02]" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--primary)) 1px, transparent 0)`,
-          backgroundSize: '32px 32px'
-        }} />
-        
-        {/* Decorative floating botanical leaves */}
-        <motion.div
-          className="absolute top-24 left-[5%] text-primary/[0.07] pointer-events-none select-none"
-          animate={{ y: [0, -14, 0], rotate: [0, 10, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <Leaf className="h-16 w-16" />
-        </motion.div>
-        <motion.div
-          className="absolute bottom-40 right-[8%] text-primary/[0.05] pointer-events-none select-none"
-          animate={{ y: [0, -10, 0], rotate: [0, -8, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-        >
-          <Leaf className="h-12 w-12" />
-        </motion.div>
-        <motion.div
-          className="absolute top-1/3 right-[15%] text-primary/[0.04] pointer-events-none select-none"
-          animate={{ y: [0, -8, 0], rotate: [0, 6, 0] }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-        >
-          <Leaf className="h-8 w-8" />
-        </motion.div>
-
-        {/* Floating particles */}
-        {[
-          { size: 100, color: "primary", top: "10%", left: "10%", dur: 8, del: 0 },
-          { size: 60, color: "success", top: "25%", right: "20%", dur: 7, del: 0.5 },
-          { size: 80, color: "primary", top: "60%", left: "5%", dur: 10, del: 1 },
-          { size: 50, color: "success", top: "15%", right: "35%", dur: 6, del: 1.5 },
-          { size: 70, color: "primary", top: "70%", right: "15%", dur: 9, del: 0.8 },
-          { size: 40, color: "success", top: "45%", left: "30%", dur: 7.5, del: 2 },
-        ].map((p, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full pointer-events-none"
-            style={{
-              width: p.size,
-              height: p.size,
-              top: p.top,
-              left: "left" in p ? p.left : undefined,
-              right: "right" in p ? p.right : undefined,
-              background: p.color === "primary" ? "hsl(var(--primary))" : "hsl(var(--success))",
-              opacity: 0.12,
-              filter: "blur(40px)",
-            }}
-            animate={{ x: [0, 20, -10, 0], y: [0, -15, 10, 0] }}
-            transition={{ duration: p.dur, repeat: Infinity, delay: p.del, ease: "easeInOut" }}
-          />
-        ))}
-
         <div className="container mx-auto px-4 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
             {/* Left: Text Content */}
             <div className="flex-1 text-center lg:text-left">
-              {/* Badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 text-primary text-sm font-semibold shadow-soft border border-primary/10 backdrop-blur-sm">
-                  <Sparkles className="h-4 w-4" />
-                  Your Complete Skincare Guide
-                </span>
-              </motion.div>
-
               {/* Heading — staggered word reveal */}
               <motion.h1
-                className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mt-8 mb-6 leading-[1.08] tracking-tight"
+                className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-[1.02] tracking-[-0.04em] max-w-xl"
                 variants={staggerWords}
                 initial="hidden"
                 animate="visible"
@@ -208,7 +144,7 @@ const Index = () => {
                 {headingWords.map((word, i) => (
                   <motion.span
                     key={i}
-                    className={`inline-block mr-[0.3em] last:mr-0 ${i >= 4 ? "text-gradient" : ""}`}
+                    className={`inline-block mr-[0.3em] last:mr-0 ${i >= 3 ? "text-[#36594a]" : ""}`}
                     variants={wordVariants}
                   >
                     {word}
@@ -305,80 +241,56 @@ const Index = () => {
             {/* Right: Hero Image */}
             <motion.div
               className="flex-1 w-full max-w-xl lg:max-w-none relative"
-              initial={{ opacity: 0, x: 80 }}
+               initial={{ opacity: 0, x: 48 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, delay: 0.4 }}
             >
-              {/* Decorative floating avatar circles */}
+              {/* Existing animated skincare accents */}
               <motion.div
-                className="absolute -top-4 -right-2 lg:-top-6 lg:-right-6 w-12 h-12 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 border-primary bg-background shadow-elevated z-10 group cursor-pointer"
-                animate={{ y: [0, -10, 0], rotate: [0, -6, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
-                whileHover={{ scale: 1.15 }}
-              >
-                <img src={skincareDroplet} alt="Skincare avatar" className="w-full h-full object-cover" />
-                <span className="absolute bottom-1 right-1 w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-emerald-400 border border-white animate-pulse" />
-                
-                {/* Tooltip */}
-                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
-                  Glowy Assistant
-                </div>
-              </motion.div>
-
-              {/* Decorative floating skincare avatar icons */}
-              <motion.div
-                className="hidden sm:flex absolute -top-8 left-8 w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-amber-400 border-2 border-background items-center justify-center shadow-elevated z-10 group cursor-pointer"
+                className="hidden sm:flex absolute -top-8 left-8 w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-amber-400 border-2 border-background items-center justify-center shadow-elevated z-10"
                 animate={{ y: [0, -10, 0], rotate: [0, 8, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-                whileHover={{ scale: 1.15 }}
               >
                 <Sun className="h-4 w-4 text-white" />
-                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
-                  SPF Protection
-                </div>
               </motion.div>
+
               <motion.div
-                className="hidden sm:flex absolute bottom-12 -right-6 w-9 h-9 rounded-full bg-gradient-to-br from-sky-300 to-sky-400 border-2 border-background items-center justify-center shadow-elevated z-10 group cursor-pointer"
+                className="hidden sm:flex absolute bottom-12 -right-6 w-9 h-9 rounded-full bg-gradient-to-br from-sky-300 to-sky-400 border-2 border-background items-center justify-center shadow-elevated z-10"
                 animate={{ y: [0, -6, 0], rotate: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
-                whileHover={{ scale: 1.15 }}
               >
                 <Droplets className="h-3.5 w-3.5 text-white" />
-                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
-                  Deep Hydration
-                </div>
               </motion.div>
+
               <motion.div
-                className="hidden sm:flex absolute -bottom-6 right-16 w-8 h-8 rounded-full bg-gradient-to-br from-violet-300 to-violet-400 border-2 border-background items-center justify-center shadow-elevated z-10 group cursor-pointer"
+                className="hidden sm:flex absolute -bottom-6 right-16 w-8 h-8 rounded-full bg-gradient-to-br from-violet-300 to-violet-400 border-2 border-background items-center justify-center shadow-elevated z-10"
                 animate={{ y: [0, -7, 0], rotate: [0, 6, 0] }}
                 transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                whileHover={{ scale: 1.15 }}
               >
                 <Shield className="h-3 w-3 text-white" />
-                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
-                  Skin Barrier
-                </div>
               </motion.div>
+
               <motion.div
-                className="hidden sm:flex absolute top-1/4 -left-5 w-7 h-7 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-400 border-2 border-background items-center justify-center shadow-elevated z-10 group cursor-pointer"
+                className="hidden sm:flex absolute top-1/4 -left-5 w-7 h-7 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-400 border-2 border-background items-center justify-center shadow-elevated z-10"
                 animate={{ y: [0, -9, 0], rotate: [0, -7, 0] }}
                 transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                whileHover={{ scale: 1.15 }}
               >
                 <Leaf className="h-2.5 w-2.5 text-white" />
-                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
-                  Natural Ingredients
-                </div>
               </motion.div>
+
+              {/* Product-specific diagnostic signature */}
               <motion.div
-                className="hidden sm:flex absolute top-1/2 -right-8 w-6 h-6 rounded-full bg-gradient-to-br from-rose-300 to-rose-400 border-2 border-background items-center justify-center shadow-elevated z-10 group cursor-pointer"
-                animate={{ y: [0, -5, 0], rotate: [0, 12, 0] }}
-                transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                whileHover={{ scale: 1.15 }}
+                className="absolute -top-4 -right-2 lg:-top-6 lg:-right-6 z-10"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.7, delay: 0.8, ease: "easeOut" }}
               >
-                <Heart className="h-2.5 w-2.5 text-white" />
-                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-soft -bottom-8 left-1/2 -translate-x-1/2 font-semibold">
-                  Self Care
+                <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-background/90 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-primary shadow-card backdrop-blur-sm">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-secondary" />
+                  </span>
+                  Live skin map
                 </div>
               </motion.div>
 
@@ -404,6 +316,17 @@ const Index = () => {
                     alt="Glowing healthy skin"
                     className="w-full h-auto object-cover"
                   />
+                  <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+                    <div className="absolute inset-4 rounded-xl border border-white/40" />
+                    <div className="absolute left-4 right-4 top-1/2 h-px bg-secondary/90 shadow-[0_0_18px_rgba(133,68,56,0.9)] animate-scan-line" />
+                    <div className="absolute left-7 top-7 flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.18em] text-white drop-shadow-md">
+                      <span className="h-1.5 w-1.5 rounded-full bg-secondary shadow-[0_0_10px_rgba(197,138,127,1)]" />
+                      Facial analysis ready
+                    </div>
+                    <div className="absolute bottom-7 right-7 rounded-md bg-foreground/70 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-sm">
+                      6-angle capture
+                    </div>
+                  </div>
                 </div>
 
                 {/* Floating stat badge - scaled and positioned cleanly on mobile */}
@@ -450,8 +373,21 @@ const Index = () => {
       </div>
 
       {/* Features Section */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-14 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4">
+          <motion.div
+            className="mb-10 max-w-2xl"
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+              A clearer way to care for your skin.
+            </h2>
+            <p className="mt-3 max-w-xl text-base leading-relaxed text-muted-foreground">
+              Start with what your skin is telling you, then turn that insight into care you can actually follow.
+            </p>
+          </motion.div>
           <motion.div
             className="grid md:grid-cols-3 gap-6"
             variants={containerVariants}
@@ -480,7 +416,7 @@ const Index = () => {
       </section>
 
       {/* What is Skincare Section */}
-      <section className="py-20">
+      <section className="py-14 md:py-20">
         <div className="container mx-auto px-4">
           <motion.div
             className="max-w-3xl mx-auto text-center mb-12"
@@ -503,12 +439,14 @@ const Index = () => {
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              <div className="rounded-2xl overflow-hidden shadow-card">
+              <div className="rounded-2xl overflow-hidden shadow-card transition-shadow duration-300 hover:shadow-hover">
                 <img
                   src={skincareProducts}
                   alt="GlowGuide Skincare Products"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out hover:scale-[1.025]"
                 />
               </div>
             </motion.div>
@@ -542,7 +480,7 @@ const Index = () => {
       </section>
 
       {/* Skin Types Preview */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-14 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <motion.div
             className="mb-12 flex flex-col items-center text-center"
@@ -634,7 +572,7 @@ const Index = () => {
       </section>
 
       {/* Quiz CTA Section */}
-      <section className="py-20">
+      <section className="py-14 md:py-20">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center rounded-3xl bg-gradient-to-br from-primary to-primary/80 p-8 md:p-12 shadow-card relative overflow-hidden">
             {/* Decorative background */}
@@ -647,12 +585,14 @@ const Index = () => {
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              <div className="rounded-2xl overflow-hidden shadow-elevated border border-white/10">
+              <div className="rounded-2xl overflow-hidden shadow-elevated border border-white/10 transition-shadow duration-300 hover:shadow-hover">
                 <img
                   src={skinAnalysisTech}
                   alt="Skin Analysis App"
-                  className="w-full h-auto object-cover"
+                  className="w-full h-auto object-cover transition-transform duration-700 ease-out hover:scale-[1.025]"
                 />
               </div>
             </motion.div>
@@ -664,7 +604,15 @@ const Index = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <Sparkles className="h-10 w-10 text-primary-foreground/80 mb-6 mx-auto lg:mx-0" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, rotate: -12 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                viewport={{ once: true, amount: 0.7 }}
+                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                className="mb-6 w-fit mx-auto lg:mx-0"
+              >
+                <Sparkles className="h-10 w-10 text-primary-foreground/80" />
+              </motion.div>
               <h2 className="font-heading text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
                 Discover Your Skin Type
               </h2>
@@ -672,14 +620,20 @@ const Index = () => {
                 Take our quick 5-question quiz to identify your skin type and get personalized 
                 routine recommendations tailored just for you.
               </p>
-              <div className="flex flex-wrap gap-3 mb-8 justify-center lg:justify-start">
+              <motion.div
+                className="flex flex-wrap gap-3 mb-8 justify-center lg:justify-start"
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.45 }}
+              >
                 {["Quick & Easy", "Personalized Results", "Expert Recommendations"].map((item, i) => (
-                  <span key={i} className="flex items-center gap-2 text-primary-foreground/80 text-sm">
+                  <motion.span key={i} variants={itemVariants} className="flex items-center gap-2 text-primary-foreground/80 text-sm">
                     <CheckCircle className="h-4 w-4" />
                     {item}
-                  </span>
+                  </motion.span>
                 ))}
-              </div>
+              </motion.div>
               <Link href="/analysis">
                 <motion.div
                   className="relative inline-block"
@@ -708,7 +662,7 @@ const Index = () => {
       </section>
 
       {/* Why Skincare Matters */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-14 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -752,23 +706,26 @@ const Index = () => {
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
               <motion.div
-                className="rounded-2xl overflow-hidden shadow-card"
+                className="rounded-2xl overflow-hidden shadow-card transition-shadow duration-300 hover:shadow-hover"
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
               >
                 <img
                   src={skincareLifestyle}
                   alt="Skincare routine"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out hover:scale-[1.025]"
                 />
               </motion.div>
             </motion.div>
           </div>
         </div>
       </section>
-    </>
+      </>
+    </MotionConfig>
   );
 };
 

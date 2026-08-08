@@ -37,6 +37,8 @@ export const HealthTrendCharts = ({ history }: HealthTrendChartsProps) => {
     concernSeries.map(({ key }) => key)
   );
 
+  // concernSeries is derived from concernKeys — keying on concernKeys is intentional
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const availableKeys = new Set(concernSeries.map(({ key }) => key));
     setSelectedConcernKeys((selected) => [
@@ -46,6 +48,7 @@ export const HealthTrendCharts = ({ history }: HealthTrendChartsProps) => {
         .filter((key) => !selected.includes(key)),
     ]);
   }, [concernKeys]);
+
 
   const toggleConcern = (key: string) => {
     setSelectedConcernKeys((selected) =>

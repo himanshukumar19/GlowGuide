@@ -72,7 +72,7 @@ const AboutSkincare = () => {
     <>
       {/* Hero — editorial split */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 gradient-hero" />
+        <div className="absolute inset-0 bg-[#e8efeb]" />
         <div className="relative container mx-auto px-4 pt-20 pb-24 md:pt-32 md:pb-36">
           <div className="grid md:grid-cols-12 gap-8 md:gap-12 items-center">
             {/* Left — text */}
@@ -100,9 +100,9 @@ const AboutSkincare = () => {
                 Your skin is
                 <br />
                 talking.{" "}
-                <span className="text-gradient">Are you</span>
+                 <span className="text-primary">Are you</span>
                 <br />
-                <span className="text-gradient">listening</span>?
+                 <span className="text-primary">listening</span>?
               </motion.h1>
 
               <motion.div
@@ -121,12 +121,12 @@ const AboutSkincare = () => {
 
             {/* Right — hero image */}
             <motion.div
-              className="hidden md:block md:col-span-5"
+              className="block md:col-span-5"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="relative aspect-[3/4] rounded-3xl overflow-hidden">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl md:aspect-[3/4]">
                 <img
                   src="/images/about/hero-skin.jpg"
                   alt="Close-up of healthy, glowing skin in natural light"
@@ -186,7 +186,7 @@ const AboutSkincare = () => {
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br ${stat.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                     <div className="relative">
-                      <p className="font-heading text-4xl md:text-5xl font-bold text-gradient mb-3 tracking-tight">
+                       <p className="font-heading text-4xl md:text-5xl font-bold text-primary mb-3 tracking-tight">
                         {stat.number}
                       </p>
                       <p className="text-xs md:text-sm text-muted-foreground leading-snug">
@@ -255,30 +255,30 @@ const AboutSkincare = () => {
                 icon: Shield,
                 title: "Strengthens your protective barrier",
                 desc: "A healthy skin barrier keeps bacteria, pollution, and irritants out while locking moisture in. When it's compromised, everything from breakouts to sensitivity gets worse.",
-                border: "border-l-primary",
+                    border: "border-primary/20",
               },
               {
                 icon: Droplets,
                 title: "Maintains hydration from within",
                 desc: "Dehydrated skin doesn't just feel tight — it's more prone to fine lines, dullness, and irritation. Proper skincare helps your skin hold onto the water it needs.",
-                border: "border-l-sky-500",
+                    border: "border-sky-500/20",
               },
               {
                 icon: Sun,
                 title: "Prevents cumulative sun damage",
                 desc: "UV damage is the #1 cause of premature aging. Daily sunscreen prevents dark spots, wrinkles, and significantly reduces skin cancer risk. It's the single most impactful step.",
-                border: "border-l-amber-500",
+                    border: "border-amber-500/20",
               },
               {
                 icon: Sparkles,
                 title: "Supports natural cell renewal",
                 desc: "Your skin replaces itself every 2-3 weeks. Consistent care — cleansing, exfoliating, nourishing — supports this cycle so fresh, healthy cells reach the surface faster.",
-                border: "border-l-emerald-500",
+                    border: "border-emerald-500/20",
               },
             ].map((item, i) => (
               <motion.div
                 key={item.title}
-                className={`group flex gap-5 md:gap-8 p-6 md:p-8 rounded-2xl bg-card border border-border/50 border-l-4 ${item.border} shadow-soft hover:shadow-hover hover:-translate-y-1 transition-all duration-300`}
+                 className={`group flex gap-5 rounded-2xl border bg-card p-6 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-hover md:gap-8 md:p-8 ${item.border}`}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, margin: "-50px" }}
@@ -531,7 +531,7 @@ const AboutSkincare = () => {
             </p>
             <h2 className="font-heading text-3xl md:text-5xl font-bold leading-tight mb-6">
               Ready to understand <br className="hidden md:block" />
-              <span className="text-gradient">your skin?</span>
+              <span className="text-primary">your skin?</span>
             </h2>
             <p className="text-muted-foreground text-lg mb-10 max-w-xl mx-auto">
               Take our AI-powered skin analysis to get personalized recommendations

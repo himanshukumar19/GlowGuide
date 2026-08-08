@@ -28,6 +28,14 @@ const validSkinTypes = ["oily", "dry", "combination", "sensitive", "normal"] as 
 
 type ValidSkinType = (typeof validSkinTypes)[number];
 
+const skinImages: Record<ValidSkinType, string> = {
+  oily: "/images/skin-oily.png",
+  dry: "/images/skin-dry.png",
+  combination: "/images/skin-combination.png",
+  sensitive: "/images/skin-sensitive.png",
+  normal: "/images/skin-normal.png",
+};
+
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
@@ -54,6 +62,7 @@ const HeroSection = ({ data }: { data: SkinTypeConfig }) => {
           Back to all skin types
         </Link>
 
+        <div className="grid items-center gap-10 md:grid-cols-[1.1fr_0.9fr]">
         <motion.div
           className="max-w-4xl"
           initial={{ opacity: 0, y: 24 }}
@@ -86,6 +95,21 @@ const HeroSection = ({ data }: { data: SkinTypeConfig }) => {
             {data.description}
           </p>
         </motion.div>
+        <motion.div
+          className="relative hidden md:block"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+        >
+          <div className="aspect-[4/3] overflow-hidden rounded-[2.5rem] rounded-bl-[5rem] border-8 border-white/60 shadow-xl">
+            <img src={skinImages[data.slug as ValidSkinType]} alt={`${data.type} skin texture`} className="h-full w-full object-cover" />
+          </div>
+          <div className="absolute -bottom-5 -left-4 rounded-2xl bg-white px-5 py-3 shadow-lg">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Focus</p>
+            <p className="mt-1 text-sm font-semibold" style={{ color: data.tokens.accentDark }}>{data.tagline}</p>
+          </div>
+        </motion.div>
+        </div>
       </div>
     </section>
   );
@@ -124,9 +148,10 @@ const CharacteristicsSection = ({ data }: { data: SkinTypeConfig }) => (
     whileInView="visible"
     viewport={{ once: true }}
   >
-    <h2 className="font-heading text-2xl font-bold text-[#262626] md:text-3xl">
-      Key Characteristics
-    </h2>
+    <div className="flex items-end justify-between gap-4 border-b border-[#E2E8E4] pb-4">
+      <div><p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: data.tokens.accent }}>Read the signals</p><h2 className="mt-2 font-heading text-2xl font-bold text-[#262626] md:text-3xl">Key Characteristics</h2></div>
+      <span className="hidden text-sm text-[#737373] sm:block">What you may notice day to day</span>
+    </div>
     <div className="mt-6 grid gap-5 md:grid-cols-2">
       <Card className="border-[#E2E8E4] bg-white shadow-sm">
         <CardHeader className="pb-3">

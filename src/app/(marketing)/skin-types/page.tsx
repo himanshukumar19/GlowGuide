@@ -16,6 +16,14 @@ import { getAllSkinTypes } from "@/data/skinTypes";
 
 const skinTypes = getAllSkinTypes();
 
+const skinImages: Record<string, string> = {
+  oily: "/images/skin-oily.png",
+  dry: "/images/skin-dry.png",
+  combination: "/images/skin-combination.png",
+  sensitive: "/images/skin-sensitive.png",
+  normal: "/images/skin-normal.png",
+};
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -33,7 +41,7 @@ const SkinTypesOverview = () => {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-[#F7F9F8] py-20 md:py-28">
+      <section className="relative overflow-hidden bg-[#E8EFEB] py-16 md:py-24">
         <div className="absolute inset-0 opacity-50">
           <div
             className="absolute inset-0"
@@ -44,24 +52,39 @@ const SkinTypesOverview = () => {
           />
         </div>
         <div className="container relative mx-auto px-4">
+          <div className="grid items-center gap-10 md:grid-cols-[1.05fr_0.95fr]">
           <motion.div
-            className="mx-auto max-w-3xl text-center"
+            className="max-w-3xl"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#D8E2DC] bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#355245] backdrop-blur-sm">
+            <span className="mb-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#355245]">
               <Sparkles className="h-3.5 w-3.5" />
               Understanding Your Skin
             </span>
-            <h1 className="font-heading text-4xl font-bold leading-tight text-[#262626] md:text-5xl lg:text-6xl">
-              Know Your <span className="text-[#538670]">Skin Type</span>
+            <h1 className="font-heading text-5xl font-bold leading-[0.98] tracking-[-0.045em] text-[#262626] md:text-7xl">
+              Your skin has<br /><span className="text-[#538670]">a pattern.</span>
             </h1>
-            <p className="mt-5 text-lg leading-relaxed text-[#737373] md:text-xl">
-              Every effective routine starts here. Learn the five core skin types,
-              spot your own, and build a regimen that actually works for you.
+            <p className="mt-6 max-w-xl text-base leading-7 text-[#525252] md:text-lg">
+              Learn the five core skin types, recognize your own signals, and build a routine that works with your skin instead of fighting it.
             </p>
           </motion.div>
+          <motion.div
+            className="relative hidden min-h-[290px] md:block"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.15 }}
+          >
+            <div className="absolute right-4 top-0 h-56 w-56 overflow-hidden rounded-[2.5rem] rounded-bl-[5rem] border-8 border-[#E8EFEB] shadow-xl md:h-64 md:w-64">
+              <img src="/images/skin-normal.png" alt="Healthy skin texture" className="h-full w-full object-cover" />
+            </div>
+            <div className="absolute bottom-0 left-10 h-40 w-40 overflow-hidden rounded-[2rem] rounded-tr-[4rem] border-8 border-[#E8EFEB] shadow-lg">
+              <img src="/images/skin-sensitive.png" alt="Close-up skin texture" className="h-full w-full object-cover" />
+            </div>
+            <div className="absolute bottom-6 right-0 rounded-full bg-white px-4 py-2 text-xs font-bold text-[#355245] shadow-md">Five types. One place to start.</div>
+          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -120,7 +143,7 @@ const SkinTypesOverview = () => {
             </span>
           </motion.div>
 
-          <motion.div
+            <motion.div
             className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
             variants={containerVariants}
             initial="hidden"
@@ -133,21 +156,22 @@ const SkinTypesOverview = () => {
                 <motion.div key={skin.slug} variants={itemVariants}>
                   <Link href={`/skin-types/${skin.slug}`}>
                     <article
-                      className="group relative h-full overflow-hidden rounded-2xl border border-[#E2E8E4] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#355245]/20 hover:shadow-lg"
+                      className="group relative h-full overflow-hidden rounded-3xl border border-[#E2E8E4] bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#355245]/20 hover:shadow-xl"
                     >
-                      <div
-                        className="absolute left-0 top-0 h-1 w-full"
-                        style={{ backgroundColor: skin.tokens.accent }}
-                      />
-                      <div
-                        className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
+                      <div className="relative h-40 overflow-hidden" style={{ backgroundColor: skin.tokens.wash }}>
+                        <img src={skinImages[skin.slug]} alt={`${skin.type} skin texture`} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                        <div
+                        className="absolute bottom-4 left-5 inline-flex h-11 w-11 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
                         style={{
                           backgroundColor: skin.tokens.wash,
                           color: skin.tokens.accent,
                         }}
                       >
                         <Icon className="h-6 w-6" strokeWidth={1.8} />
+                        </div>
                       </div>
+                      <div className="p-6">
                       <h3 className="font-heading text-2xl font-bold text-[#262626]">
                         {skin.label}
                       </h3>
@@ -173,6 +197,7 @@ const SkinTypesOverview = () => {
                       <div className="mt-6 flex items-center gap-2 text-sm font-semibold" style={{ color: skin.tokens.accent }}>
                         <span>Explore {skin.type}</span>
                         <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      </div>
                       </div>
                     </article>
                   </Link>

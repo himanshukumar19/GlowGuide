@@ -42,7 +42,7 @@ Thumbs.db
 out/
 
 # Seed data (source of truth is Firestore)
-scripts/product-data.ts
+
 
 # RAG data files (keep .gitkeep only)
 data/*

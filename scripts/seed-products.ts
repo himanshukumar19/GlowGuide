@@ -1,8 +1,8 @@
 import "dotenv/config";
 
 import { products } from "./product-data";
-import { db } from "@/lib/firebase-admin";
-import { uploadImageFile } from "@/lib/cloudinary";
+import { db } from "../src/lib/firebase-admin";
+import { uploadImageFile } from "../src/lib/cloudinary";
 import path from "path";
 import fs from "fs";
 

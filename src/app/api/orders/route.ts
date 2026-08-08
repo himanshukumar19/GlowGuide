@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authorize } from "@/lib/api-auth";
 import { listOrdersByCustomer } from "@/lib/models/order";
 
+export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   try {
     const authCheck = await authorize(request, ["CUSTOMER"]);

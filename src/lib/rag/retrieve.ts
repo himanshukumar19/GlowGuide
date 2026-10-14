@@ -296,7 +296,7 @@ async function classifyMessage(
   | { type: "SKINCARE_QUESTION" | "OFF_TOPIC" }
 > {
   const model = new ChatGroq({
-    model: "llama-3.1-8b-instant",
+    model: "llama-3.3-70b-versatile",
     apiKey: process.env.GROQ_API_KEY,
     temperature: 0,
     maxRetries: 1,

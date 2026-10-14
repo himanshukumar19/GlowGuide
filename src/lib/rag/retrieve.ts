@@ -296,7 +296,7 @@ async function classifyMessage(
   | { type: "SKINCARE_QUESTION" | "OFF_TOPIC" }
 > {
   const model = new ChatGroq({
-    model: "llama-3.3-70b-versatile",
+    model: "llama-3.3-70b",
     apiKey: process.env.GROQ_API_KEY,
     temperature: 0,
     maxRetries: 1,
@@ -382,7 +382,7 @@ export async function answerQuery(query: string): Promise<QueryResult> {
 
   const needsFallback = await (async () => {
     const judgeModel = new ChatGroq({
-      model: "llama-3.3-70b-versatile",
+      model: "llama-3.3-70b",
       apiKey: process.env.GROQ_API_KEY,
       temperature: 0,
     });
@@ -416,7 +416,7 @@ export async function answerQuery(query: string): Promise<QueryResult> {
   }
 
   const primaryModel = new ChatGroq({
-    model: "llama-3.3-70b-versatile",
+    model: "llama-3.3-70b",
     apiKey: process.env.GROQ_API_KEY,
     temperature: 0.2,
     maxRetries: 2,
@@ -433,7 +433,7 @@ export async function answerQuery(query: string): Promise<QueryResult> {
   });
 
   const geminiModel = new ChatGoogleGenerativeAI({
-    model: "gemini-2.0-flash",
+    model: "gemini-3.5-flash",
     apiKey: process.env.GEMINI_API_KEY,
     temperature: 0.2,
     maxRetries: 2,

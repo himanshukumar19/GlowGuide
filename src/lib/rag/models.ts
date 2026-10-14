@@ -7,14 +7,14 @@ import { ChatGroq } from "@langchain/groq";
  */
 export function createChatModel() {
   const primary = new ChatGoogleGenerativeAI({
-    model: "gemini-2.0-flash",
+    model: "gemini-3.5-flash",
     apiKey: process.env.GEMINI_API_KEY,
     temperature: 0.2,
     maxRetries: 2,
   });
 
   const fallback = new ChatGroq({
-    model: "llama-3.3-70b-versatile",
+    model: "llama-3.3-70b",
     apiKey: process.env.GROQ_API_KEY,
     temperature: 0.2,
     maxRetries: 2,
